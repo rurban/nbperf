@@ -100,7 +100,7 @@ graph2_check_duplicates(struct nbperf *nbperf, struct graph2 *graph)
 				break;
 			j = e2->l_next;
 			e2 = &graph->edges[j];
-		}		
+		}
 	}
 	return 0;
 }
