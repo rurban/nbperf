@@ -140,8 +140,13 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	uint64_t sum;
 	size_t i;
 
+	fprintf(nbperf->output, "#include <stdint.h>\n");
 	fprintf(nbperf->output, "#include <stdlib.h>\n");
-	fprintf(nbperf->output, "#include <strings.h>\n\n");
+	fprintf(nbperf->output, "#include <strings.h>\n");
+        fprintf(nbperf->output, "#include \"mi_vector_hash.h\"\n\n");
+        fprintf(nbperf->output, "#ifdef __GNUC__\n"); // since gcc 4.5
+        fprintf(nbperf->output, "#define popcount64 __builtin_popcountll\n");
+        fprintf(nbperf->output, "#endif\n\n");
 
 	fprintf(nbperf->output, "%suint32_t\n",
 	    nbperf->static_hash ? "static " : "");

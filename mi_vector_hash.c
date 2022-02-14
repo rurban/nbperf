@@ -60,6 +60,17 @@ __RCSID("$NetBSD: mi_vector_hash.c,v 1.1 2013/12/11 01:24:08 joerg Exp $");
 #include <stdlib.h>
 #endif
 
+static inline uint32_t
+le32dec(const void *buf)
+{
+#if 0
+	uint8_t const *p = (uint8_t const *)buf;
+	return (((unsigned)p[3] << 24) | (p[2] << 16) | (p[1] << 8) | p[0]);
+#else
+        return *(uint32_t*)buf;
+#endif
+}
+
 #define mix(a, b, c) do {		\
 	a -= b; a -= c; a ^= (c >> 13);	\
 	b -= c; b -= a; b ^= (a << 8);	\
@@ -82,7 +93,7 @@ __weak_alias(mi_vector_hash, _mi_vector_hash)
 
 void
 mi_vector_hash(const void * __restrict key, size_t len, uint32_t seed,
-    uint32_t hashes[3])
+               uint32_t hashes[3])
 {
 	static const uint32_t mask[4] = {
 		0x000000ff, 0x0000ffff, 0x00ffffff, 0xffffffff

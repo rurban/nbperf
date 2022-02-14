@@ -150,7 +150,9 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	const char *g_type;
 	int g_width;
 
-	fprintf(nbperf->output, "#include <stdlib.h>\n\n");
+	fprintf(nbperf->output, "#include <stdlib.h>\n");
+	fprintf(nbperf->output, "#include <stdint.h>\n");
+        fprintf(nbperf->output, "#include \"mi_vector_hash.h\"\n\n");
 
 	fprintf(nbperf->output, "%suint32_t\n",
 	    nbperf->static_hash ? "static " : "");
