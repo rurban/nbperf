@@ -31,12 +31,15 @@
  * SUCH DAMAGE.
  */
 
+// number of u32 results
+#define	NBPERF_MIN_HASH_SIZE	2
 #define	NBPERF_MAX_HASH_SIZE	3
 
 struct nbperf {
 	FILE *output;
 	FILE *map_output;
 	const char *hash_name;
+	const char *hash_header;
 	int static_hash;
 	int allow_hash_fudging;
 	size_t n;

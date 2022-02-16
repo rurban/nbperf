@@ -5,17 +5,26 @@ SRCS=	nbperf.c
 SRCS+=	nbperf-bdz.c nbperf-chm.c nbperf-chm3.c
 SRCS+=	graph2.c graph3.c
 WORDS = /usr/share/dict/words
+CC = cc
+CFLAGS = -O2 -g
 
-$(PROG): $(SRCS)
-	cc -O2 -I. -DHAVE_NBTOOL_CONFIG_H $(SRCS) mi_vector_hash.c -o $@
+MACHINE := $(shell uname -m)
+ifeq (x86_64,$(MACHINE))
+CFLAGS += -march=native
+endif
+
+$(PROG): $(SRCS) mi_vector_hash.c mi_vector_hash.h wyhash.h nbtool_config.h
+	$(CC) $(CFLAGS) -I. -DHAVE_NBTOOL_CONFIG_H $(SRCS) mi_vector_hash.c -o $@
 
 check: $(PROG)
 	./$(PROG) <$(WORDS) >_test_chm.c
-	cc -c -O2 -I. _test_chm.c
+	$(CC) $(CFLAGS) -c -I. _test_chm.c
 	./$(PROG) -a bdz <$(WORDS) >_test_bdz.c
-	cc -c -O2 -I. _test_bdz.c
+	$(CC) $(CFLAGS) -c -I. _test_bdz.c
 	./$(PROG) -a chm3 <$(WORDS) >_test_chm3.c
-	cc -c -O2 -I. _test_chm3.c
+	$(CC) $(CFLAGS) -c -I. _test_chm3.c
+	./$(PROG) -h wyhash <$(WORDS) >_test_chm_wy.c
+	$(CC) $(CFLAGS) -c -I. _test_chm_wy.c
 clean:
 	rm $(PROG) _test_*.c _test_*.o
 install: $(PROG)

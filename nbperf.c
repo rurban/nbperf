@@ -49,6 +49,8 @@ __RCSID("$NetBSD: nbperf.c,v 1.7 2021/01/12 14:21:18 joerg Exp $");
 #include <unistd.h>
 
 #include "nbperf.h"
+#include "mi_vector_hash.h"
+#include "mi_wyhash.h"
 
 static int predictable;
 
@@ -57,7 +59,7 @@ void usage(void)
 {
 	fprintf(stderr,
 	    "%s [-ps] [-c utilisation] [-i iterations] [-n name] "
-	    "[-o output] input\n",
+	    "[-h hash] [-o output] input\n",
                 "nbperf" /*getprogname()*/);
 	exit(1);
 }
@@ -93,17 +95,56 @@ mi_vector_hash_print_hash(struct nbperf *nbperf, const char *indent,
 }
 
 static void
+wyhash_seed_hash(struct nbperf *nbperf)
+{
+	static uint32_t predictable_counter;
+	if (predictable)
+		nbperf->seed[0] = predictable_counter++;
+	else
+		nbperf->seed[0] = arc4random();
+	if (nbperf->seed[0] == UINT32_C(0x14cc886e) ||
+	    nbperf->seed[0] == UINT32_C(0xd637dbf3))
+		nbperf->seed[0]++;
+}
+
+static void
+wyhash_compute(struct nbperf *nbperf, const void *key, size_t keylen,
+	       uint32_t *hashes)
+{
+	mi_wyhash(key, (uint64_t)keylen, (unsigned)nbperf->seed[0], hashes);
+}
+
+static void
+wyhash_print_hash(struct nbperf *nbperf, const char *indent,
+		  const char *key, const char *keylen, const char *hash)
+{
+	fprintf(nbperf->output,
+	    "%smi_wyhash(%s, %s, 0x%08" PRIx32 "U, %s);\n",
+	    indent, key, keylen, nbperf->seed[0], hash);
+}
+
+static void
 set_hash(struct nbperf *nbperf, const char *arg)
 {
 	if (strcmp(arg, "mi_vector_hash") == 0) {
-		nbperf->hash_size = 3;
+		nbperf->hash_size = 3; // needed for chm3 and bdz
+		nbperf->hash_header = "mi_vector_hash.h";
 		nbperf->seed_hash = mi_vector_hash_seed_hash;
 		nbperf->compute_hash = mi_vector_hash_compute;
 		nbperf->print_hash = mi_vector_hash_print_hash;
 		return;
+	} else if (strcmp(arg, "wyhash") == 0) {
+		nbperf->hash_size = 2;
+		nbperf->hash_header = "mi_wyhash.h";
+		nbperf->seed_hash = wyhash_seed_hash;
+		nbperf->compute_hash = wyhash_compute;
+		nbperf->print_hash = wyhash_print_hash;
+		return;
 	}
 	if (nbperf->hash_size > NBPERF_MAX_HASH_SIZE)
 		errx(1, "Hash function creates too many output values");
+	if (nbperf->hash_size < NBPERF_MIN_HASH_SIZE)
+		errx(1, "Hash function creates not enough output values");
 	errx(1, "Unknown hash function: %s", arg);
 }
 
@@ -142,8 +183,9 @@ main(int argc, char **argv)
 				build_hash = chm_compute;
 			else if (strcmp(optarg, "chm3") == 0)
 				build_hash = chm3_compute;
-			else if (strcmp(optarg, "bpz") == 0 ||
-			         strcmp(optarg, "bdz") == 0)
+			else if ((strcmp(optarg, "bpz") == 0 ||
+				  strcmp(optarg, "bdz") == 0)
+				 && nbperf.hash_size >= 3)
 				build_hash = bpz_compute;
 			else
 				errx(1, "Unsupport algorithm: %s", optarg);
