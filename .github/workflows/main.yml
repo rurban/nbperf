@@ -1,0 +1,22 @@
+name: Github CI
+on: [push, pull_request]
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        CFLAGS:
+          -
+          - -O2 -g -fsanitize=address
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 1
+    - run: sudo apt-get install wamerican
+    - if: matrix.CFLAGS != ''
+      run: make check CFLAGS="${{ matrix.CFLAGS }}"
+    - if: matrix.CFLAGS == ''
+      run: make check

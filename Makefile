@@ -17,14 +17,19 @@ $(PROG): $(SRCS) mi_vector_hash.c mi_vector_hash.h wyhash.h nbtool_config.h
 	$(CC) $(CFLAGS) -I. -DHAVE_NBTOOL_CONFIG_H $(SRCS) mi_vector_hash.c -o $@
 
 check: $(PROG)
-	./$(PROG) <$(WORDS) >_test_chm.c
+	./$(PROG) -o _test_chm.c $(WORDS)
 	$(CC) $(CFLAGS) -c -I. _test_chm.c
-	./$(PROG) -a bdz <$(WORDS) >_test_bdz.c
+	./$(PROG) -a bdz -o _test_bdz.c $(WORDS)
 	$(CC) $(CFLAGS) -c -I. _test_bdz.c
-	./$(PROG) -a chm3 <$(WORDS) >_test_chm3.c
+	./$(PROG) -a chm3 -o _test_chm3.c $(WORDS)
 	$(CC) $(CFLAGS) -c -I. _test_chm3.c
-	./$(PROG) -h wyhash <$(WORDS) >_test_chm_wy.c
+	./$(PROG) -h wyhash -o _test_chm_wy.c $(WORDS)
 	$(CC) $(CFLAGS) -c -I. _test_chm_wy.c
+	./$(PROG) -h wyhash -a bdz -o _test_bdz_wy.c $(WORDS)
+	$(CC) $(CFLAGS) -c -I. _test_bdz_wy.c
+	./$(PROG) -h wyhash -a chm3 -o _test_chm3_wy.c $(WORDS)
+	$(CC) $(CFLAGS) -c -I. _test_chm3_wy.c
+	./test
 clean:
 	rm $(PROG) _test_*.c _test_*.o
 install: $(PROG)

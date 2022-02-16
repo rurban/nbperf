@@ -1,0 +1,24 @@
+#!/bin/sh
+set -e
+WORDS=/usr/share/dict/words
+
+perf() {
+    alg=$1
+    hash=$2
+    if [ -z $hash ]; then
+	echo nbperf -a $1
+	./nbperf -a $1 -o _test_$alg.c $WORDS
+	cc -I. _test_$alg.c test_main.c mi_vector_hash.c -o test_$alg && ./test_$alg
+    else
+	echo nbperf -a $1 -h wyhash
+	./nbperf -a $1 -h wyhash -o _test_${alg}_wy.c $WORDS
+	cc -I. _test_${alg}_wy.c test_main.c -o test_${alg}_wy && ./test_${alg}_wy
+    fi
+}
+
+perf chm
+perf chm3
+perf bdz
+perf chm wy
+perf chm3 wy
+perf bdz wy

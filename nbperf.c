@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 __RCSID("$NetBSD: nbperf.c,v 1.7 2021/01/12 14:21:18 joerg Exp $");
 
-#include <sys/endian.h>
+#include <endian.h>
 #include <err.h>
 #include <errno.h>
 #include <inttypes.h>
@@ -111,7 +111,7 @@ static void
 wyhash_compute(struct nbperf *nbperf, const void *key, size_t keylen,
 	       uint32_t *hashes)
 {
-	mi_wyhash(key, (uint64_t)keylen, (unsigned)nbperf->seed[0], hashes);
+	mi_wyhash3(key, keylen, *(uint64_t*)nbperf->seed, (uint64_t*)hashes);
 }
 
 static void
@@ -119,7 +119,7 @@ wyhash_print_hash(struct nbperf *nbperf, const char *indent,
 		  const char *key, const char *keylen, const char *hash)
 {
 	fprintf(nbperf->output,
-	    "%smi_wyhash(%s, %s, 0x%08" PRIx32 "U, %s);\n",
+	    "%smi_wyhash3(%s, %s, 0x%08" PRIx32 "U, (uint64_t*)%s);\n",
 	    indent, key, keylen, nbperf->seed[0], hash);
 }
 
@@ -134,7 +134,7 @@ set_hash(struct nbperf *nbperf, const char *arg)
 		nbperf->print_hash = mi_vector_hash_print_hash;
 		return;
 	} else if (strcmp(arg, "wyhash") == 0) {
-		nbperf->hash_size = 2;
+	    nbperf->hash_size = 4; // i.e. 2 u64 values
 		nbperf->hash_header = "mi_wyhash.h";
 		nbperf->seed_hash = wyhash_seed_hash;
 		nbperf->compute_hash = wyhash_compute;
@@ -273,8 +273,17 @@ main(int argc, char **argv)
 			if (keylens == NULL)
 				err(1, "realloc failed");
 		}
-		if ((keys[curlen] = strndup(line, line_len)) == NULL)
-			err(1, "malloc failed");
+	    	if (line_len % 4 == 0) {
+		    if ((keys[curlen] = strndup(line, line_len)) == NULL)
+			err(1, "strndup failed");
+		}
+		else {
+		    ssize_t padded_len = line_len + (4 - (line_len % 4));
+		    if ((keys[curlen] = calloc(padded_len, 1)) == NULL)
+			err(1, "calloc failed");
+		    memcpy((void*)keys[curlen], line, line_len);
+		}
+			
 		keylens[curlen] = line_len;
 		++curlen;
 	}
@@ -311,5 +320,9 @@ main(int argc, char **argv)
 	if (looped)
 		fputc('\n', stderr);
 
+	free (keylens);
+	for (int i=0; i < curlen; i++)
+	    free ((void*)keys[i]);
+	free (keys);
 	return 0;
 }

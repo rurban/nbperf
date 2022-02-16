@@ -176,7 +176,7 @@ int
 SIZED2(_hash)(struct nbperf *nbperf, struct SIZED(graph) *graph)
 {
 	struct SIZED(edge) *e;
-	uint32_t hashes[NBPERF_MAX_HASH_SIZE];
+	uint32_t hashes[4];
 	size_t i, j;
 
 #if GRAPH_SIZE == 2
@@ -186,7 +186,6 @@ SIZED2(_hash)(struct nbperf *nbperf, struct SIZED(graph) *graph)
 	if (nbperf->allow_hash_fudging && (graph->v & 3) != 3)
 		errx(1, "vertex count must have lowest 2 bits set");
 #endif
-
 
 	memset(graph->verts, 0, sizeof(*graph->verts) * graph->v);
 	graph->hash_fudge = 0;
