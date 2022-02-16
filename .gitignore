@@ -42,11 +42,13 @@
 *.idb
 *.pdb
 
-# Kernel Module Compile Results
-*.mod*
-*.cmd
-.tmp_versions/
-modules.order
-Module.symvers
-Mkfile.old
-dkms.conf
+.gdbinit
+nbperf
+_test_*.c
+_test_*.o
+test_bdz
+test_chm
+test_chm3
+test_bdz_wy
+test_chm_wy
+test_chm3_wy

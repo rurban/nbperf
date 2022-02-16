@@ -31,7 +31,7 @@ check: $(PROG)
 	$(CC) $(CFLAGS) -c -I. _test_chm3_wy.c
 	./test
 clean:
-	rm $(PROG) _test_*.c _test_*.o
+	-rm -f $(PROG) _test_*.c _test_*.o test_{bdz,chm,chm3} test_{bdz,chm,chm3}_wy
 install: $(PROG)
 	sudo cp $(PROG) /usr/local/bin/
 	sudo cp $(PROG).1 /usr/local/share/man/man1/
