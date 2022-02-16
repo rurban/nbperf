@@ -77,7 +77,11 @@ The **nbperf** utility exits 0 on success, and >0 if an error occurs.
 
 # SEE ALSO
 
-* `mi_vector_hash(3)`
+* gperf(1)
+* The Perfect::Hash perl library
+* `PerfectHash.pm` in PostgreSQL, and a similar lib in perl5
+* [Bob Jenkins's Minimal Perfect Hashing](https://github.com/rurban/jenkins-minimal-perfect-hash)
+* `mi_vector_hash(3)` in NetBSD
 * [wyhash](https://github.com/wangyi-fudan/wyhash)
 
 # AUTHORS
