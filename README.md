@@ -23,34 +23,34 @@ Supported arguments for **-a**:
 
 * **chm**:
 
-This results in an order preserving minimal perfect hash function.
-The _utilisation_ must be at least 2, the default.  The number of
-iterations needed grows if the utilisation is very near to 2.
+  This results in an order preserving minimal perfect hash function.
+  The _utilisation_ must be at least 2, the default.  The number of
+  iterations needed grows if the utilisation is very near to 2.
 
 * **chm3**:
 
-Similar to _chm_.  The resulting hash function needs three instead of
-two table lookups when compared to _chm_.  The _utilisation_ must be at
-least 1.24, the default.  This makes the output for _chm3_ noticeably
-smaller than the output for _chm_.
+  Similar to _chm_.  The resulting hash function needs three instead of
+  two table lookups when compared to _chm_.  The _utilisation_ must be at
+  least 1.24, the default.  This makes the output for _chm3_ noticeably
+  smaller than the output for _chm_.
 
 * **bpz**:
 
-This results in a non-order preserving minimal perfect hash function.
-Output size is approximately 2.79 bit per key for the default value of
-_utilisation_, 1.24.  This is also the smallest supported value.
+  This results in a non-order preserving minimal perfect hash function.
+  Output size is approximately 2.79 bit per key for the default value of
+  _utilisation_, 1.24.  This is also the smallest supported value.
 
 Supported arguments for **-h**:
 
-**mi_vector_hash**:
+* **mi_vector_hash**:
 
-Platform-independent version of Jenkins parallel hash.  See
-`mi_vector_hash(3)`.
+  Platform-independent version of Jenkins parallel hash.  See
+  `mi_vector_hash(3)`.
 
-**wyhash**:
+* **wyhash**:
 
-64bit version of wyhash, extended to 128bit.
-See [wyhash(3)](https://github.com/wangyi-fudan/wyhash).
+  64bit version of wyhash, extended to 128bit.
+  See [wyhash(3)](https://github.com/wangyi-fudan/wyhash).
 
 The number of iterations can be limited with **-i**.  **nbperf**
 outputs a function matching `uint32_t hash(const void * restrict, size_t)`
