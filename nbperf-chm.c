@@ -79,7 +79,7 @@ struct state {
 	uint8_t *visited;
 };
 
-#if GRAPH_SIZE == 3
+#if GRAPH_SIZE >= 3
 static void
 assign_nodes(struct state *state)
 {
@@ -192,7 +192,7 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	    state->graph.v);
 	fprintf(nbperf->output, "\th[1] = h[1] %% %" PRIu32 ";\n",
 	    state->graph.v);
-#if GRAPH_SIZE == 3
+#if GRAPH_SIZE >= 3
 	fprintf(nbperf->output, "\th[2] = h[2] %% %" PRIu32 ";\n",
 	    state->graph.v);
 #endif
@@ -200,7 +200,7 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	if (state->graph.hash_fudge & 1)
 		fprintf(nbperf->output, "\th[1] ^= (h[0] == h[1]);\n");
 
-#if GRAPH_SIZE == 3
+#if GRAPH_SIZE >= 3
 	if (state->graph.hash_fudge & 2) {
 		fprintf(nbperf->output,
 		    "\th[2] ^= (h[0] == h[2] || h[1] == h[2]);\n");
@@ -209,7 +209,7 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	}
 #endif
 
-#if GRAPH_SIZE == 3
+#if GRAPH_SIZE >= 3
 	fprintf(nbperf->output, "\treturn (g[h[0]] + g[h[1]] + g[h[2]]) %% "
 	    "%" PRIu32 ";\n", state->graph.e);
 #else
@@ -225,7 +225,7 @@ print_hash(struct nbperf *nbperf, struct state *state)
 }
 
 int
-#if GRAPH_SIZE == 3
+#if GRAPH_SIZE >= 3
 chm3_compute(struct nbperf *nbperf)
 #else
 chm_compute(struct nbperf *nbperf)
@@ -235,7 +235,7 @@ chm_compute(struct nbperf *nbperf)
 	int retval = -1;
 	uint32_t v, e;
 
-#if GRAPH_SIZE == 3
+#if GRAPH_SIZE >= 3
 	if (nbperf->c == 0)
 		nbperf-> c = 1.24;
 
@@ -258,7 +258,7 @@ chm_compute(struct nbperf *nbperf)
 	(*nbperf->seed_hash)(nbperf);
 	e = nbperf->n;
 	v = nbperf->c * nbperf->n;
-#if GRAPH_SIZE == 3
+#if GRAPH_SIZE >= 3
 	if (v == 1.24 * nbperf->n)
 		++v;
 	if (v < 10)

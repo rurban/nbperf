@@ -202,7 +202,7 @@ SIZED2(_hash)(struct nbperf *nbperf, struct SIZED(graph) *graph)
 				e->vertices[1] ^= 1; /* toogle bit to differ */
 				graph->hash_fudge |= 1;
 			}
-#if GRAPH_SIZE == 3
+#if GRAPH_SIZE >= 3
 			if (j == 2 && (e->vertices[0] == e->vertices[2] ||
 			    e->vertices[1] == e->vertices[2])) {
 				if (!nbperf->allow_hash_fudging)
