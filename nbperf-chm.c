@@ -58,7 +58,7 @@ __RCSID("$NetBSD: nbperf-chm.c,v 1.4 2021/01/07 16:03:08 joerg Exp $");
  * The algorithm is based on random, acyclic graphs.
  *
  * Each edge in the represents a key.  The vertices are the reminder of
- * the hash function mod n.  n = cm with c > 2, otherwise the propability
+ * the hash function mod n.  n = cm with c > 2, otherwise the probability
  * of finding an acyclic graph is very low (for 2-graphs).  The constant
  * for 3-graphs is 1.24.
  *

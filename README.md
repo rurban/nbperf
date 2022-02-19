@@ -1,6 +1,6 @@
 # NAME
 
-nbperf — compute a perfect hash function
+nbperf — compute a minimal perfect hash function
 
 # SYNOPSIS
 
@@ -9,9 +9,9 @@ nbperf — compute a perfect hash function
 
 # DESCRIPTION
 
-nbperf reads a number of keys one per line from standard input or input.  It computes a 
-minimal perfect hash function and writes it to stdout or output.  The default algorithm is
-"**chm**".
+nbperf reads a number of keys one per line from standard input or
+input.  It computes a minimal perfect hash function and writes it to
+stdout or output.  The default algorithm is "**chm**".
 
 The **-m** argument instructs **nbperf** to write the resulting key
 mapping to _map-file_.  Each line gives the result of the hash
@@ -83,6 +83,8 @@ The **nbperf** utility exits 0 on success, and >0 if an error occurs.
 * [Bob Jenkins's Minimal Perfect Hashing](https://github.com/rurban/jenkins-minimal-perfect-hash)
 * `mi_vector_hash(3)` in NetBSD
 * [wyhash](https://github.com/wangyi-fudan/wyhash)
+* [CHM](http://cmph.sourceforge.net/chm.html) Algorithm
+* [BPZ](http://cmph.sourceforge.net/bdz.html) Algorithm
 
 # AUTHORS
 
