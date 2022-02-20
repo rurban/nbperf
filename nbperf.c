@@ -134,7 +134,7 @@ set_hash(struct nbperf *nbperf, const char *arg)
 		nbperf->print_hash = mi_vector_hash_print_hash;
 		return;
 	} else if (strcmp(arg, "wyhash") == 0) {
-	    nbperf->hash_size = 4; // i.e. 2 u64 values
+		nbperf->hash_size = 4; // i.e. 2 u64 values
 		nbperf->hash_header = "mi_wyhash.h";
 		nbperf->seed_hash = wyhash_seed_hash;
 		nbperf->compute_hash = wyhash_compute;
@@ -283,7 +283,7 @@ main(int argc, char **argv)
 			err(1, "calloc failed");
 		    memcpy((void*)keys[curlen], line, line_len);
 		}
-			
+
 		keylens[curlen] = line_len;
 		++curlen;
 	}
