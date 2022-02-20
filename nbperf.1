@@ -141,6 +141,11 @@ flag is specified, the hash function is seeded in a stable way.
 This may take longer than the normal random seed, but ensures
 that the output is the same for repeated invocations as long as
 the input is constant.
+.Pp
+If the
+.Fl f
+flag is specified, hash fudging will be allowed. I.e. slightly slower hashes.
+.Pp
 .Sh EXIT STATUS
 .Ex -std
 .Sh SEE ALSO
