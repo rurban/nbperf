@@ -162,7 +162,7 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	for (i = 0; i < state->graph.v; ++i) {
 		sum |= ((uint64_t)state->g[i] & 1) << (i & 63);
 		if (i % 64 == 63) {
-			fprintf(nbperf->output, "%s0x%016" PRIx64 "ULL,%s",
+			fprintf(nbperf->output, "%sUINT64_C(0x%016" PRIx64 "),%s",
 			    (i / 64 % 2 == 0 ? "\t    " : " "),
 			    sum,
 			    (i / 64 % 2 == 1 ? "\n" : ""));
@@ -170,7 +170,7 @@ print_hash(struct nbperf *nbperf, struct state *state)
 		}
 	}
 	if (i % 64 != 0) {
-		fprintf(nbperf->output, "%s0x%016" PRIx64 "ULL,%s",
+		fprintf(nbperf->output, "%sUINT64_C(0x%016" PRIx64 "),%s",
 		    (i / 64 % 2 == 0 ? "\t    " : " "),
 		    sum,
 		    (i / 64 % 2 == 1 ? "\n" : ""));
@@ -184,7 +184,7 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	for (i = 0; i < state->graph.v; ++i) {
 		sum |= (((uint64_t)state->g[i] & 2) >> 1) << (i & 63);
 		if (i % 64 == 63) {
-			fprintf(nbperf->output, "%s0x%016" PRIx64 "ULL,%s",
+			fprintf(nbperf->output, "%sUINT64_C(0x%016" PRIx64 "),%s",
 			    (i / 64 % 2 == 0 ? "\t    " : " "),
 			    sum,
 			    (i / 64 % 2 == 1 ? "\n" : ""));
@@ -192,7 +192,7 @@ print_hash(struct nbperf *nbperf, struct state *state)
 		}
 	}
 	if (i % 64 != 0) {
-		fprintf(nbperf->output, "%s0x%016" PRIx64 "ULL,%s",
+		fprintf(nbperf->output, "%sUINT64_C(0x%016" PRIx64 "),%s",
 		    (i / 64 % 2 == 0 ? "\t    " : " "),
 		    sum,
 		    (i / 64 % 2 == 1 ? "\n" : ""));
@@ -203,7 +203,7 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	    "\tstatic const uint32_t holes64k[%" PRId32 "] = {\n",
 	    (state->graph.v + 65535) / 65536);
 	for (i = 0; i < state->graph.v; i += 65536)
-		fprintf(nbperf->output, "%s0x%08" PRIx32 ",%s",
+		fprintf(nbperf->output, "%sUINT32_C(0x%08" PRIx32 "),%s",
 		    (i / 65536 % 4 == 0 ? "\t    " : " "),
 		    state->holes64k[i >> 16],
 		    (i / 65536 % 4 == 3 ? "\n" : ""));
@@ -213,7 +213,7 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	    "\tstatic const uint16_t holes64[%" PRId32 "] = {\n",
 	    (state->graph.v + 63) / 64);
 	for (i = 0; i < state->graph.v; i += 64)
-		fprintf(nbperf->output, "%s0x%04" PRIx32 ",%s",
+		fprintf(nbperf->output, "%sUINT32_C(0x%04" PRIx32 "),%s",
 		    (i / 64 % 4 == 0 ? "\t    " : " "),
 		    state->holes64[i >> 6],
 		    (i / 64 % 4 == 3 ? "\n" : ""));
@@ -225,11 +225,11 @@ print_hash(struct nbperf *nbperf, struct state *state)
 
 	(*nbperf->print_hash)(nbperf, "\t", "key", "keylen", "h");
 
-	fprintf(nbperf->output, "\n\th[0] = h[0] %% %" PRIu32 ";\n",
+	fprintf(nbperf->output, "\n\th[0] = h[0] %% UINT32_C(%" PRIu32 ");\n",
 	    state->graph.v);
-	fprintf(nbperf->output, "\th[1] = h[1] %% %" PRIu32 ";\n",
+	fprintf(nbperf->output, "\th[1] = h[1] %% UINT32_C(%" PRIu32 ");\n",
 	    state->graph.v);
-	fprintf(nbperf->output, "\th[2] = h[2] %% %" PRIu32 ";\n",
+	fprintf(nbperf->output, "\th[2] = h[2] %% UINT32_C(%" PRIu32 ");\n",
 	    state->graph.v);
 
 	if (state->graph.hash_fudge & 1)
@@ -243,19 +243,20 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	}
 
 	fprintf(nbperf->output,
-	    "\tidx = 9 + ((g1[h[0] >> 6] >> (h[0] & 63)) &1)\n"
-	    "\t      + ((g1[h[1] >> 6] >> (h[1] & 63)) & 1)\n"
-	    "\t      + ((g1[h[2] >> 6] >> (h[2] & 63)) & 1)\n"
-	    "\t      - ((g2[h[0] >> 6] >> (h[0] & 63)) & 1)\n"
-	    "\t      - ((g2[h[1] >> 6] >> (h[1] & 63)) & 1)\n"
-	    "\t      - ((g2[h[2] >> 6] >> (h[2] & 63)) & 1);\n"
+	    "\tidx = 9 + ((g1[h[0] >> 6] >> (h[0] & 63)) & 1)\n"
+	    "\t        + ((g1[h[1] >> 6] >> (h[1] & 63)) & 1)\n"
+	    "\t        + ((g1[h[2] >> 6] >> (h[2] & 63)) & 1)\n"
+	    "\t        - ((g2[h[0] >> 6] >> (h[0] & 63)) & 1)\n"
+	    "\t        - ((g2[h[1] >> 6] >> (h[1] & 63)) & 1)\n"
+	    "\t        - ((g2[h[2] >> 6] >> (h[2] & 63)) & 1);\n"
 	    );
 
 	fprintf(nbperf->output,
 	    "\tidx = h[idx %% 3];\n");
 	fprintf(nbperf->output,
 	    "\tidx2 = idx - holes64[idx >> 6] - holes64k[idx >> 16];\n"
-	    "\tidx2 -= popcount64(g1[idx >> 6] & g2[idx >> 6]\n"
+	    "\tidx2 -= popcount64(  g1[idx >> 6]\n"
+            "\t                   & g2[idx >> 6]\n"
 	    "\t                   & (((uint64_t)1 << (idx & 63)) - 1));\n"
 	    "\treturn idx2;\n");
 

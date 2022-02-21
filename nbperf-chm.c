@@ -176,7 +176,7 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	fprintf(nbperf->output, "\tstatic const %s g[%" PRId32 "] = {\n",
 	    g_type, state->graph.v);
 	for (i = 0; i < state->graph.v; ++i) {
-		fprintf(nbperf->output, "%s0x%0*" PRIx32 ",%s",
+		fprintf(nbperf->output, "%sUINT32_C(0x%0*" PRIx32 "),%s",
 		    (i % per_line == 0 ? "\t    " : " "),
 		    g_width, state->g[i],
 		    (i % per_line == per_line - 1 ? "\n" : ""));
@@ -188,12 +188,12 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	fprintf(nbperf->output, "\tuint32_t h[%zu];\n\n", nbperf->hash_size);
 	(*nbperf->print_hash)(nbperf, "\t", "key", "keylen", "h");
 
-	fprintf(nbperf->output, "\n\th[0] = h[0] %% %" PRIu32 ";\n",
+	fprintf(nbperf->output, "\n\th[0] = h[0] %% UINT32_C(%" PRIu32 ");\n",
 	    state->graph.v);
-	fprintf(nbperf->output, "\th[1] = h[1] %% %" PRIu32 ";\n",
+	fprintf(nbperf->output, "\th[1] = h[1] %% UINT32_C(%" PRIu32 ");\n",
 	    state->graph.v);
 #if GRAPH_SIZE >= 3
-	fprintf(nbperf->output, "\th[2] = h[2] %% %" PRIu32 ";\n",
+	fprintf(nbperf->output, "\th[2] = h[2] %% UINT32_C(%" PRIu32 ");\n",
 	    state->graph.v);
 #endif
 
@@ -211,10 +211,10 @@ print_hash(struct nbperf *nbperf, struct state *state)
 
 #if GRAPH_SIZE >= 3
 	fprintf(nbperf->output, "\treturn (g[h[0]] + g[h[1]] + g[h[2]]) %% "
-	    "%" PRIu32 ";\n", state->graph.e);
+	    "UINT32_C(%" PRIu32 ");\n", state->graph.e);
 #else
 	fprintf(nbperf->output, "\treturn (g[h[0]] + g[h[1]]) %% "
-	    "%" PRIu32 ";\n", state->graph.e);
+	    "UINT32_C(%" PRIu32 ");\n", state->graph.e);
 #endif
 	fprintf(nbperf->output, "}\n");
 

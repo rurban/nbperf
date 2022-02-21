@@ -90,7 +90,7 @@ mi_vector_hash_print_hash(struct nbperf *nbperf, const char *indent,
     const char *key, const char *keylen, const char *hash)
 {
 	fprintf(nbperf->output,
-	    "%smi_vector_hash(%s, %s, 0x%08" PRIx32 "U, %s);\n",
+	    "%smi_vector_hash(%s, %s, UINT32_C(0x%08" PRIx32 "), %s);\n",
 	    indent, key, keylen, nbperf->seed[0], hash);
 }
 
