@@ -1,24 +1,54 @@
 #!/bin/sh
 set -e
 WORDS=/usr/share/dict/words
+head -n 1000 <${WORDS} >_words1000
 
 perf() {
     alg=$1
     hash=$2
+    opts=$3
+    map=
+    mapopt=
+    if [ x$alg = xbdz ]; then
+        map="_words1000.map"
+        mapopt="-m $map"
+    fi
     if [ -z $hash ]; then
-	echo nbperf -a $1
-	./nbperf -a $1 -o _test_$alg.c $WORDS
-	cc -I. -D$alg _test_$alg.c test_main.c mi_vector_hash.c -o test_$alg && ./test_$alg
+	echo nbperf $opts -a $alg
+	./nbperf $opts -a $alg -o _test_$alg.c $mapopt _words1000
+	cc -g -I. -Wall -Wextra -D$alg _test_$alg.c test_main.c mi_vector_hash.c -o _test_$alg && \
+            ./_test_$alg
     else
-	echo nbperf -a $1 -h wyhash
-	./nbperf -a $1 -h wyhash -o _test_${alg}_wy.c $WORDS
-	cc -I. -D$alg -Dwy _test_${alg}_wy.c test_main.c -o test_${alg}_wy && ./test_${alg}_wy
+	echo nbperf $opts -a $alg -h $hash
+	./nbperf $opts -a $alg -h $hash -o _test_${alg}_${hash}.c $mapopt _words1000
+	cc -g -I. -Wall -Wextra -D$alg -Dh_$hash _test_${alg}_${hash}.c test_main.c -o _test_${alg}_${hash} && \
+            ./_test_${alg}_${hash}
     fi
 }
 
 perf chm
 perf chm3
 perf bdz
-perf chm wy
-perf chm3 wy
-perf bdz wy
+perf chm wyhash
+perf chm3 wyhash
+perf bdz wyhash
+perf chm fnv
+perf chm fnv3
+perf chm3 fnv3
+perf bdz fnv3 -f
+#perf chm crc
+perf chm wyhash -f
+perf chm3 wyhash -f
+perf bdz wyhash -f
+perf chm wyhash -fp
+perf chm3 wyhash -fp
+perf bdz wyhash -fp
+perf chm wyhash -p
+perf chm3 wyhash -p
+perf bdz wyhash -p
+#perf chm wyhash -fps
+#perf chm3 wyhash -fps
+#perf bdz wyhash -fps
+#perf chm wyhash -fs
+#perf chm3 wyhash -fs
+#perf bdz wyhash -fs

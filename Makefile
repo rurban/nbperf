@@ -17,6 +17,7 @@ $(PROG): $(SRCS) mi_vector_hash.c mi_vector_hash.h wyhash.h nbtool_config.h
 	$(CC) $(CFLAGS) -I. -DHAVE_NBTOOL_CONFIG_H $(SRCS) mi_vector_hash.c -o $@
 
 check: $(PROG)
+	@echo test building a few with big sets
 	./$(PROG) -o _test_chm.c $(WORDS)
 	$(CC) $(CFLAGS) -c -I. _test_chm.c
 	./$(PROG) -a bdz -o _test_bdz.c $(WORDS)
@@ -29,9 +30,10 @@ check: $(PROG)
 	$(CC) $(CFLAGS) -c -I. _test_bdz_wy.c
 	./$(PROG) -h wyhash -a chm3 -o _test_chm3_wy.c $(WORDS)
 	$(CC) $(CFLAGS) -c -I. _test_chm3_wy.c
+	@echo test all combinations and results with a small set
 	./test
 clean:
-	-rm -f $(PROG) _test_*.c _test_*.o test_{bdz,chm,chm3} test_{bdz,chm,chm3}_wy
+	-rm -f $(PROG) _test_* test_{bdz,chm,chm3}* _words1000*
 install: $(PROG)
 	sudo cp $(PROG) /usr/local/bin/
 	sudo cp $(PROG).1 /usr/local/share/man/man1/

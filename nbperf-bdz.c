@@ -219,8 +219,7 @@ print_hash(struct nbperf *nbperf, struct state *state)
 		    (i / 64 % 4 == 3 ? "\n" : ""));
 	fprintf(nbperf->output, "%s\t};\n", (i / 64 % 4 ? "\n" : "")); 
 
-	fprintf(nbperf->output, "\tuint64_t m;\n");
-	fprintf(nbperf->output, "\tuint32_t idx, i, idx2;\n");
+	fprintf(nbperf->output, "\tuint32_t idx, idx2;\n");
 	fprintf(nbperf->output, "\tuint32_t h[%zu];\n\n", nbperf->hash_size);
 
 	(*nbperf->print_hash)(nbperf, "\t", "key", "keylen", "h");

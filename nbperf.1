@@ -101,6 +101,7 @@ Supported arguments for
 .Bl -tag -width "mi_vector_hash"
 .It Sy mi_vector_hash
 Platform-independent version of Jenkins parallel hash.
+This accesses the strings in 4-bytes, which will trip valgrind and asan.
 See
 .Xr mi_vector_hash 3 .
 .El
@@ -109,6 +110,18 @@ See
 64bit version of wyhash. Only for -a chm.
 See
 .Xr wyhash 3 .
+.El
+.Bl -tag -width "fnv"
+.It Sy fnv
+64bit fnv-1a. Only for -a chm.
+See
+.Xr fnv 3 .
+.El
+.Bl -tag -width "fnv3"
+.It Sy fnv3
+2x 64bit fnv-1a. Also for -a chm3 and bdz.
+See
+.Xr fnv 3 .
 .El
 .Pp
 The number of iterations can be limited with

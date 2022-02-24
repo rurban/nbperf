@@ -7,11 +7,12 @@ uint32_t hash(const void * __restrict key, size_t keylen);
 
 int main(int argc, char **argv)
 {
-    char *input = "/usr/share/dict/words";
+    (void)argv;
+    char *input = "_words1000";
     char *line;
     ssize_t line_len;
     size_t line_allocated;
-    FILE *f = fopen(input, "r");
+    FILE *f;
     int verbose = argc > 1;
     unsigned i = 0;
 
@@ -19,6 +20,19 @@ int main(int argc, char **argv)
     uint32_t h = hash(w, strlen(w));
     printf("%s: %x\n", w, h); // false-positive! englis == Luz's
 
+#if defined bdz
+    uint32_t map[1000];
+    // read map file for the indices
+    f = fopen("_words1000.map", "r");
+    while (fscanf(f, "%u\n", &map[i])) {
+        i++;
+        if (i >= 1000)
+            break;
+    }
+    fclose(f);
+#endif
+    i = 0;
+    f = fopen(input, "r");
     if (!f) {
 	perror("fopen");
 	exit(1);
@@ -36,7 +50,7 @@ int main(int argc, char **argv)
 #if defined chm || defined chm3
         assert(h == i);
 #else
-        // TODO test bdz lookup
+        assert(h == map[i]);
 #endif
         i++;
     }

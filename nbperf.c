@@ -51,6 +51,11 @@ __RCSID("$NetBSD: nbperf.c,v 1.7 2021/01/12 14:21:18 joerg Exp $");
 #include "nbperf.h"
 #include "mi_vector_hash.h"
 #include "mi_wyhash.h"
+#include "fnv.h"
+#include "fnv3.h"
+#ifdef HAVE_CRC
+#include "crc3.h"
+#endif
 
 static int predictable;
 
@@ -69,7 +74,7 @@ void usage(void)
 #endif
 
 static void
-mi_vector_hash_seed_hash(struct nbperf *nbperf)
+mi_vector_hash_seed(struct nbperf *nbperf)
 {
 	static uint32_t predictable_counter;
 	if (predictable)
@@ -86,22 +91,26 @@ mi_vector_hash_compute(struct nbperf *nbperf, const void *key, size_t keylen,
 }
 
 static void
-mi_vector_hash_print_hash(struct nbperf *nbperf, const char *indent,
-    const char *key, const char *keylen, const char *hash)
+mi_vector_hash_print(struct nbperf *nbperf, const char *indent,
+                     const char *key, const char *keylen, const char *hash)
 {
 	fprintf(nbperf->output,
 	    "%smi_vector_hash(%s, %s, UINT32_C(0x%08" PRIx32 "), %s);\n",
-	    indent, key, keylen, nbperf->seed[0], hash);
+                indent, key, keylen, nbperf->seed[0], hash);
 }
 
 static void
-wyhash_seed_hash(struct nbperf *nbperf)
+wyhash_seed(struct nbperf *nbperf)
 {
 	static uint32_t predictable_counter;
-	if (predictable)
+	if (predictable) {
 		nbperf->seed[0] = predictable_counter++;
-	else
+		nbperf->seed[1] = predictable_counter++;
+        }
+	else {
 		nbperf->seed[0] = arc4random();
+		nbperf->seed[1] = arc4random();
+        }
 	if (nbperf->seed[0] == UINT32_C(0x14cc886e) ||
 	    nbperf->seed[0] == UINT32_C(0xd637dbf3))
 		nbperf->seed[0]++;
@@ -115,13 +124,64 @@ wyhash_compute(struct nbperf *nbperf, const void *key, size_t keylen,
 }
 
 static void
-wyhash_print_hash(struct nbperf *nbperf, const char *indent,
-		  const char *key, const char *keylen, const char *hash)
+wyhash_print(struct nbperf *nbperf, const char *indent,
+             const char *key, const char *keylen, const char *hash)
 {
 	fprintf(nbperf->output,
-	    "%smi_wyhash3(%s, %s, 0x%08" PRIx32 "U, (uint64_t*)%s);\n",
-	    indent, key, keylen, nbperf->seed[0], hash);
+	    "%smi_wyhash3(%s, %s, UINT64_C(0x%" PRIx64 "), (uint64_t*)%s);\n",
+                indent, key, keylen, *(uint64_t*)nbperf->seed, hash);
 }
+static void fnv_compute(struct nbperf *nbperf, const void *key, size_t keylen,
+                        uint32_t *hashes)
+{
+	fnv(key, keylen, *(uint64_t*)nbperf->seed, (uint64_t*)hashes);
+}
+static void fnv_print(struct nbperf *nbperf, const char *indent,
+                      const char *key, const char *keylen, const char *hash)
+{
+	fprintf(nbperf->output,
+                      "%sfnv(%s, %s, UINT64_C(0x%" PRIx64 "), (uint64_t*)%s);\n",
+                      indent, key, keylen, *(uint64_t*)nbperf->seed, hash);
+}
+static void fnv_seed(struct nbperf *nbperf)
+{
+	static uint32_t predictable_counter;
+	if (predictable) {
+		nbperf->seed[0] = predictable_counter++;
+		nbperf->seed[1] = predictable_counter++;
+        }
+	else {
+		nbperf->seed[0] = arc4random();
+		nbperf->seed[1] = arc4random();
+        }
+}
+
+static void fnv3_compute(struct nbperf *nbperf, const void *key, size_t keylen,
+                        uint32_t *hashes)
+{
+	fnv3(key, keylen, *(uint64_t*)nbperf->seed, (uint64_t*)hashes);
+}
+static void fnv3_print(struct nbperf *nbperf, const char *indent,
+                      const char *key, const char *keylen, const char *hash)
+{
+	fprintf(nbperf->output,
+                      "%sfnv3(%s, %s, UINT64_C(0x%" PRIx64 "), (uint64_t*)%s);\n",
+                indent, key, keylen, *(uint64_t*)nbperf->seed, hash);
+}
+#if HAVE_CRC
+static void crc_compute(struct nbperf *nbperf, const void *key, size_t keylen,
+                        uint32_t *hashes)
+{
+	crc3(key, keylen, *(uint64_t*)nbperf->seed, (uint64_t*)hashes);
+}
+static void crc_print(struct nbperf *nbperf, const char *indent,
+                      const char *key, const char *keylen, const char *hash)
+{
+	fprintf(nbperf->output,
+                      "%scrc3(%s, %s, UINT64_C(0x%" PRIx64 "), (uint64_t*)%s);\n",
+                      indent, key, keylen, *(uint64_t*)nbperf->seed, hash);
+}
+#endif
 
 static void
 set_hash(struct nbperf *nbperf, const char *arg)
@@ -129,18 +189,42 @@ set_hash(struct nbperf *nbperf, const char *arg)
 	if (strcmp(arg, "mi_vector_hash") == 0) {
 		nbperf->hash_size = 3; // needed for chm3 and bdz
 		nbperf->hash_header = "mi_vector_hash.h";
-		nbperf->seed_hash = mi_vector_hash_seed_hash;
+		nbperf->seed_hash = mi_vector_hash_seed;
 		nbperf->compute_hash = mi_vector_hash_compute;
-		nbperf->print_hash = mi_vector_hash_print_hash;
+		nbperf->print_hash = mi_vector_hash_print;
 		return;
 	} else if (strcmp(arg, "wyhash") == 0) {
-		nbperf->hash_size = 4; // i.e. 2 u64 values
+		nbperf->hash_size = 4;
 		nbperf->hash_header = "mi_wyhash.h";
-		nbperf->seed_hash = wyhash_seed_hash;
+		nbperf->seed_hash = wyhash_seed;
 		nbperf->compute_hash = wyhash_compute;
-		nbperf->print_hash = wyhash_print_hash;
+		nbperf->print_hash = wyhash_print;
+		return;
+	} else if (strcmp(arg, "fnv") == 0) {
+		nbperf->hash_size = 2;
+		nbperf->hash_header = "fnv.h";
+		nbperf->seed_hash = fnv_seed;
+		nbperf->compute_hash = fnv_compute;
+		nbperf->print_hash = fnv_print;
+		return;
+	} else if (strcmp(arg, "fnv3") == 0) {
+		nbperf->hash_size = 4;
+		nbperf->hash_header = "fnv3.h";
+		nbperf->seed_hash = fnv_seed;
+		nbperf->compute_hash = fnv3_compute;
+		nbperf->print_hash = fnv3_print;
 		return;
 	}
+#ifdef HAVE_CRC
+        else if (strcmp(arg, "crc") == 0) {
+		nbperf->hash_size = 4;
+		nbperf->hash_header = "crc3.h";
+		nbperf->seed_hash = fnv_seed;
+		nbperf->compute_hash = crc_compute;
+		nbperf->print_hash = crc_print;
+		return;
+	}
+#endif
 	if (nbperf->hash_size > NBPERF_MAX_HASH_SIZE)
 		errx(1, "Hash function creates too many output values");
 	if (nbperf->hash_size < NBPERF_MIN_HASH_SIZE)
@@ -321,7 +405,7 @@ main(int argc, char **argv)
 		fputc('\n', stderr);
 
 	free (keylens);
-	for (int i=0; i < curlen; i++)
+	for (unsigned i=0; i < curlen; i++)
 	    free ((void*)keys[i]);
 	free (keys);
 	return 0;

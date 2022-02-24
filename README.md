@@ -44,13 +44,23 @@ Supported arguments for **-h**:
 
 * **mi_vector_hash**:
 
-  Platform-independent version of Jenkins parallel hash.  See
-  `mi_vector_hash(3)`.
+  Platform-independent version of Jenkins parallel hash.  This accesses the
+  strings in 4-bytes, which will trip valgrind and asan. See `mi_vector_hash(3)`.
 
 * **wyhash**:
 
   64bit version of wyhash, extended to 128bit.
   See [wyhash(3)](https://github.com/wangyi-fudan/wyhash).
+
+* **fnv**:
+
+  64bit fnv-1a. Only for -a chm.
+  See [fnv(3)](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function).
+
+* **fnv3**:
+
+  2x 64bit fnv-1a. Also for -a chm3 and bdz.
+  See [fnv(3)](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function).
 
 The number of iterations can be limited with **-i**.  **nbperf**
 outputs a function matching `uint32_t hash(const void * restrict, size_t)`
@@ -85,6 +95,7 @@ The **nbperf** utility exits 0 on success, and >0 if an error occurs.
 * [wyhash](https://github.com/wangyi-fudan/wyhash)
 * [CHM](http://cmph.sourceforge.net/chm.html) Algorithm
 * [BPZ](http://cmph.sourceforge.net/bdz.html) Algorithm
+* [smhasher](https://github.com/rurban/smhasher) hash comparisons
 
 # AUTHORS
 
