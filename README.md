@@ -49,17 +49,17 @@ Supported arguments for **-h**:
 
 * **wyhash**:
 
-  64bit version of wyhash, extended to 128bit.
+  64-bit version of wyhash, extended to 128-bit.
   See [wyhash(3)](https://github.com/wangyi-fudan/wyhash).
 
 * **fnv**:
 
-  64bit fnv-1a. Only for -a chm.
+  64-bit variant of FNV-1a. Only for -a chm.
   See [fnv(3)](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function).
 
 * **fnv3**:
 
-  2x 64bit fnv-1a. Also for -a chm3 and bdz.
+  128-bit variant of FNV-1a. Also for -a chm3 and bdz.
   See [fnv(3)](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function).
 
 The number of iterations can be limited with **-i**.  **nbperf**
