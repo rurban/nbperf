@@ -114,6 +114,9 @@ wyhash_seed(struct nbperf *nbperf)
 	if (nbperf->seed[0] == UINT32_C(0x14cc886e) ||
 	    nbperf->seed[0] == UINT32_C(0xd637dbf3))
 		nbperf->seed[0]++;
+	if (nbperf->seed[1] == UINT32_C(0x14cc886e) ||
+	    nbperf->seed[1] == UINT32_C(0xd637dbf3))
+		nbperf->seed[1]++;
 }
 
 static void
@@ -157,12 +160,12 @@ static void fnv_seed(struct nbperf *nbperf)
 }
 
 static void fnv3_compute(struct nbperf *nbperf, const void *key, size_t keylen,
-                        uint32_t *hashes)
+			 uint32_t *hashes)
 {
 	fnv3(key, keylen, *(uint64_t*)nbperf->seed, (uint64_t*)hashes);
 }
 static void fnv3_print(struct nbperf *nbperf, const char *indent,
-                      const char *key, const char *keylen, const char *hash)
+		       const char *key, const char *keylen, const char *hash)
 {
 	fprintf(nbperf->output,
                       "%sfnv3(%s, %s, UINT64_C(0x%" PRIx64 "), (uint64_t*)%s);\n",
@@ -182,6 +185,19 @@ static void crc_print(struct nbperf *nbperf, const char *indent,
                       indent, key, keylen, *(uint64_t*)nbperf->seed, hash);
 }
 #endif
+
+void
+inthash_compute(struct nbperf *nbperf, const void *key, size_t keylen, uint32_t *hashes)
+{
+	(void)keylen;
+	*hashes = *(const int32_t*)key * nbperf->seed[0] + nbperf->seed[1];
+}
+void
+inthash_print(struct nbperf *nbperf, const char *indent, const char *key, const char *keylen, const char *hash)
+{
+	(void)keylen;
+	fprintf(nbperf->output, "%s_inthash(%s, (uint64_t*)%s);\n", indent, key, hash);
+}
 
 static void
 set_hash(struct nbperf *nbperf, const char *arg)
@@ -214,6 +230,13 @@ set_hash(struct nbperf *nbperf, const char *arg)
 		nbperf->compute_hash = fnv3_compute;
 		nbperf->print_hash = fnv3_print;
 		return;
+	} else if (strcmp(arg, "inthash") == 0) {
+		nbperf->hash_size = 2;
+		nbperf->hash_header = NULL;
+		nbperf->seed_hash = fnv_seed;
+		nbperf->compute_hash = inthash_compute;
+		nbperf->print_hash = inthash_print;
+		return;
 	}
 #ifdef HAVE_CRC
         else if (strcmp(arg, "crc") == 0) {
@@ -244,6 +267,7 @@ main(int argc, char **argv)
 	    .check_duplicates = 0,
 	    .has_duplicates = 0,
 	    .allow_hash_fudging = 0,
+	    .intkeys = 0,
 	};
 	FILE *input;
 	size_t curlen = 0, curalloc = 0;
@@ -259,7 +283,7 @@ main(int argc, char **argv)
 
 	set_hash(&nbperf, "mi_vector_hash");
 
-	while ((ch = getopt(argc, argv, "a:c:fh:i:m:n:o:ps")) != -1) {
+	while ((ch = getopt(argc, argv, "a:c:fh:i:m:n:o:psI")) != -1) {
 		switch (ch) {
 		case 'a':
 			/* Accept bdz as alias for netbsd-6 compat. */
@@ -294,6 +318,12 @@ main(int argc, char **argv)
 				errx(2, "Iteration count must be "
 				    "a 32bit integer");
 			max_iterations = (uint32_t)tmp;
+			break;
+		case 'I':
+			nbperf.intkeys = 1;
+			set_hash(&nbperf, "inthash");
+			if (strcmp(nbperf.hash_name, "hash") == 0)
+			    nbperf.hash_name = "inthash";
 			break;
 		case 'm':
 			if (nbperf.map_output)

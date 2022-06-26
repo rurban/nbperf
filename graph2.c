@@ -192,7 +192,7 @@ SIZED2(_hash)(struct nbperf *nbperf, struct SIZED(graph) *graph)
 
 	for (i = 0; i < graph->e; ++i) {
 		(*nbperf->compute_hash)(nbperf,
-		    nbperf->keys[i], nbperf->keylens[i], hashes);
+		        nbperf->keys[i], nbperf->keylens[i], hashes);
 		e = graph->edges + i;
 		for (j = 0; j < GRAPH_SIZE; ++j) {
 			e->vertices[j] = hashes[j] % graph->v;

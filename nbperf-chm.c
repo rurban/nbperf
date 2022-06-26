@@ -148,17 +148,33 @@ print_hash(struct nbperf *nbperf, struct state *state)
 {
 	uint32_t i, per_line;
 	const char *g_type;
+	const char *g_const_u;
 	int g_width;
 
-	fprintf(nbperf->output, "#include <stdlib.h>\n");
+	fprintf(nbperf->output, "/* generated with rurban/nbperf %s%s */\n",
+		nbperf->intkeys ? "-I " : "",
+		nbperf->static_hash ? "-s " : "");
+	if (!nbperf->intkeys)
+		fprintf(nbperf->output, "#include <stdlib.h>\n");
 	fprintf(nbperf->output, "#include <stdint.h>\n");
-        fprintf(nbperf->output, "#include \"%s\"\n\n", nbperf->hash_header);
+	if (nbperf->hash_header)
+		fprintf(nbperf->output, "#include \"%s\"\n\n", nbperf->hash_header);
+	else if (nbperf->intkeys) {
+		fprintf(nbperf->output, "\nstatic void _inthash(const int32_t key, uint64_t *h)\n");
+		fprintf(nbperf->output, "{\n");
+		fprintf(nbperf->output, "	*h = key * UINT32_C(%u) + UINT32_C(%u);\n",
+			nbperf->seed[0], nbperf->seed[1]);
+		fprintf(nbperf->output, "}\n\n");
+	}
 
 	fprintf(nbperf->output, "%suint32_t\n",
 	    nbperf->static_hash ? "static " : "");
-	fprintf(nbperf->output,
-	    "%s(const void * __restrict key, size_t keylen)\n",
-	    nbperf->hash_name);
+	if (!nbperf->intkeys)
+		fprintf(nbperf->output,
+			"%s(const void * __restrict key, size_t keylen)\n",
+			nbperf->hash_name);
+	else
+		fprintf(nbperf->output,	"%s(const uint32_t key)\n", nbperf->hash_name);
 	fprintf(nbperf->output, "{\n");
 	if (state->graph.v >= 65536) {
 		g_type = "uint32_t";
@@ -176,10 +192,16 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	fprintf(nbperf->output, "\tstatic const %s g[%" PRId32 "] = {\n",
 	    g_type, state->graph.v);
 	for (i = 0; i < state->graph.v; ++i) {
-		fprintf(nbperf->output, "%sUINT32_C(0x%0*" PRIx32 "),%s",
-		    (i % per_line == 0 ? "\t    " : " "),
-		    g_width, state->g[i],
-		    (i % per_line == per_line - 1 ? "\n" : ""));
+		if (nbperf->intkeys)
+			fprintf(nbperf->output, "%s%*" PRIu32 ",%s",
+				(i % per_line == 0 ? "\t    " : " "),
+				g_width, state->g[i],
+				(i % per_line == per_line - 1 ? "\n" : ""));
+		else
+			fprintf(nbperf->output, "%s0x%0*" PRIx32 ",%s",
+				(i % per_line == 0 ? "\t    " : " "),
+				g_width, state->g[i],
+				(i % per_line == per_line - 1 ? "\n" : ""));
 	}
 	if (i % per_line != 0)
 		fprintf(nbperf->output, "\n\t};\n");

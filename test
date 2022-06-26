@@ -2,6 +2,7 @@
 set -e
 WORDS=/usr/share/dict/words
 head -n 1000 <${WORDS} >_words1000
+seq 100 | random > _rand100
 
 perf() {
     alg=$1
@@ -13,16 +14,25 @@ perf() {
         map="_words1000.map"
         mapopt="-m $map"
     fi
-    if [ -z $hash ]; then
+    if [ x$opts = x-I ]; then
+        if [ x$alg = xbdz ]; then
+            map="_rand100.map"
+            mapopt="-m $map"
+        fi
+	echo nbperf $opts -a $alg
+	./nbperf $opts -a $alg -o _test_int$alg.c $mapopt _rand100
+	cc -g -I. -Wall -Wextra -D_INTKEYS -D$alg _test_int$alg.c test_main.c -o _test_int$alg && \
+            ./_test_int$alg _rand100
+    elif [ -z $hash ]; then
 	echo nbperf $opts -a $alg
 	./nbperf $opts -a $alg -o _test_$alg.c $mapopt _words1000
 	cc -g -I. -Wall -Wextra -D$alg _test_$alg.c test_main.c mi_vector_hash.c -o _test_$alg && \
-            ./_test_$alg
+            ./_test_$alg _words1000
     else
 	echo nbperf $opts -a $alg -h $hash
 	./nbperf $opts -a $alg -h $hash -o _test_${alg}_${hash}.c $mapopt _words1000
 	cc -g -I. -Wall -Wextra -D$alg -Dh_$hash _test_${alg}_${hash}.c test_main.c -o _test_${alg}_${hash} && \
-            ./_test_${alg}_${hash}
+            ./_test_${alg}_${hash} _words1000
     fi
 }
 
@@ -52,3 +62,7 @@ perf bdz wyhash -p
 #perf chm wyhash -fs
 #perf chm3 wyhash -fs
 #perf bdz wyhash -fs
+
+perf chm "" -I
+#perf chm3 "" -I
+#perf bdz "" -I

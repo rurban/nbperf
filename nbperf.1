@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 15, 2022
+.Dd June 27, 2022
 .Dt NBPERF 1
 .Os
 .Sh NAME
@@ -35,7 +35,7 @@
 .Nd compute a perfect hash function
 .Sh SYNOPSIS
 .Nm
-.Op Fl fps
+.Op Fl fpsI
 .Op Fl a Ar algorithm
 .Op Fl c Ar utilisation
 .Op Fl h Ar hash
@@ -140,6 +140,13 @@ The function name can be changed using
 If the
 .Fl s
 flag is specified, it will be static.
+.Pp
+If the
+.Fl I
+flag is specified, the keys are integers, and the generated
+hash function will have the signature
+.Ft uint32_t
+.Fn hash "const uint32_t key"
 .Pp
 After each failing iteration, a dot is written to stderr.
 .Pp
