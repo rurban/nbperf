@@ -140,19 +140,28 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	uint64_t sum;
 	size_t i;
 
-	fprintf(nbperf->output, "#include <stdint.h>\n");
-	fprintf(nbperf->output, "#include <stdlib.h>\n");
+	print_coda(nbperf);
 	fprintf(nbperf->output, "#include <strings.h>\n");
-        fprintf(nbperf->output, "#include \"%s\"\n\n", nbperf->hash_header);
         fprintf(nbperf->output, "#ifdef __GNUC__\n"); // since gcc 4.5
         fprintf(nbperf->output, "#define popcount64 __builtin_popcountll\n");
         fprintf(nbperf->output, "#endif\n\n");
 
+	if (nbperf->intkeys) {
+		fprintf(nbperf->output, "\nstatic void _inthash(const int32_t key, uint64_t *h)\n");
+		fprintf(nbperf->output, "{\n");
+		fprintf(nbperf->output, "	*h = key * UINT32_C(%u) + UINT32_C(%u);\n",
+			nbperf->seed[0], nbperf->seed[1]);
+		fprintf(nbperf->output, "}\n\n");
+	}
+
 	fprintf(nbperf->output, "%suint32_t\n",
 	    nbperf->static_hash ? "static " : "");
-	fprintf(nbperf->output,
-	    "%s(const void * __restrict key, size_t keylen)\n",
-	    nbperf->hash_name);
+	if (!nbperf->intkeys)
+		fprintf(nbperf->output,
+		    "%s(const void * __restrict key, size_t keylen)\n",
+		    nbperf->hash_name);
+	else
+		fprintf(nbperf->output,	"%s(const uint32_t key)\n", nbperf->hash_name);
 	fprintf(nbperf->output, "{\n");
 
 	fprintf(nbperf->output,

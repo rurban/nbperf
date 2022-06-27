@@ -57,15 +57,13 @@ __RCSID("$NetBSD: nbperf.c,v 1.7 2021/01/12 14:21:18 joerg Exp $");
 #include "crc3.h"
 #endif
 
-static int predictable;
-
 static /*__dead*/
 void usage(void)
 {
 	fprintf(stderr,
-	    "%s [-ps] [-c utilisation] [-i iterations] [-n name] "
+	    "%s [-fIps] [-c utilisation] [-i iterations] [-n name] "
 	    "[-h hash] [-o output] input\n",
-                "nbperf" /*getprogname()*/);
+            "nbperf" /*getprogname()*/);
 	exit(1);
 }
 
@@ -77,7 +75,7 @@ static void
 mi_vector_hash_seed(struct nbperf *nbperf)
 {
 	static uint32_t predictable_counter;
-	if (predictable)
+	if (nbperf->predictable)
 		nbperf->seed[0] = predictable_counter++;
 	else
 		nbperf->seed[0] = arc4random();
@@ -103,7 +101,7 @@ static void
 wyhash_seed(struct nbperf *nbperf)
 {
 	static uint32_t predictable_counter;
-	if (predictable) {
+	if (nbperf->predictable) {
 		nbperf->seed[0] = predictable_counter++;
 		nbperf->seed[1] = predictable_counter++;
         }
@@ -148,10 +146,10 @@ static void fnv_print(struct nbperf *nbperf, const char *indent,
 }
 static void fnv_seed(struct nbperf *nbperf)
 {
-	static uint32_t predictable_counter;
-	if (predictable) {
-		nbperf->seed[0] = predictable_counter++;
-		nbperf->seed[1] = predictable_counter++;
+	static uint32_t predictable_counter = 0;
+	if (nbperf->predictable) {
+		nbperf->seed[0] = (uint32_t)(0x85ebca6b * ++predictable_counter);
+		nbperf->seed[1] = predictable_counter;
         }
 	else {
 		nbperf->seed[0] = arc4random();
@@ -190,13 +188,49 @@ void
 inthash_compute(struct nbperf *nbperf, const void *key, size_t keylen, uint32_t *hashes)
 {
 	(void)keylen;
-	*hashes = *(const int32_t*)key * nbperf->seed[0] + nbperf->seed[1];
+	*hashes = *(const uint32_t*)key * nbperf->seed[0] + nbperf->seed[1];
 }
 void
 inthash_print(struct nbperf *nbperf, const char *indent, const char *key, const char *keylen, const char *hash)
 {
 	(void)keylen;
 	fprintf(nbperf->output, "%s_inthash(%s, (uint64_t*)%s);\n", indent, key, hash);
+}
+
+void print_coda(struct nbperf *nbperf)
+{
+	int saw_dash = 0;
+	fprintf(nbperf->output, "/* generated with rurban/nbperf ");
+	if (nbperf->allow_hash_fudging) {
+	    fprintf(nbperf->output, "%sf", saw_dash ? "" : "-");
+	    saw_dash = 1;
+	}
+	if (nbperf->intkeys) {
+	    fprintf(nbperf->output, "%sI", saw_dash ? "" : "-");
+	    saw_dash = 1;
+	}
+	if (nbperf->predictable) {
+	    fprintf(nbperf->output, "%sp", saw_dash ? "" : "-");
+	    saw_dash = 1;
+	}
+	if (nbperf->static_hash) {
+	    fprintf(nbperf->output, "%ss", saw_dash ? "" : "-");
+	    saw_dash = 1;
+	}
+	/*
+	if (nbperf->c > 0)
+	    fprintf(nbperf->output, " -c %f", nbperf->c);
+	*/
+	if (nbperf->input)
+	    fprintf(nbperf->output, " %s", nbperf->input);
+	fprintf(nbperf->output, "*/\n/* seed[0]: %" PRIu32 ", seed[1]: %" PRIu32 " */\n",
+		nbperf->seed[0], nbperf->seed[1]);
+
+	if (!nbperf->intkeys)
+		fprintf(nbperf->output, "#include <stdlib.h>\n");
+	fprintf(nbperf->output, "#include <stdint.h>\n");
+	if (nbperf->hash_header)
+		fprintf(nbperf->output, "#include \"%s\"\n\n", nbperf->hash_header);
 }
 
 static void
@@ -262,6 +296,7 @@ main(int argc, char **argv)
 	    .c = 0,
 	    .hash_name = "hash",
 	    .map_output = NULL,
+	    .input = NULL,
 	    .output = NULL,
 	    .static_hash = 0,
 	    .check_duplicates = 0,
@@ -343,7 +378,7 @@ main(int argc, char **argv)
 				err(2, "cannot open output file");
 			break;
 		case 'p':
-			predictable = 1;
+			nbperf.predictable = 1;
 			break;
 		case 's':
 			nbperf.static_hash = 1;
@@ -363,6 +398,7 @@ main(int argc, char **argv)
 		input = fopen(argv[0], "r");
 		if (input == NULL)
 			err(1, "can't open input file");
+		nbperf.input = argv[0];
 	} else
 		input = stdin;
 

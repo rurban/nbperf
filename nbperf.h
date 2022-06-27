@@ -38,19 +38,22 @@
 struct nbperf {
 	FILE *output;
 	FILE *map_output;
+	const char *input;
 	const char *hash_name;
 	const char *hash_header;
-	int static_hash;
-	int allow_hash_fudging;
-	int intkeys;
 	size_t n;
 	const void * __restrict * keys;
 	const size_t *keylens;
-	int check_duplicates, has_duplicates;
+	unsigned static_hash :1;
+	unsigned allow_hash_fudging :1;
+	unsigned predictable :1;
+	unsigned intkeys :1;
+	unsigned check_duplicates :1;
+	unsigned has_duplicates :1;
 
 	double c;
 
-	size_t hash_size;
+	size_t hash_size; /* number of 32bit hashes */
 	void (*seed_hash)(struct nbperf *);
 	void (*print_hash)(struct nbperf *, const char *, const char *, const char *,
 	    const char *);
@@ -62,3 +65,4 @@ struct nbperf {
 int	chm_compute(struct nbperf *);
 int	chm3_compute(struct nbperf *);
 int	bpz_compute(struct nbperf *);
+void	print_coda(struct nbperf *);

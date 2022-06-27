@@ -151,15 +151,8 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	const char *g_const_u;
 	int g_width;
 
-	fprintf(nbperf->output, "/* generated with rurban/nbperf %s%s */\n",
-		nbperf->intkeys ? "-I " : "",
-		nbperf->static_hash ? "-s " : "");
-	if (!nbperf->intkeys)
-		fprintf(nbperf->output, "#include <stdlib.h>\n");
-	fprintf(nbperf->output, "#include <stdint.h>\n");
-	if (nbperf->hash_header)
-		fprintf(nbperf->output, "#include \"%s\"\n\n", nbperf->hash_header);
-	else if (nbperf->intkeys) {
+	print_coda(nbperf);
+	if (nbperf->intkeys) {
 		fprintf(nbperf->output, "\nstatic void _inthash(const int32_t key, uint64_t *h)\n");
 		fprintf(nbperf->output, "{\n");
 		fprintf(nbperf->output, "	*h = key * UINT32_C(%u) + UINT32_C(%u);\n",
@@ -167,7 +160,7 @@ print_hash(struct nbperf *nbperf, struct state *state)
 		fprintf(nbperf->output, "}\n\n");
 	}
 
-	fprintf(nbperf->output, "%suint32_t\n",
+	fprintf(nbperf->output, "%suint32_t ",
 	    nbperf->static_hash ? "static " : "");
 	if (!nbperf->intkeys)
 		fprintf(nbperf->output,
@@ -210,12 +203,12 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	fprintf(nbperf->output, "\tuint32_t h[%zu];\n\n", nbperf->hash_size);
 	(*nbperf->print_hash)(nbperf, "\t", "key", "keylen", "h");
 
-	fprintf(nbperf->output, "\n\th[0] = h[0] %% UINT32_C(%" PRIu32 ");\n",
+	fprintf(nbperf->output, "\n\th[0] = h[0] %% %" PRIu32 ";\n",
 	    state->graph.v);
-	fprintf(nbperf->output, "\th[1] = h[1] %% UINT32_C(%" PRIu32 ");\n",
+	fprintf(nbperf->output, "\th[1] = h[1] %% %" PRIu32 ";\n",
 	    state->graph.v);
 #if GRAPH_SIZE >= 3
-	fprintf(nbperf->output, "\th[2] = h[2] %% UINT32_C(%" PRIu32 ");\n",
+	fprintf(nbperf->output, "\th[2] = h[2] %% %" PRIu32 ";\n",
 	    state->graph.v);
 #endif
 
@@ -233,10 +226,10 @@ print_hash(struct nbperf *nbperf, struct state *state)
 
 #if GRAPH_SIZE >= 3
 	fprintf(nbperf->output, "\treturn (g[h[0]] + g[h[1]] + g[h[2]]) %% "
-	    "UINT32_C(%" PRIu32 ");\n", state->graph.e);
+	    "%" PRIu32 ";\n", state->graph.e);
 #else
 	fprintf(nbperf->output, "\treturn (g[h[0]] + g[h[1]]) %% "
-	    "UINT32_C(%" PRIu32 ");\n", state->graph.e);
+	    "%" PRIu32 ";\n", state->graph.e);
 #endif
 	fprintf(nbperf->output, "}\n");
 

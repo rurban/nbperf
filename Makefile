@@ -40,7 +40,7 @@ check: $(PROG) $(RAND100)
 	@echo test all combinations and results with a small set
 	./test
 clean:
-	-rm -f $(PROG) _test_* test_{bdz,chm,chm3}* _words1000* _rand100
+	-rm -f $(PROG) _test_* test_{bdz,chm,chm3}* _words1000* _rand100 a.out
 install: $(PROG)
 	sudo cp $(PROG) /usr/local/bin/
 	sudo cp $(HEADERS) /usr/local/include/
