@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nbperf-chm.c,v 1.4 2021/01/07 16:03:08 joerg Exp $");
+__RCSID("$NetBSD: nbperf-chm.c,v 1.4 2021/01/07 16:03:08 joerg Exp $")
 
 #include <err.h>
 #include <inttypes.h>
@@ -150,7 +150,6 @@ print_hash(struct nbperf *nbperf, struct state *state)
 {
 	uint32_t i, per_line;
 	const char *g_type;
-	const char *g_const_u;
 	int g_width;
 
 	print_coda(nbperf);
@@ -204,7 +203,8 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	else
 		fprintf(nbperf->output, "\t};\n");
         if (nbperf->hash_size == 2 && nbperf->c <= 65534)
-                fprintf(nbperf->output, "\tuint16_t h[%zu];\n\n", nbperf->hash_size);
+                /* we read only 2, but write 4 (1x 64bit) into it. */
+                fprintf(nbperf->output, "\tuint16_t h[4];\n\n");
         else
                 fprintf(nbperf->output, "\tuint32_t h[%zu];\n\n", nbperf->hash_size);
 	(*nbperf->print_hash)(nbperf, "\t", "key", "keylen", "h");

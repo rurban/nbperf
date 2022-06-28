@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mi_vector_hash.c,v 1.1 2013/12/11 01:24:08 joerg Exp $");
+__RCSID("$NetBSD: mi_vector_hash.c,v 1.1 2013/12/11 01:24:08 joerg Exp $")
 
 #if !HAVE_NBTOOL_CONFIG_H || HAVE_ENDIAN_H
 #include <endian.h>

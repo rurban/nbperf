@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nbperf.c,v 1.7 2021/01/12 14:21:18 joerg Exp $");
+__RCSID("$NetBSD: nbperf.c,v 1.7 2021/01/12 14:21:18 joerg Exp $")
 
 #include <endian.h>
 #include <err.h>
@@ -123,28 +123,32 @@ static void
 wyhash_compute(struct nbperf *nbperf, const void *key, size_t keylen,
 	       uint32_t *hashes)
 {
-	mi_wyhash3(key, keylen, *(uint64_t*)nbperf->seed, (uint64_t*)hashes);
+	uint64_t seed = *(uint64_t*)nbperf->seed;
+	mi_wyhash3(key, keylen, seed, (uint64_t*)hashes);
 }
 
 static void
 wyhash_print(struct nbperf *nbperf, const char *indent,
              const char *key, const char *keylen, const char *hash)
 {
+	uint64_t seed = *(uint64_t*)nbperf->seed;
 	fprintf(nbperf->output,
 	    "%smi_wyhash3(%s, %s, UINT64_C(0x%" PRIx64 "), (uint64_t*)%s);\n",
-                indent, key, keylen, *(uint64_t*)nbperf->seed, hash);
+                indent, key, keylen, seed, hash);
 }
 static void fnv_compute(struct nbperf *nbperf, const void *key, size_t keylen,
                         uint32_t *hashes)
 {
-	fnv(key, keylen, *(uint64_t*)nbperf->seed, (uint64_t*)hashes);
+	uint64_t seed = *(uint64_t*)nbperf->seed;
+	fnv(key, keylen, seed, (uint64_t*)hashes);
 }
 static void fnv_print(struct nbperf *nbperf, const char *indent,
                       const char *key, const char *keylen, const char *hash)
 {
+	uint64_t seed = *(uint64_t*)nbperf->seed;
 	fprintf(nbperf->output,
                       "%sfnv(%s, %s, UINT64_C(0x%" PRIx64 "), (uint64_t*)%s);\n",
-                      indent, key, keylen, *(uint64_t*)nbperf->seed, hash);
+                      indent, key, keylen, seed, hash);
 }
 static void fnv_seed(struct nbperf *nbperf)
 {
@@ -162,29 +166,34 @@ static void fnv_seed(struct nbperf *nbperf)
 static void fnv3_compute(struct nbperf *nbperf, const void *key, size_t keylen,
 			 uint32_t *hashes)
 {
-	fnv3(key, keylen, *(uint64_t*)nbperf->seed, (uint64_t*)hashes);
+	uint64_t seed = *(uint64_t*)nbperf->seed;
+	fnv3(key, keylen, seed, (uint64_t*)hashes);
 }
 static void fnv3_print(struct nbperf *nbperf, const char *indent,
 		       const char *key, const char *keylen, const char *hash)
 {
+	uint64_t seed = *(uint64_t*)nbperf->seed;
 	fprintf(nbperf->output,
                       "%sfnv3(%s, %s, UINT64_C(0x%" PRIx64 "), (uint64_t*)%s);\n",
-                indent, key, keylen, *(uint64_t*)nbperf->seed, hash);
+                indent, key, keylen, seed, hash);
 }
 #ifdef HAVE_CRC
 static void crc_compute(struct nbperf *nbperf, const void *key, size_t keylen,
                         uint32_t *hashes)
 {
-	crc3(key, keylen, *(uint64_t*)nbperf->seed, (uint64_t*)hashes);
+	uint64_t seed = *(uint64_t*)nbperf->seed;
+	crc3(key, keylen, seed, (uint64_t*)hashes);
 }
 static void crc2_compute(struct nbperf *nbperf, const void *key, size_t keylen,
                          uint32_t *hashes)
 {
-	crc2(key, keylen, *(uint64_t*)nbperf->seed, (uint64_t*)hashes);
+	uint64_t seed = *(uint64_t*)nbperf->seed;
+	crc2(key, keylen, seed, (uint64_t*)hashes);
 }
 static void crc_print(struct nbperf *nbperf, const char *indent,
                       const char *key, const char *keylen, const char *hash)
 {
+	uint64_t seed = *(uint64_t*)nbperf->seed;
 	fprintf(nbperf->output,
 	    "%scrc%s(%s, %s, UINT64_C(0x%" PRIx64 "), (uint64_t*)%s);\n", indent,
 	    nbperf->compute_hash == crc2_compute ? "2" : "3",

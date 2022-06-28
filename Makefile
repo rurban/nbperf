@@ -8,7 +8,7 @@ WORDS = /usr/share/dict/words
 RAND100 = _rand100
 RANDBIG = _randbig
 CC = cc
-CFLAGS = -O2 -g
+CFLAGS = -O2 -g -fno-strict-aliasing
 
 MACHINE := $(shell uname -m)
 ifeq (x86_64,$(MACHINE))
