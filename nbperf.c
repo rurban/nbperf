@@ -188,7 +188,18 @@ void
 inthash_compute(struct nbperf *nbperf, const void *key, size_t keylen, uint32_t *hashes)
 {
 	(void)keylen;
-	*hashes = *(const uint32_t*)key * nbperf->seed[0] + nbperf->seed[1];
+	*(uint64_t *)hashes = (uint64_t)key *
+	    /* mult factor from CityHash to reach into 2nd 32bit slot */
+	    (UINT64_C(0x9DDFEA08EB382D69) + (uint64_t)nbperf->seed[0]) + nbperf->seed[1];
+}
+void
+inthash4_compute(struct nbperf *nbperf, const void *key, size_t keylen, uint32_t *hashes)
+{
+	(void)keylen;
+	*(uint64_t *)hashes = (uint64_t)key *
+	    /* mult factor from CityHash to reach into 2nd 32bit slot, but not the 3rd */
+	    (UINT64_C(0x9DDFEA08EB382D69) + (uint64_t)nbperf->seed[0]) + nbperf->seed[1];
+	*((uint64_t *)hashes+1) = (uint64_t)key * (uint64_t)nbperf->seed[0] + nbperf->seed[1];
 }
 void
 inthash_print(struct nbperf *nbperf, const char *indent, const char *key, const char *keylen, const char *hash)
@@ -223,7 +234,7 @@ void print_coda(struct nbperf *nbperf)
 	*/
 	if (nbperf->input)
 	    fprintf(nbperf->output, " %s", nbperf->input);
-	fprintf(nbperf->output, "*/\n/* seed[0]: %" PRIu32 ", seed[1]: %" PRIu32 " */\n",
+	fprintf(nbperf->output, " */\n/* seed[0]: %" PRIu32 ", seed[1]: %" PRIu32 " */\n",
 		nbperf->seed[0], nbperf->seed[1]);
 
 	if (!nbperf->intkeys)
@@ -265,9 +276,9 @@ set_hash(struct nbperf *nbperf, const char *arg)
 		nbperf->print_hash = fnv3_print;
 		return;
 	} else if (strcmp(arg, "inthash") == 0) {
-		nbperf->hash_size = 2;
 		nbperf->hash_header = NULL;
 		nbperf->seed_hash = fnv_seed;
+		nbperf->hash_size = 2;
 		nbperf->compute_hash = inthash_compute;
 		nbperf->print_hash = inthash_print;
 		return;
@@ -309,7 +320,7 @@ main(int argc, char **argv)
 	char *line, *eos;
 	ssize_t line_len;
 	size_t line_allocated;
-	const void **keys = NULL;
+	const char **keys = NULL;
 	size_t *keylens = NULL;
 	uint32_t max_iterations = 0xffffffU;
 	long long tmp;
@@ -327,8 +338,7 @@ main(int argc, char **argv)
 			else if (strcmp(optarg, "chm3") == 0)
 				build_hash = chm3_compute;
 			else if ((strcmp(optarg, "bpz") == 0 ||
-				  strcmp(optarg, "bdz") == 0)
-				 && nbperf.hash_size >= 3)
+				  strcmp(optarg, "bdz") == 0))
 				build_hash = bpz_compute;
 			else
 				errx(1, "Unsupport algorithm: %s", optarg);
@@ -394,13 +404,22 @@ main(int argc, char **argv)
 	if (argc > 1)
 		usage();
 
+	if (build_hash == bpz_compute && nbperf.intkeys) {
+		nbperf.hash_size = 4;
+		nbperf.compute_hash = inthash4_compute;
+	}
+	if (build_hash == bpz_compute && nbperf.hash_size < 3)
+		errx(1, "Unsupport algorithm: %s", "bpz");
+
 	if (argc == 1) {
 		input = fopen(argv[0], "r");
 		if (input == NULL)
 			err(1, "can't open input file");
 		nbperf.input = argv[0];
-	} else
+	} else {
 		input = stdin;
+		nbperf.input = "<stdin>";
+	}
 
 	if (nbperf.output == NULL)
 		nbperf.output = stdout;
@@ -423,7 +442,16 @@ main(int argc, char **argv)
 			if (keylens == NULL)
 				err(1, "realloc failed");
 		}
-	    	if (line_len % 4 == 0) {
+		if (nbperf.intkeys) {
+		    uint64_t i;
+		    errno = 0;
+		    i = strtod(line, &eos);
+		    if (errno || (eos[0] != '\n' && eos[0] != '\r'))
+			errx(2, "Invalid integer key \"%s\" at line %lu of %s", line,
+			     curlen, nbperf.input);
+		    memcpy(&keys[curlen], &i, sizeof(char*));
+		}
+		else if (line_len % 4 == 0) {
 		    if ((keys[curlen] = strndup(line, line_len)) == NULL)
 			err(1, "strndup failed");
 		}
@@ -471,8 +499,9 @@ main(int argc, char **argv)
 		fputc('\n', stderr);
 
 	free (keylens);
-	for (unsigned i=0; i < curlen; i++)
-	    free ((void*)keys[i]);
+	if (!nbperf.intkeys)
+	    for (unsigned i=0; i < curlen; i++)
+		free ((void*)keys[i]);
 	free (keys);
 	return 0;
 }

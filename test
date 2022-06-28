@@ -14,7 +14,7 @@ perf() {
         map="_words1000.map"
         mapopt="-m $map"
     fi
-    if [ x$opts = x-I ]; then
+    if [ x$opts = x-I -o x$opts = x-Ip -o x$opts = x-Ifp ]; then
         if [ x$alg = xbdz ]; then
             map="_rand100.map"
             mapopt="-m $map"
@@ -63,6 +63,10 @@ perf bdz wyhash -p
 #perf chm3 wyhash -fs
 #perf bdz wyhash -fs
 
+perf chm "" -Ip
 perf chm "" -I
+perf chm "" -Ifp
 #perf chm3 "" -I
-#perf bdz "" -I
+perf bdz "" -Ip
+perf bdz "" -I
+perf bdz "" -Ifp

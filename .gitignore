@@ -64,5 +64,6 @@ _test_chm3_fnv
 _test_chm3_fnv3
 _test_chm3_wyhash
 _test_intchm
+_test_intbdz
 _words1000
 _rand100

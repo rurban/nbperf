@@ -22,7 +22,10 @@ int main(int argc, char **argv)
 
 #ifdef _INTKEYS
 # ifdef bdz
-    const char *mapfile = "_rand100.map";
+    char mapfile[80];
+    assert(strlen(input) < 80);
+    strncpy(mapfile, input, 80);
+    strcat(mapfile, ".map");
 # endif
     h = inthash(1);
     printf("%u: %u\n", 1, h);
@@ -39,6 +42,24 @@ int main(int argc, char **argv)
     uint32_t map[1000];
     // read map file for the indices
     f = fopen(mapfile, "r");
+    if (!f) {
+	perror("fopen");
+	exit(1);
+    }
+    while (fscanf(f, "%u\n", &map[i])) {
+        i++;
+        if (i >= 1000)
+            break;
+    }
+    fclose(f);
+#elif defined _INTKEYS
+    uint32_t map[100];
+    // read input file for the indices
+    f = fopen(input, "r");
+    if (!f) {
+	perror("fopen");
+	exit(1);
+    }
     while (fscanf(f, "%u\n", &map[i])) {
         i++;
         if (i >= 1000)
@@ -64,12 +85,18 @@ int main(int argc, char **argv)
 #else
         h = hash(line, strlen(line));
 #endif
-	if (verbose || i < 5)
+	if (verbose || i < 10)
+#if defined _INTKEYS || defined bdz
+            printf("%s: %u, %u\n", line, h, map[i]);
+#else
             printf("%s: %u\n", line, h);
-#if defined chm || defined chm3
+#endif
+#if (defined chm || defined chm3) && !defined _INTKEYS
         assert(h == i);
 #else
+# ifndef _INTKEYS
         assert(h == map[i]);
+# endif
 #endif
         i++;
     }

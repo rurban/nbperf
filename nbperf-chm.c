@@ -1,10 +1,12 @@
 /*	$NetBSD: nbperf-chm.c,v 1.4 2021/01/07 16:03:08 joerg Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2022 Reini Urban
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Joerg Sonnenberger.
+ * Integer keys were added by Reini Urban.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -155,7 +157,7 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	if (nbperf->intkeys) {
 		fprintf(nbperf->output, "\nstatic void _inthash(const int32_t key, uint64_t *h)\n");
 		fprintf(nbperf->output, "{\n");
-		fprintf(nbperf->output, "	*h = key * UINT32_C(%u) + UINT32_C(%u);\n",
+		fprintf(nbperf->output, "	*h = (uint64_t)key * (UINT64_C(0x9DDFEA08EB382D69) + UINT64_C(%u))\n\t\t + UINT32_C(%u);\n",
 			nbperf->seed[0], nbperf->seed[1]);
 		fprintf(nbperf->output, "}\n\n");
 	}

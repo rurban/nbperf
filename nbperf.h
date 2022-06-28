@@ -42,7 +42,7 @@ struct nbperf {
 	const char *hash_name;
 	const char *hash_header;
 	size_t n;
-	const void * __restrict * keys;
+	const char * __restrict * keys;
 	const size_t *keylens;
 	unsigned static_hash :1;
 	unsigned allow_hash_fudging :1;

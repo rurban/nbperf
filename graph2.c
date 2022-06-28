@@ -95,7 +95,27 @@ static int sorting_cmp(const void *a_, const void *b_)
 	if (sorting_nbperf->keylens[*a] > sorting_nbperf->keylens[*b])
 		return 1;
 	i = memcmp(sorting_nbperf->keys[*a], sorting_nbperf->keys[*b],
-	    sorting_nbperf->keylens[*a]);
+		   sorting_nbperf->keylens[*a]);
+	if (i == 0)
+		sorting_found = 1;
+	return i;
+}
+
+static int sorting_intcmp(const void *a_, const void *b_)
+{
+	const uint32_t *a = a_, *b = b_;
+	int i;
+	const struct SIZED(edge) *ea = &sorting_graph->edges[*a],
+	    *eb = &sorting_graph->edges[*b];
+	for (i = 0; i < GRAPH_SIZE; ++i) {
+		if (ea->vertices[i] < eb->vertices[i])
+			return -1;
+		if (ea->vertices[i] > eb->vertices[i])
+			return 1;
+	}
+	i = memcmp((const void*)&sorting_nbperf->keys[*a],
+		   (const void*)&sorting_nbperf->keys[*b],
+		   sizeof(char*));
 	if (i == 0)
 		sorting_found = 1;
 	return i;
@@ -115,7 +135,10 @@ SIZED2(_check_duplicates)(struct nbperf *nbperf, struct SIZED(graph) *graph)
 	sorting_nbperf = nbperf;
 	sorting_graph = graph;
 	sorting_found = 0;
-	qsort(key_index, graph->e, sizeof(*key_index), sorting_cmp);
+	if (nbperf->intkeys)
+		qsort(key_index, graph->e, sizeof(*key_index), sorting_intcmp);
+	else
+		qsort(key_index, graph->e, sizeof(*key_index), sorting_cmp);
 	if (sorting_found)
 		goto found_dups;
 	/*
