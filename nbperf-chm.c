@@ -203,7 +203,7 @@ print_hash(struct nbperf *nbperf, struct state *state)
 		fprintf(nbperf->output, "\n\t};\n");
 	else
 		fprintf(nbperf->output, "\t};\n");
-        if (nbperf->intkeys > 0 && nbperf->c <= 65534)
+        if (nbperf->hash_size == 2 && nbperf->c <= 65534)
                 fprintf(nbperf->output, "\tuint16_t h[%zu];\n\n", nbperf->hash_size);
         else
                 fprintf(nbperf->output, "\tuint32_t h[%zu];\n\n", nbperf->hash_size);
@@ -214,8 +214,9 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	fprintf(nbperf->output, "\th[1] = h[1] %% %" PRIu32 ";\n",
 	    state->graph.v);
 #if GRAPH_SIZE >= 3
-	fprintf(nbperf->output, "\th[2] = h[2] %% %" PRIu32 ";\n",
-	    state->graph.v);
+        if (nbperf->hash_size > 2)
+                fprintf(nbperf->output, "\th[2] = h[2] %% %" PRIu32 ";\n",
+                        state->graph.v);
 #endif
 
 	if (state->graph.hash_fudge & 1)

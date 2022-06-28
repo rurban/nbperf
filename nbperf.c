@@ -48,12 +48,14 @@ __RCSID("$NetBSD: nbperf.c,v 1.7 2021/01/12 14:21:18 joerg Exp $");
 #include <time.h>
 #include <unistd.h>
 
+#define HAVE_CRC
 #include "nbperf.h"
 #include "mi_vector_hash.h"
 #include "mi_wyhash.h"
 #include "fnv.h"
 #include "fnv3.h"
 #ifdef HAVE_CRC
+#include "crc2.h"
 #include "crc3.h"
 #endif
 
@@ -169,18 +171,24 @@ static void fnv3_print(struct nbperf *nbperf, const char *indent,
                       "%sfnv3(%s, %s, UINT64_C(0x%" PRIx64 "), (uint64_t*)%s);\n",
                 indent, key, keylen, *(uint64_t*)nbperf->seed, hash);
 }
-#if HAVE_CRC
+#ifdef HAVE_CRC
 static void crc_compute(struct nbperf *nbperf, const void *key, size_t keylen,
                         uint32_t *hashes)
 {
 	crc3(key, keylen, *(uint64_t*)nbperf->seed, (uint64_t*)hashes);
 }
+static void crc2_compute(struct nbperf *nbperf, const void *key, size_t keylen,
+                         uint32_t *hashes)
+{
+	crc2(key, keylen, *(uint64_t*)nbperf->seed, (uint64_t*)hashes);
+}
 static void crc_print(struct nbperf *nbperf, const char *indent,
                       const char *key, const char *keylen, const char *hash)
 {
 	fprintf(nbperf->output,
-                      "%scrc3(%s, %s, UINT64_C(0x%" PRIx64 "), (uint64_t*)%s);\n",
-                      indent, key, keylen, *(uint64_t*)nbperf->seed, hash);
+	    "%scrc%s(%s, %s, UINT64_C(0x%" PRIx64 "), (uint64_t*)%s);\n", indent,
+	    nbperf->compute_hash == crc2_compute ? "2" : "3",
+	    key, keylen, seed, hash);
 }
 #endif
 
@@ -478,6 +486,11 @@ main(int argc, char **argv)
 		nbperf.hash_size = 2;
 		nbperf.compute_hash = inthash_compute;
 	}
+	if (nbperf.compute_hash == crc_compute && curlen <= 65534) {
+		nbperf.hash_size = 2;
+		nbperf.hash_header = "crc2.h";
+		nbperf.compute_hash = crc2_compute;
+        }
 
 	looped = 0;
 	int rv;
