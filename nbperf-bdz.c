@@ -151,10 +151,12 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	if (nbperf->intkeys) {
 		fprintf(nbperf->output, "\nstatic void _inthash(const int32_t key, uint64_t *h)\n");
 		fprintf(nbperf->output, "{\n");
-		fprintf(nbperf->output, "	*h = (int64_t)key * (UINT64_C(0x9DDFEA08EB382D69) + UINT64_C(%u))\n"
+		fprintf(nbperf->output, "	*h = (uint64_t)key * (UINT64_C(0x9DDFEA08EB382D69) + UINT64_C(%u))\n"
 			"\t\t + UINT32_C(%u);\n", nbperf->seed[0], nbperf->seed[1]);
-		fprintf(nbperf->output, "	*(h+1) = (uint64_t)key * UINT64_C(%u) + UINT32_C(%u);\n",
-			nbperf->seed[0], nbperf->seed[1]);
+                /* only needed with 4x 32bit hashes, with 4x 16bit not */
+                if (nbperf->hash_size > 2)
+                        fprintf(nbperf->output, "	*(h+1) = (uint64_t)key * UINT64_C(%u) + UINT32_C(%u);\n",
+                                nbperf->seed[0], nbperf->seed[1]);
 		fprintf(nbperf->output, "}\n\n");
 	}
 
@@ -233,7 +235,10 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	fprintf(nbperf->output, "%s\t};\n", (i / 64 % 4 ? "\n" : "")); 
 
 	fprintf(nbperf->output, "\tuint32_t idx, idx2;\n");
-	fprintf(nbperf->output, "\tuint32_t h[%zu];\n\n", nbperf->hash_size);
+        if (nbperf->intkeys > 0 && nbperf->c <= 65534)
+                fprintf(nbperf->output, "\tuint16_t h[%zu];\n\n", nbperf->hash_size);
+        else
+                fprintf(nbperf->output, "\tuint32_t h[%zu];\n\n", nbperf->hash_size);
 
 	(*nbperf->print_hash)(nbperf, "\t", "key", "keylen", "h");
 
@@ -241,30 +246,43 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	    state->graph.v);
 	fprintf(nbperf->output, "\th[1] = h[1] %% UINT32_C(%" PRIu32 ");\n",
 	    state->graph.v);
-	fprintf(nbperf->output, "\th[2] = h[2] %% UINT32_C(%" PRIu32 ");\n",
-	    state->graph.v);
+        if (nbperf->hash_size > 2)
+                fprintf(nbperf->output, "\th[2] = h[2] %% UINT32_C(%" PRIu32 ");\n",
+                        state->graph.v);
 
 	if (state->graph.hash_fudge & 1)
 		fprintf(nbperf->output, "\th[1] ^= (h[0] == h[1]);\n");
 
-	if (state->graph.hash_fudge & 2) {
+	if (state->graph.hash_fudge & 2 && nbperf->hash_size > 2) {
 		fprintf(nbperf->output,
 		    "\th[2] ^= (h[0] == h[2] || h[1] == h[2]);\n");
 		fprintf(nbperf->output,
 		    "\th[2] ^= 2 * (h[0] == h[2] || h[1] == h[2]);\n");
 	}
 
-	fprintf(nbperf->output,
-	    "\tidx = 9 + ((g1[h[0] >> 6] >> (h[0] & 63)) & 1)\n"
-	    "\t        + ((g1[h[1] >> 6] >> (h[1] & 63)) & 1)\n"
-	    "\t        + ((g1[h[2] >> 6] >> (h[2] & 63)) & 1)\n"
-	    "\t        - ((g2[h[0] >> 6] >> (h[0] & 63)) & 1)\n"
-	    "\t        - ((g2[h[1] >> 6] >> (h[1] & 63)) & 1)\n"
-	    "\t        - ((g2[h[2] >> 6] >> (h[2] & 63)) & 1);\n"
-	    );
+        if (nbperf->hash_size > 2) {
+                fprintf(nbperf->output,
+                        "\tidx = 9 + ((g1[h[0] >> 6] >> (h[0] & 63)) & 1)\n"
+                        "\t        + ((g1[h[1] >> 6] >> (h[1] & 63)) & 1)\n"
+                        "\t        + ((g1[h[2] >> 6] >> (h[2] & 63)) & 1)\n"
+                        "\t        - ((g2[h[0] >> 6] >> (h[0] & 63)) & 1)\n"
+                        "\t        - ((g2[h[1] >> 6] >> (h[1] & 63)) & 1)\n"
+                        "\t        - ((g2[h[2] >> 6] >> (h[2] & 63)) & 1);\n"
+                        );
+                fprintf(nbperf->output,
+                        "\tidx = h[idx %% 3];\n");
+        }
+        else {
+                fprintf(nbperf->output,
+                        "\tidx = 9 + ((g1[h[0] >> 6] >> (h[0] & 63)) & 1)\n"
+                        "\t        + ((g1[h[1] >> 6] >> (h[1] & 63)) & 1)\n"
+                        "\t        - ((g2[h[0] >> 6] >> (h[0] & 63)) & 1)\n"
+                        "\t        - ((g2[h[1] >> 6] >> (h[1] & 63)) & 1);\n"
+                        );
+                fprintf(nbperf->output,
+                        "\tidx = h[idx %% 2];\n");
+        }
 
-	fprintf(nbperf->output,
-	    "\tidx = h[idx %% 3];\n");
 	fprintf(nbperf->output,
 	    "\tidx2 = idx - holes64[idx >> 6] - holes64k[idx >> 16];\n"
 	    "\tidx2 -= popcount64(  g1[idx >> 6]\n"
@@ -292,8 +310,8 @@ bpz_compute(struct nbperf *nbperf)
 		nbperf->c = 1.24;
 	if (nbperf->c < 1.24)
 		errx(1, "The argument for option -c must be at least 1.24");
-	if (nbperf->hash_size < 3)
-		errx(1, "The hash function must generate at least 3 values");
+	if (nbperf->hash_size < 3 && (nbperf->intkeys == 0 || nbperf->c > 65534))
+                errx(1, "The hash function must generate at least 3 values");
 
 	(*nbperf->seed_hash)(nbperf);
 	e = nbperf->n;

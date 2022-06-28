@@ -6,7 +6,7 @@ SRCS+=	nbperf-bdz.c nbperf-chm.c nbperf-chm3.c	graph2.c graph3.c
 HEADERS = mi_vector_hash.h mi_wyhash.h wyhash.h fnv3.h fnv.h
 WORDS = /usr/share/dict/words
 RAND100 = _rand100
-RAND10000 = _rand10000
+RANDBIG = _randbig
 CC = cc
 CFLAGS = -O2 -g
 
@@ -18,10 +18,10 @@ endif
 $(PROG): $(SRCS) mi_vector_hash.c mi_vector_hash.h wyhash.h nbtool_config.h
 	$(CC) $(CFLAGS) -I. -DHAVE_NBTOOL_CONFIG_H $(SRCS) mi_vector_hash.c -o $@
 
-$(RAND10000):
-	seq 20000 | random > $(RAND10000)
+$(RANDBIG):
+	seq 160000 | random > $(RANDBIG)
 
-check: $(PROG) $(RAND10000)
+check: $(PROG) $(RANDBIG)
 	@echo test building a few with big sets
 	./$(PROG) -o _test_chm.c $(WORDS)
 	$(CC) $(CFLAGS) -c -I. _test_chm.c
@@ -36,12 +36,12 @@ check: $(PROG) $(RAND10000)
 	./$(PROG) -h wyhash -a chm3 -o _test_chm3_wy.c $(WORDS)
 	$(CC) $(CFLAGS) -c -I. _test_chm3_wy.c
 	@echo test building intkeys
-	./$(PROG) -I -o _test_int.c $(RAND10000)
+	./$(PROG) -I -o _test_int.c $(RANDBIG)
 	$(CC) $(CFLAGS) -c -I. _test_int.c
 	@echo test all combinations and results with a small set
 	./test
 clean:
-	-rm -f $(PROG) _test_* test_{bdz,chm,chm3}* _words1000* _rand100* a.out
+	-rm -f $(PROG) _test_* test_{bdz,chm,chm3}* _words1000* _rand100 _randbig a.out
 install: $(PROG)
 	sudo cp $(PROG) /usr/local/bin/
 	sudo cp $(HEADERS) /usr/local/include/

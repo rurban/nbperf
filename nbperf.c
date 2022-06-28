@@ -205,7 +205,7 @@ void
 inthash_print(struct nbperf *nbperf, const char *indent, const char *key, const char *keylen, const char *hash)
 {
 	(void)keylen;
-	fprintf(nbperf->output, "%s_inthash(%s, (uint64_t*)%s);\n", indent, key, hash);
+        fprintf(nbperf->output, "%s_inthash(%s, (uint64_t*)%s);\n", indent, key, hash);
 }
 
 void print_coda(struct nbperf *nbperf)
@@ -404,7 +404,7 @@ main(int argc, char **argv)
 	if (argc > 1)
 		usage();
 
-	if (build_hash == bpz_compute && nbperf.intkeys) {
+	if (build_hash == bpz_compute && nbperf.intkeys > 0) {
 		nbperf.hash_size = 4;
 		nbperf.compute_hash = inthash4_compute;
 	}
@@ -473,6 +473,11 @@ main(int argc, char **argv)
 	nbperf.n = curlen;
 	nbperf.keys = keys;
 	nbperf.keylens = keylens;
+        /* with less keys we can use smaller and esp. faster 16bit hashes */
+	if (nbperf.intkeys > 0 && curlen <= 65534) {
+		nbperf.hash_size = 2;
+		nbperf.compute_hash = inthash_compute;
+	}
 
 	looped = 0;
 	int rv;

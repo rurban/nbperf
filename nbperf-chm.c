@@ -174,8 +174,8 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	fprintf(nbperf->output, "{\n");
 	if (state->graph.v >= 65536) {
 		g_type = "uint32_t";
-		g_width = 8;
-		per_line = 4;
+		g_width = 6;
+		per_line = 8;
 	} else if (state->graph.v >= 256) {
 		g_type = "uint16_t";
 		g_width = 4;
@@ -203,7 +203,10 @@ print_hash(struct nbperf *nbperf, struct state *state)
 		fprintf(nbperf->output, "\n\t};\n");
 	else
 		fprintf(nbperf->output, "\t};\n");
-	fprintf(nbperf->output, "\tuint32_t h[%zu];\n\n", nbperf->hash_size);
+        if (nbperf->intkeys > 0 && nbperf->c <= 65534)
+                fprintf(nbperf->output, "\tuint16_t h[%zu];\n\n", nbperf->hash_size);
+        else
+                fprintf(nbperf->output, "\tuint32_t h[%zu];\n\n", nbperf->hash_size);
 	(*nbperf->print_hash)(nbperf, "\t", "key", "keylen", "h");
 
 	fprintf(nbperf->output, "\n\th[0] = h[0] %% %" PRIu32 ";\n",
