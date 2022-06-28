@@ -6,7 +6,7 @@
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Joerg Sonnenberger.
- * Integer keys were added by Reini Urban.
+ * Integer keys and more hashes were added by Reini Urban.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -235,8 +235,8 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	fprintf(nbperf->output, "%s\t};\n", (i / 64 % 4 ? "\n" : "")); 
 
 	fprintf(nbperf->output, "\tuint32_t idx, idx2;\n");
-        if (nbperf->intkeys > 0 && nbperf->c <= 65534)
-                fprintf(nbperf->output, "\tuint16_t h[%zu];\n\n", nbperf->hash_size);
+        if (nbperf->hashes16)
+                fprintf(nbperf->output, "\tuint16_t h[4];\n\n");
         else
                 fprintf(nbperf->output, "\tuint32_t h[%zu];\n\n", nbperf->hash_size);
 

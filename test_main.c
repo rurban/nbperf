@@ -12,39 +12,45 @@ uint32_t hash(const void * __restrict key, size_t keylen);
 
 int main(int argc, char **argv)
 {
-    char *input = argc > 1 ? argv[1] : "_words1000";
+    char *input;
     char *line;
     ssize_t line_len;
     size_t line_allocated;
     FILE *f;
-    int verbose = argc > 2;
+    int verbose = 0;
     unsigned i = 0;
     uint32_t h;
 #if defined _INTKEYS || defined bdz
     uint32_t *map;
 #endif
 
-#ifdef _INTKEYS
-# ifdef bdz
+    if (argc > 1 && strcmp(argv[i], "-v") == 0)
+        verbose = 1, i++;
+    input = i > 0 ? argv[i] : "_words1000";
+
+#ifdef bdz
     char mapfile[80];
     assert(strlen(input) < 80);
     strncpy(mapfile, input, 80);
     strcat(mapfile, ".map");
-# endif
+#endif
+#ifndef PERF
+# ifdef _INTKEYS
     h = inthash(1);
-    printf("%u: %u\n", 1, h);
-#else
-# ifdef bdz
-    const char *mapfile = "_words1000.map";
-# endif
+    if (verbose)
+        printf("%u: %u\n", 1, h);
+# else
     char *w = "englis";
     h = hash(w, strlen(w));
-    printf("%s: %x\n", w, h); // false-positive! englis == Luz's
+    if (verbose)
+        printf("%s: %x\n", w, h); // false-positive! englis == Luz's
+# endif
 #endif
 
 #if defined bdz
     size_t lines = 1000;
     map = calloc (lines, 4);
+    i = 0;
     // read map file for the indices
     f = fopen(mapfile, "r");
     if (!f) {
@@ -64,6 +70,7 @@ int main(int argc, char **argv)
 #elif defined _INTKEYS
     size_t lines = 1000;
     map = calloc (lines, 4);
+    i = 0;
     // read input file for the indices
     f = fopen(input, "r");
     if (!f) {
@@ -99,17 +106,19 @@ int main(int argc, char **argv)
 #else
         h = hash(line, strlen(line));
 #endif
-	if (verbose || i < 3)
+	if (verbose)
 #if defined _INTKEYS || defined bdz
             printf("%s: %u, %u\n", line, h, map[i]);
 #else
             printf("%s: %u\n", line, h);
 #endif
-#if (defined chm || defined chm3) && !defined _INTKEYS
+#ifndef PERF
+# if (defined chm || defined chm3) && !defined _INTKEYS
         assert(h == i);
-#else
-# ifndef _INTKEYS
+# else
+#  ifndef _INTKEYS
         assert(h == map[i]);
+#  endif
 # endif
 #endif
         i++;

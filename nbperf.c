@@ -1,10 +1,12 @@
 /*	$NetBSD: nbperf.c,v 1.7 2021/01/12 14:21:18 joerg Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2022 Reini Urban
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Joerg Sonnenberger.
+ * Integer keys and more hashes were added by Reini Urban.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,35 +44,38 @@ __RCSID("$NetBSD: nbperf.c,v 1.7 2021/01/12 14:21:18 joerg Exp $")
 #include <err.h>
 #include <errno.h>
 #include <inttypes.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
 
 #define HAVE_CRC
+// clang-format off
 #include "nbperf.h"
-#include "mi_vector_hash.h"
-#include "mi_wyhash.h"
+// clang-format on
 #include "fnv.h"
 #include "fnv3.h"
+#include "mi_vector_hash.h"
+#include "mi_wyhash.h"
 #ifdef HAVE_CRC
 #include "crc2.h"
 #include "crc3.h"
 #endif
 
 static /*__dead*/
-void usage(void)
+    void
+    usage(void)
 {
 	fprintf(stderr,
 	    "%s [-fIps] [-c utilisation] [-i iterations] [-n name] "
 	    "[-h hash] [-o output] input\n",
-            "nbperf" /*getprogname()*/);
+	    "nbperf" /*getprogname()*/);
 	exit(1);
 }
 
 #if HAVE_NBTOOL_CONFIG_H
-#define	arc4random() rand()
+#define arc4random() rand()
 #endif
 
 static void
@@ -91,12 +96,13 @@ mi_vector_hash_compute(struct nbperf *nbperf, const void *key, size_t keylen,
 }
 
 static void
-mi_vector_hash_print(struct nbperf *nbperf, const char *indent,
-                     const char *key, const char *keylen, const char *hash)
+mi_vector_hash_print(struct nbperf *nbperf, const char *indent, const char *key,
+    const char *keylen, const char *hash)
 {
 	fprintf(nbperf->output,
-	    "%smi_vector_hash(%s, %s, UINT32_C(0x%08" PRIx32 "), %s);\n",
-                indent, key, keylen, nbperf->seed[0], hash);
+	    "%smi_vector_hash(%s, %s, UINT32_C(0x%08" PRIx32 "), %s%s);\n",
+	    indent, key, keylen, nbperf->seed[0],
+		nbperf->hashes16 ? "(uint32_t *)" : "", hash);
 }
 
 static void
@@ -106,11 +112,10 @@ wyhash_seed(struct nbperf *nbperf)
 	if (nbperf->predictable) {
 		nbperf->seed[0] = predictable_counter++;
 		nbperf->seed[1] = predictable_counter++;
-        }
-	else {
+	} else {
 		nbperf->seed[0] = arc4random();
 		nbperf->seed[1] = arc4random();
-        }
+	}
 	if (nbperf->seed[0] == UINT32_C(0x14cc886e) ||
 	    nbperf->seed[0] == UINT32_C(0xd637dbf3))
 		nbperf->seed[0]++;
@@ -121,144 +126,165 @@ wyhash_seed(struct nbperf *nbperf)
 
 static void
 wyhash_compute(struct nbperf *nbperf, const void *key, size_t keylen,
-	       uint32_t *hashes)
+    uint32_t *hashes)
 {
-	uint64_t seed = *(uint64_t*)nbperf->seed;
-	mi_wyhash3(key, keylen, seed, (uint64_t*)hashes);
+	uint64_t seed = *(uint64_t *)nbperf->seed;
+	mi_wyhash3(key, keylen, seed, (uint64_t *)hashes);
 }
 
 static void
-wyhash_print(struct nbperf *nbperf, const char *indent,
-             const char *key, const char *keylen, const char *hash)
+wyhash_print(struct nbperf *nbperf, const char *indent, const char *key,
+    const char *keylen, const char *hash)
 {
-	uint64_t seed = *(uint64_t*)nbperf->seed;
+	uint64_t seed = *(uint64_t *)nbperf->seed;
 	fprintf(nbperf->output,
 	    "%smi_wyhash3(%s, %s, UINT64_C(0x%" PRIx64 "), (uint64_t*)%s);\n",
-                indent, key, keylen, seed, hash);
+	    indent, key, keylen, seed, hash);
 }
-static void fnv_compute(struct nbperf *nbperf, const void *key, size_t keylen,
-                        uint32_t *hashes)
+static void
+fnv_compute(struct nbperf *nbperf, const void *key, size_t keylen,
+    uint32_t *hashes)
 {
-	uint64_t seed = *(uint64_t*)nbperf->seed;
-	fnv(key, keylen, seed, (uint64_t*)hashes);
+	uint64_t seed = *(uint64_t *)nbperf->seed;
+	fnv(key, keylen, seed, (uint64_t *)hashes);
 }
-static void fnv_print(struct nbperf *nbperf, const char *indent,
-                      const char *key, const char *keylen, const char *hash)
+static void
+fnv_print(struct nbperf *nbperf, const char *indent, const char *key,
+    const char *keylen, const char *hash)
 {
-	uint64_t seed = *(uint64_t*)nbperf->seed;
+	uint64_t seed = *(uint64_t *)nbperf->seed;
 	fprintf(nbperf->output,
-                      "%sfnv(%s, %s, UINT64_C(0x%" PRIx64 "), (uint64_t*)%s);\n",
-                      indent, key, keylen, seed, hash);
+	    "%sfnv(%s, %s, UINT64_C(0x%" PRIx64 "), (uint64_t*)%s);\n", indent,
+	    key, keylen, seed, hash);
 }
-static void fnv_seed(struct nbperf *nbperf)
+static void
+fnv_seed(struct nbperf *nbperf)
 {
 	static uint32_t predictable_counter = 0;
 	if (nbperf->predictable) {
-		nbperf->seed[0] = (uint32_t)(0x85ebca6b * ++predictable_counter);
+		nbperf->seed[0] = (uint32_t)(0x85ebca6b *
+		    ++predictable_counter);
 		nbperf->seed[1] = predictable_counter;
-        }
-	else {
+	} else {
 		nbperf->seed[0] = arc4random();
 		nbperf->seed[1] = arc4random();
-        }
+	}
 }
 
-static void fnv3_compute(struct nbperf *nbperf, const void *key, size_t keylen,
-			 uint32_t *hashes)
+static void
+fnv3_compute(struct nbperf *nbperf, const void *key, size_t keylen,
+    uint32_t *hashes)
 {
-	uint64_t seed = *(uint64_t*)nbperf->seed;
-	fnv3(key, keylen, seed, (uint64_t*)hashes);
+	uint64_t seed = *(uint64_t *)nbperf->seed;
+	fnv3(key, keylen, seed, (uint64_t *)hashes);
 }
-static void fnv3_print(struct nbperf *nbperf, const char *indent,
-		       const char *key, const char *keylen, const char *hash)
+static void
+fnv3_print(struct nbperf *nbperf, const char *indent, const char *key,
+    const char *keylen, const char *hash)
 {
-	uint64_t seed = *(uint64_t*)nbperf->seed;
+	uint64_t seed = *(uint64_t *)nbperf->seed;
 	fprintf(nbperf->output,
-                      "%sfnv3(%s, %s, UINT64_C(0x%" PRIx64 "), (uint64_t*)%s);\n",
-                indent, key, keylen, seed, hash);
+	    "%sfnv3(%s, %s, UINT64_C(0x%" PRIx64 "), (uint64_t*)%s);\n", indent,
+	    key, keylen, seed, hash);
 }
 #ifdef HAVE_CRC
-static void crc_compute(struct nbperf *nbperf, const void *key, size_t keylen,
-                        uint32_t *hashes)
+static void
+crc_compute(struct nbperf *nbperf, const void *key, size_t keylen,
+    uint32_t *hashes)
 {
-	uint64_t seed = *(uint64_t*)nbperf->seed;
-	crc3(key, keylen, seed, (uint64_t*)hashes);
+	uint64_t seed = *(uint64_t *)nbperf->seed;
+        // produces two 64bit hashes (needed for 3 hashes)
+	crc3(key, keylen, seed, (uint64_t *)hashes);
 }
-static void crc2_compute(struct nbperf *nbperf, const void *key, size_t keylen,
-                         uint32_t *hashes)
+static void
+crc2_compute(struct nbperf *nbperf, const void *key, size_t keylen,
+    uint32_t *hashes)
 {
-	uint64_t seed = *(uint64_t*)nbperf->seed;
-	crc2(key, keylen, seed, (uint64_t*)hashes);
+	uint64_t seed = *(uint64_t *)nbperf->seed;
+        // produces one 64bit hash
+	crc2(key, keylen, seed, (uint64_t *)hashes);
 }
-static void crc_print(struct nbperf *nbperf, const char *indent,
-                      const char *key, const char *keylen, const char *hash)
+static void
+crc_print(struct nbperf *nbperf, const char *indent, const char *key,
+    const char *keylen, const char *hash)
 {
-	uint64_t seed = *(uint64_t*)nbperf->seed;
+	uint64_t seed = *(uint64_t *)nbperf->seed;
 	fprintf(nbperf->output,
-	    "%scrc%s(%s, %s, UINT64_C(0x%" PRIx64 "), (uint64_t*)%s);\n", indent,
-	    nbperf->compute_hash == crc2_compute ? "2" : "3",
-	    key, keylen, seed, hash);
+	    "%scrc%s(%s, %s, UINT64_C(0x%" PRIx64 "), (uint64_t*)%s);\n",
+	    indent, nbperf->compute_hash == crc2_compute ? "2" : "3", key,
+	    keylen, seed, hash);
 }
 #endif
 
 void
-inthash_compute(struct nbperf *nbperf, const void *key, size_t keylen, uint32_t *hashes)
+inthash_compute(struct nbperf *nbperf, const void *key, size_t keylen,
+    uint32_t *hashes)
 {
 	(void)keylen;
 	*(uint64_t *)hashes = (uint64_t)key *
-	    /* mult factor from CityHash to reach into 2nd 32bit slot */
-	    (UINT64_C(0x9DDFEA08EB382D69) + (uint64_t)nbperf->seed[0]) + nbperf->seed[1];
+		/* mult factor from CityHash to reach into 2nd 32bit slot */
+		(UINT64_C(0x9DDFEA08EB382D69) + (uint64_t)nbperf->seed[0]) +
+	    nbperf->seed[1];
 }
 void
-inthash4_compute(struct nbperf *nbperf, const void *key, size_t keylen, uint32_t *hashes)
+inthash4_compute(struct nbperf *nbperf, const void *key, size_t keylen,
+    uint32_t *hashes)
 {
 	(void)keylen;
 	*(uint64_t *)hashes = (uint64_t)key *
-	    /* mult factor from CityHash to reach into 2nd 32bit slot, but not the 3rd */
-	    (UINT64_C(0x9DDFEA08EB382D69) + (uint64_t)nbperf->seed[0]) + nbperf->seed[1];
-	*((uint64_t *)hashes+1) = (uint64_t)key * (uint64_t)nbperf->seed[0] + nbperf->seed[1];
+		/* mult factor from CityHash to reach into 2nd 32bit slot, but
+		   not the 3rd */
+		(UINT64_C(0x9DDFEA08EB382D69) + (uint64_t)nbperf->seed[0]) +
+	    nbperf->seed[1];
+	*((uint64_t *)hashes + 1) = (uint64_t)key * (uint64_t)nbperf->seed[0] +
+	    nbperf->seed[1];
 }
 void
-inthash_print(struct nbperf *nbperf, const char *indent, const char *key, const char *keylen, const char *hash)
+inthash_print(struct nbperf *nbperf, const char *indent, const char *key,
+    const char *keylen, const char *hash)
 {
 	(void)keylen;
-        fprintf(nbperf->output, "%s_inthash(%s, (uint64_t*)%s);\n", indent, key, hash);
+	fprintf(nbperf->output, "%s_inthash(%s, (uint64_t*)%s);\n", indent, key,
+	    hash);
 }
 
-void print_coda(struct nbperf *nbperf)
+void
+print_coda(struct nbperf *nbperf)
 {
 	int saw_dash = 0;
 	fprintf(nbperf->output, "/* generated with rurban/nbperf ");
 	if (nbperf->allow_hash_fudging) {
-	    fprintf(nbperf->output, "%sf", saw_dash ? "" : "-");
-	    saw_dash = 1;
+		fprintf(nbperf->output, "%sf", saw_dash ? "" : "-");
+		saw_dash = 1;
 	}
 	if (nbperf->intkeys) {
-	    fprintf(nbperf->output, "%sI", saw_dash ? "" : "-");
-	    saw_dash = 1;
+		fprintf(nbperf->output, "%sI", saw_dash ? "" : "-");
+		saw_dash = 1;
 	}
 	if (nbperf->predictable) {
-	    fprintf(nbperf->output, "%sp", saw_dash ? "" : "-");
-	    saw_dash = 1;
+		fprintf(nbperf->output, "%sp", saw_dash ? "" : "-");
+		saw_dash = 1;
 	}
 	if (nbperf->static_hash) {
-	    fprintf(nbperf->output, "%ss", saw_dash ? "" : "-");
-	    saw_dash = 1;
+		fprintf(nbperf->output, "%ss", saw_dash ? "" : "-");
+		saw_dash = 1;
 	}
 	/*
 	if (nbperf->c > 0)
 	    fprintf(nbperf->output, " -c %f", nbperf->c);
 	*/
 	if (nbperf->input)
-	    fprintf(nbperf->output, " %s", nbperf->input);
-	fprintf(nbperf->output, " */\n/* seed[0]: %" PRIu32 ", seed[1]: %" PRIu32 " */\n",
-		nbperf->seed[0], nbperf->seed[1]);
+		fprintf(nbperf->output, " %s", nbperf->input);
+	fprintf(nbperf->output,
+	    " */\n/* seed[0]: %" PRIu32 ", seed[1]: %" PRIu32 " */\n",
+	    nbperf->seed[0], nbperf->seed[1]);
 
 	if (!nbperf->intkeys)
 		fprintf(nbperf->output, "#include <stdlib.h>\n");
 	fprintf(nbperf->output, "#include <stdint.h>\n");
 	if (nbperf->hash_header)
-		fprintf(nbperf->output, "#include \"%s\"\n\n", nbperf->hash_header);
+		fprintf(nbperf->output, "#include \"%s\"\n\n",
+		    nbperf->hash_header);
 }
 
 static void
@@ -301,7 +327,7 @@ set_hash(struct nbperf *nbperf, const char *arg)
 		return;
 	}
 #ifdef HAVE_CRC
-        else if (strcmp(arg, "crc") == 0) {
+	else if (strcmp(arg, "crc") == 0) {
 		nbperf->hash_size = 4;
 		nbperf->hash_header = "crc3.h";
 		nbperf->seed_hash = fnv_seed;
@@ -321,16 +347,16 @@ int
 main(int argc, char **argv)
 {
 	struct nbperf nbperf = {
-	    .c = 0,
-	    .hash_name = "hash",
-	    .map_output = NULL,
-	    .input = NULL,
-	    .output = NULL,
-	    .static_hash = 0,
-	    .check_duplicates = 0,
-	    .has_duplicates = 0,
-	    .allow_hash_fudging = 0,
-	    .intkeys = 0,
+		.c = 0,
+		.hash_name = "hash",
+		.map_output = NULL,
+		.input = NULL,
+		.output = NULL,
+		.static_hash = 0,
+		.check_duplicates = 0,
+		.has_duplicates = 0,
+		.allow_hash_fudging = 0,
+		.intkeys = 0,
 	};
 	FILE *input;
 	size_t curlen = 0, curalloc = 0;
@@ -355,7 +381,7 @@ main(int argc, char **argv)
 			else if (strcmp(optarg, "chm3") == 0)
 				build_hash = chm3_compute;
 			else if ((strcmp(optarg, "bpz") == 0 ||
-				  strcmp(optarg, "bdz") == 0))
+				     strcmp(optarg, "bdz") == 0))
 				build_hash = bpz_compute;
 			else
 				errx(1, "Unsupport algorithm: %s", optarg);
@@ -375,9 +401,10 @@ main(int argc, char **argv)
 		case 'i':
 			errno = 0;
 			tmp = strtoll(optarg, &eos, 0);
-			if (errno || eos == optarg || eos[0] ||
-			    tmp < 0 || tmp > 0xffffffffU)
-				errx(2, "Iteration count must be "
+			if (errno || eos == optarg || eos[0] || tmp < 0 ||
+			    tmp > 0xffffffffU)
+				errx(2,
+				    "Iteration count must be "
 				    "a 32bit integer");
 			max_iterations = (uint32_t)tmp;
 			break;
@@ -385,7 +412,7 @@ main(int argc, char **argv)
 			nbperf.intkeys = 1;
 			set_hash(&nbperf, "inthash");
 			if (strcmp(nbperf.hash_name, "hash") == 0)
-			    nbperf.hash_name = "inthash";
+				nbperf.hash_name = "inthash";
 			break;
 		case 'm':
 			if (nbperf.map_output)
@@ -454,29 +481,27 @@ main(int argc, char **argv)
 			keys = realloc(keys, curalloc * sizeof(*keys));
 			if (keys == NULL)
 				err(1, "realloc failed");
-			keylens = realloc(keylens,
-			    curalloc * sizeof(*keylens));
+			keylens = realloc(keylens, curalloc * sizeof(*keylens));
 			if (keylens == NULL)
 				err(1, "realloc failed");
 		}
 		if (nbperf.intkeys) {
-		    uint64_t i;
-		    errno = 0;
-		    i = strtod(line, &eos);
-		    if (errno || (eos[0] != '\n' && eos[0] != '\r'))
-			errx(2, "Invalid integer key \"%s\" at line %lu of %s", line,
-			     curlen, nbperf.input);
-		    memcpy(&keys[curlen], &i, sizeof(char*));
-		}
-		else if (line_len % 4 == 0) {
-		    if ((keys[curlen] = strndup(line, line_len)) == NULL)
-			err(1, "strndup failed");
-		}
-		else {
-		    ssize_t padded_len = line_len + (4 - (line_len % 4));
-		    if ((keys[curlen] = calloc(padded_len, 1)) == NULL)
-			err(1, "calloc failed");
-		    memcpy((void*)keys[curlen], line, line_len);
+			uint64_t i;
+			errno = 0;
+			i = strtod(line, &eos);
+			if (errno || (eos[0] != '\n' && eos[0] != '\r'))
+				errx(2,
+				    "Invalid integer key \"%s\" at line %lu of %s",
+				    line, curlen, nbperf.input);
+			memcpy(&keys[curlen], &i, sizeof(char *));
+		} else if (line_len % 4 == 0) {
+			if ((keys[curlen] = strndup(line, line_len)) == NULL)
+				err(1, "strndup failed");
+		} else {
+			ssize_t padded_len = line_len + (4 - (line_len % 4));
+			if ((keys[curlen] = calloc(padded_len, 1)) == NULL)
+				err(1, "calloc failed");
+			memcpy((void *)keys[curlen], line, line_len);
 		}
 
 		keylens[curlen] = line_len;
@@ -490,16 +515,19 @@ main(int argc, char **argv)
 	nbperf.n = curlen;
 	nbperf.keys = keys;
 	nbperf.keylens = keylens;
-        /* with less keys we can use smaller and esp. faster 16bit hashes */
-	if (nbperf.intkeys > 0 && curlen <= 65534) {
-		nbperf.hash_size = 2;
-		nbperf.compute_hash = inthash_compute;
+	/* with less keys we can use smaller and esp. faster 16bit hashes */
+	if (curlen <= 65534) {
+		if (nbperf.intkeys > 0) {
+			nbperf.hashes16 = 1;
+			nbperf.hash_size = 2;
+			nbperf.compute_hash = inthash_compute;
+		} else if (nbperf.compute_hash == crc_compute) {
+			nbperf.hashes16 = 1;
+			nbperf.hash_size = 2;
+			nbperf.hash_header = "crc2.h";
+			nbperf.compute_hash = crc2_compute;
+		}
 	}
-	if (nbperf.compute_hash == crc_compute && curlen <= 65534) {
-		nbperf.hash_size = 2;
-		nbperf.hash_header = "crc2.h";
-		nbperf.compute_hash = crc2_compute;
-        }
 
 	looped = 0;
 	int rv;
@@ -525,10 +553,10 @@ main(int argc, char **argv)
 	if (looped)
 		fputc('\n', stderr);
 
-	free (keylens);
+	free(keylens);
 	if (!nbperf.intkeys)
-	    for (unsigned i=0; i < curlen; i++)
-		free ((void*)keys[i]);
-	free (keys);
+		for (unsigned i = 0; i < curlen; i++)
+			free((void *)keys[i]);
+	free(keys);
 	return 0;
 }

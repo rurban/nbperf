@@ -1,10 +1,12 @@
 /*	$NetBSD: graph2.c,v 1.5 2021/01/07 16:03:08 joerg Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2022 Reini Urban
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Joerg Sonnenberger.
+ * Integer keys and more hashes were added by Reini Urban.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -43,12 +45,15 @@ __RCSID("$NetBSD: graph2.c,v 1.5 2021/01/07 16:03:08 joerg Exp $")
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
+// clang-format off
 #include "nbperf.h"
 #include "graph2.h"
+// clang-format on
 
 void
-SIZED2(_setup)(struct SIZED(graph) *graph, uint32_t v, uint32_t e)
+SIZED2(_setup)(struct SIZED(graph) * graph, uint32_t v, uint32_t e)
 {
 	graph->v = v;
 	graph->e = e;
@@ -63,7 +68,7 @@ SIZED2(_setup)(struct SIZED(graph) *graph, uint32_t v, uint32_t e)
 }
 
 void
-SIZED2(_free)(struct SIZED(graph) *graph)
+SIZED2(_free)(struct SIZED(graph) * graph)
 {
 	free(graph->verts);
 	free(graph->edges);
@@ -75,15 +80,16 @@ SIZED2(_free)(struct SIZED(graph) *graph)
 }
 
 static struct nbperf *sorting_nbperf;
-static struct SIZED(graph) *sorting_graph;
+static struct SIZED(graph) * sorting_graph;
 static int sorting_found;
 
-static int sorting_cmp(const void *a_, const void *b_)
+static int
+sorting_cmp(const void *a_, const void *b_)
 {
 	const uint32_t *a = a_, *b = b_;
 	int i;
 	const struct SIZED(edge) *ea = &sorting_graph->edges[*a],
-	    *eb = &sorting_graph->edges[*b];
+				 *eb = &sorting_graph->edges[*b];
 	for (i = 0; i < GRAPH_SIZE; ++i) {
 		if (ea->vertices[i] < eb->vertices[i])
 			return -1;
@@ -95,34 +101,34 @@ static int sorting_cmp(const void *a_, const void *b_)
 	if (sorting_nbperf->keylens[*a] > sorting_nbperf->keylens[*b])
 		return 1;
 	i = memcmp(sorting_nbperf->keys[*a], sorting_nbperf->keys[*b],
-		   sorting_nbperf->keylens[*a]);
-	if (i == 0)
-		sorting_found = 1;
-	return i;
-}
-
-static int sorting_intcmp(const void *a_, const void *b_)
-{
-	const uint32_t *a = a_, *b = b_;
-	int i;
-	const struct SIZED(edge) *ea = &sorting_graph->edges[*a],
-	    *eb = &sorting_graph->edges[*b];
-	for (i = 0; i < GRAPH_SIZE; ++i) {
-		if (ea->vertices[i] < eb->vertices[i])
-			return -1;
-		if (ea->vertices[i] > eb->vertices[i])
-			return 1;
-	}
-	i = memcmp((const void*)&sorting_nbperf->keys[*a],
-		   (const void*)&sorting_nbperf->keys[*b],
-		   sizeof(char*));
+	    sorting_nbperf->keylens[*a]);
 	if (i == 0)
 		sorting_found = 1;
 	return i;
 }
 
 static int
-SIZED2(_check_duplicates)(struct nbperf *nbperf, struct SIZED(graph) *graph)
+sorting_intcmp(const void *a_, const void *b_)
+{
+	const uint32_t *a = a_, *b = b_;
+	int i;
+	const struct SIZED(edge) *ea = &sorting_graph->edges[*a],
+				 *eb = &sorting_graph->edges[*b];
+	for (i = 0; i < GRAPH_SIZE; ++i) {
+		if (ea->vertices[i] < eb->vertices[i])
+			return -1;
+		if (ea->vertices[i] > eb->vertices[i])
+			return 1;
+	}
+	i = memcmp((const void *)&sorting_nbperf->keys[*a],
+	    (const void *)&sorting_nbperf->keys[*b], sizeof(char *));
+	if (i == 0)
+		sorting_found = 1;
+	return i;
+}
+
+static int
+SIZED2(_check_duplicates)(struct nbperf *nbperf, struct SIZED(graph) * graph)
 {
 	size_t i;
 	uint32_t *key_index = calloc(sizeof(*key_index), graph->e);
@@ -149,16 +155,16 @@ SIZED2(_check_duplicates)(struct nbperf *nbperf, struct SIZED(graph) *graph)
 
 	free(key_index);
 	return 0;
- found_dups:
+found_dups:
 	nbperf->has_duplicates = 1;
 	return -1;
 }
 
 static inline void
-SIZED2(_add_edge)(struct SIZED(graph) *graph, uint32_t edge)
+SIZED2(_add_edge)(struct SIZED(graph) * graph, uint32_t edge)
 {
 	struct SIZED(edge) *e = graph->edges + edge;
-	struct SIZED(vertex) *v;
+	struct SIZED(vertex) * v;
 	size_t i;
 
 	for (i = 0; i < GRAPH_SIZE; ++i) {
@@ -169,10 +175,10 @@ SIZED2(_add_edge)(struct SIZED(graph) *graph, uint32_t edge)
 }
 
 static inline void
-SIZED2(_remove_edge)(struct SIZED(graph) *graph, uint32_t edge)
+SIZED2(_remove_edge)(struct SIZED(graph) * graph, uint32_t edge)
 {
 	struct SIZED(edge) *e = graph->edges + edge;
-	struct SIZED(vertex) *v;
+	struct SIZED(vertex) * v;
 	size_t i;
 
 	for (i = 0; i < GRAPH_SIZE; ++i) {
@@ -183,7 +189,7 @@ SIZED2(_remove_edge)(struct SIZED(graph) *graph, uint32_t edge)
 }
 
 static inline void
-SIZED2(_remove_vertex)(struct SIZED(graph) *graph, uint32_t vertex)
+SIZED2(_remove_vertex)(struct SIZED(graph) * graph, uint32_t vertex)
 {
 	struct SIZED(vertex) *v = graph->verts + vertex;
 	uint32_t e;
@@ -196,10 +202,11 @@ SIZED2(_remove_vertex)(struct SIZED(graph) *graph, uint32_t vertex)
 }
 
 int
-SIZED2(_hash)(struct nbperf *nbperf, struct SIZED(graph) *graph)
+SIZED2(_hash)(struct nbperf *nbperf, struct SIZED(graph) * graph)
 {
-	struct SIZED(edge) *e;
+	struct SIZED(edge) * e;
 	uint32_t hashes[4];
+	uint16_t hashes16[4];
 	size_t i, j;
 
 #if GRAPH_SIZE == 2
@@ -214,11 +221,18 @@ SIZED2(_hash)(struct nbperf *nbperf, struct SIZED(graph) *graph)
 	graph->hash_fudge = 0;
 
 	for (i = 0; i < graph->e; ++i) {
-		(*nbperf->compute_hash)(nbperf,
-		        nbperf->keys[i], nbperf->keylens[i], hashes);
+		if (nbperf->hashes16)
+			(*nbperf->compute_hash)(nbperf, nbperf->keys[i],
+			    nbperf->keylens[i], (uint32_t *)hashes16);
+		else
+			(*nbperf->compute_hash)(nbperf, nbperf->keys[i],
+			    nbperf->keylens[i], hashes);
 		e = graph->edges + i;
 		for (j = 0; j < GRAPH_SIZE; ++j) {
-			e->vertices[j] = hashes[j] % graph->v;
+			if (nbperf->hashes16)
+				e->vertices[j] = hashes16[j] % graph->v;
+			else
+				e->vertices[j] = hashes[j] % graph->v;
 			if (j == 1 && e->vertices[0] == e->vertices[1]) {
 				if (!nbperf->allow_hash_fudging)
 					return -1;
@@ -226,14 +240,16 @@ SIZED2(_hash)(struct nbperf *nbperf, struct SIZED(graph) *graph)
 				graph->hash_fudge |= 1;
 			}
 #if GRAPH_SIZE >= 3
-			if (j == 2 && (e->vertices[0] == e->vertices[2] ||
-			    e->vertices[1] == e->vertices[2])) {
+			if (j == 2 &&
+			    (e->vertices[0] == e->vertices[2] ||
+				e->vertices[1] == e->vertices[2])) {
 				if (!nbperf->allow_hash_fudging)
 					return -1;
 				graph->hash_fudge |= 2;
 				e->vertices[2] ^= 1;
-				e->vertices[2] ^= 2 * (e->vertices[0] == e->vertices[2] ||
-				    e->vertices[1] == e->vertices[2]);
+				e->vertices[2] ^= 2 *
+				    (e->vertices[0] == e->vertices[2] ||
+					e->vertices[1] == e->vertices[2]);
 			}
 #endif
 		}
@@ -251,17 +267,18 @@ SIZED2(_hash)(struct nbperf *nbperf, struct SIZED(graph) *graph)
 }
 
 int
-SIZED2(_output_order)(struct SIZED(graph) *graph)
+SIZED2(_output_order)(struct SIZED(graph) * graph)
 {
 	size_t i, j;
-	struct SIZED(edge) *e2;
+	struct SIZED(edge) * e2;
 
 	graph->output_index = graph->e;
 
 	for (i = 0; i < graph->v; ++i)
 		SIZED2(_remove_vertex)(graph, i);
 
-	for (i = graph->e; graph->output_index > 0 && i > graph->output_index;) {
+	for (i = graph->e;
+	     graph->output_index > 0 && i > graph->output_index;) {
 		e2 = graph->edges + graph->output_order[--i];
 		for (j = 0; j < GRAPH_SIZE; ++j)
 			SIZED2(_remove_vertex)(graph, e2->vertices[j]);

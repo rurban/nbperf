@@ -56,6 +56,8 @@
 #define GRAPH_SIZE 2
 #endif
 
+#include <stdint.h>
+
 #define SIZED__(n, i) n ## i
 #define SIZED_(n, i) SIZED__(n, i)
 #define SIZED(n) SIZED_(n, GRAPH_SIZE)

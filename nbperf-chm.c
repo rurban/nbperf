@@ -6,7 +6,7 @@
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Joerg Sonnenberger.
- * Integer keys were added by Reini Urban.
+ * Integer keys and more hashes were added by Reini Urban.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -202,7 +202,7 @@ print_hash(struct nbperf *nbperf, struct state *state)
 		fprintf(nbperf->output, "\n\t};\n");
 	else
 		fprintf(nbperf->output, "\t};\n");
-        if (nbperf->hash_size == 2 && nbperf->c <= 65534)
+        if (nbperf->hash_size == 2 && nbperf->hashes16)
                 /* we read only 2, but write 4 (1x 64bit) into it. */
                 fprintf(nbperf->output, "\tuint16_t h[4];\n\n");
         else
@@ -264,7 +264,7 @@ chm_compute(struct nbperf *nbperf)
 	if (nbperf->c < 1.24)
 		errx(1, "The argument for option -c must be at least 1.24");
 
-	if (nbperf->hash_size < 3)
+	if (nbperf->hash_size < 3 && !nbperf->hashes16)
 		errx(1, "The hash function must generate at least 3 values");
 #else
 	if (nbperf->c == 0)
