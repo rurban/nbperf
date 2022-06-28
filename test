@@ -2,7 +2,7 @@
 set -e
 WORDS=/usr/share/dict/words
 head -n 1000 <${WORDS} >_words1000
-seq 100 | random > _rand100
+seq 200 | random > _rand100
 
 perf() {
     alg=$1
