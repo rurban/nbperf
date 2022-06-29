@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include <errno.h>
 #ifdef _INTKEYS
 uint32_t inthash(const uint32_t key);
 #else
@@ -19,6 +20,9 @@ int main(int argc, char **argv)
     int verbose = argc > 2;
     unsigned i = 0;
     uint32_t h;
+#if defined _INTKEYS || defined bdz
+    uint32_t *map;
+#endif
 
 #ifdef _INTKEYS
 # ifdef bdz
@@ -39,31 +43,41 @@ int main(int argc, char **argv)
 #endif
 
 #if defined bdz
-    uint32_t map[1000];
+    size_t lines = 1000;
+    map = calloc (lines, 4);
     // read map file for the indices
     f = fopen(mapfile, "r");
     if (!f) {
 	perror("fopen");
 	exit(1);
     }
-    while (fscanf(f, "%u\n", &map[i])) {
+    errno = 0;
+    while (1 == fscanf(f, "%u\n", &map[i]) && !errno) {
         i++;
-        if (i >= 1000)
-            break;
+        if (i > lines) {
+            fprintf(stderr, "more than %lu lines in %s\n", lines, mapfile);
+            lines *= 2;
+            map = realloc (map, lines * 4);
+        }
     }
     fclose(f);
 #elif defined _INTKEYS
-    uint32_t map[100];
+    size_t lines = 1000;
+    map = calloc (lines, 4);
     // read input file for the indices
     f = fopen(input, "r");
     if (!f) {
 	perror("fopen");
 	exit(1);
     }
-    while (fscanf(f, "%u\n", &map[i])) {
+    errno = 0;
+    while (1 == fscanf(f, "%u\n", &map[i]) && !errno) {
         i++;
-        if (i >= 1000)
-            break;
+        if (i > lines) {
+            fprintf(stderr, "more than %lu lines in %s\n", lines, input);
+            lines *= 2;
+            map = realloc (map, lines * 4);
+        }
     }
     fclose(f);
 #endif
@@ -85,7 +99,7 @@ int main(int argc, char **argv)
 #else
         h = hash(line, strlen(line));
 #endif
-	if (verbose || i < 10)
+	if (verbose || i < 3)
 #if defined _INTKEYS || defined bdz
             printf("%s: %u, %u\n", line, h, map[i]);
 #else
@@ -101,5 +115,8 @@ int main(int argc, char **argv)
         i++;
     }
     free(line);
+#if defined _INTKEYS || defined bdz
+    free(map);
+#endif
     fclose(f);
 }
