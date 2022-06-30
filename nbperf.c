@@ -221,7 +221,7 @@ inthash_compute(struct nbperf *nbperf, const void *key, size_t keylen,
     uint32_t *hashes)
 {
 	(void)keylen;
-	*(uint64_t *)hashes = (uint64_t)key *
+	*(uint64_t *)hashes = (int64_t)key *
 		/* mult factor from CityHash to reach into 2nd 32bit slot */
 		(UINT64_C(0x9DDFEA08EB382D69) + (uint64_t)nbperf->seed[0]) +
 	    nbperf->seed[1];
@@ -231,7 +231,7 @@ inthash4_compute(struct nbperf *nbperf, const void *key, size_t keylen,
     uint32_t *hashes)
 {
 	(void)keylen;
-	*(uint64_t *)hashes = (uint64_t)key *
+	*(uint64_t *)hashes = (int64_t)key *
 		/* mult factor from CityHash to reach into 2nd 32bit slot, but
 		   not the 3rd */
 		(UINT64_C(0x9DDFEA08EB382D69) + (uint64_t)nbperf->seed[0]) +

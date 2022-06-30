@@ -54,7 +54,7 @@ int main(int argc, char **argv)
     // read map file for the indices
     f = fopen(mapfile, "r");
     if (!f) {
-	perror("fopen");
+	perror("fopen mapfile");
 	exit(1);
     }
     errno = 0;
@@ -74,7 +74,7 @@ int main(int argc, char **argv)
     // read input file for the indices
     f = fopen(input, "r");
     if (!f) {
-	perror("fopen");
+	perror("fopen input");
 	exit(1);
     }
     errno = 0;
@@ -91,7 +91,7 @@ int main(int argc, char **argv)
     i = 0;
     f = fopen(input, "r");
     if (!f) {
-	perror("fopen");
+	perror("fopen input");
 	exit(1);
     }
     line = NULL;

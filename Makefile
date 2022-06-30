@@ -7,7 +7,7 @@ HEADERS = mi_vector_hash.h mi_wyhash.h wyhash.h fnv3.h fnv.h
 WORDS = /usr/share/dict/words
 RANDBIG = _randbig
 CC = cc
-CFLAGS = -I. -O2 -g -fno-strict-aliasing -Wall -Wextra
+CFLAGS = -O2 -g -fno-strict-aliasing -Wall -Wextra
 
 MACHINE := $(shell uname -m)
 ifeq (x86_64,$(MACHINE))
@@ -25,23 +25,23 @@ _words1000:
 check: $(PROG) _words1000 $(RANDBIG)
 	@echo test building a few with big sets
 	./$(PROG) -o _test_chm.c $(WORDS)
-	$(CC) $(CFLAGS) -c _test_chm.c
+	$(CC) $(CFLAGS) -I. -c _test_chm.c
 	./$(PROG) -a bdz -o _test_bdz.c $(WORDS)
-	$(CC) $(CFLAGS) -c _test_bdz.c
+	$(CC) $(CFLAGS) -I. -c _test_bdz.c
 	./$(PROG) -a chm3 -o _test_chm3.c $(WORDS)
-	$(CC) $(CFLAGS) -c _test_chm3.c
+	$(CC) $(CFLAGS) -I. -c _test_chm3.c
 	./$(PROG) -h wyhash -o _test_chm_wy.c $(WORDS)
-	$(CC) $(CFLAGS) -c _test_chm_wy.c
+	$(CC) $(CFLAGS) -I. -c _test_chm_wy.c
 	./$(PROG) -h wyhash -a bdz -o _test_bdz_wy.c $(WORDS)
-	$(CC) $(CFLAGS) -c _test_bdz_wy.c
+	$(CC) $(CFLAGS) -I. -c _test_bdz_wy.c
 	./$(PROG) -h wyhash -a chm3 -o _test_chm3_wy.c $(WORDS)
-	$(CC) $(CFLAGS) -c _test_chm3_wy.c
+	$(CC) $(CFLAGS) -I. -c _test_chm3_wy.c
 	@echo test building intkeys
 	./$(PROG) -I -o _test_int.c $(RANDBIG)
-	$(CC) $(CFLAGS) -c _test_int.c
+	$(CC) $(CFLAGS) -I. -c _test_int.c
 	@echo test all combinations and results with a small set
-	./test
-perf: $(PROG) $(RANDBIG)
+	CFLAGS="$(CFLAGS)" ./test
+perf: $(PROG)
 	@echo time all combinations with big sets
 	./test 2000
 	./test 5000
