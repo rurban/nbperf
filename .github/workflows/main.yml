@@ -10,7 +10,7 @@ jobs:
       matrix:
         CFLAGS:
           -
-          - -O2 -g -fsanitize=address
+          - -O2 -g -fsanitize=address -DASAN
     steps:
     - uses: actions/checkout@v2
       with:

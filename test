@@ -11,6 +11,10 @@ if [ -z "$CFLAGS" ]; then
     then
         CFLAGS="$CFLAGS -march=native"
     fi
+else
+    case "$CFLAGS" in
+        *-fsanitize=address*) ASAN=1; CFLAGS="$CFLAGS -DASAN" ;;
+    esac
 fi
 if [ -z "$1" ]
 then
@@ -49,7 +53,7 @@ perf() {
         then
              alg=chm
         fi
-	echo nbperf $opts -a $alg -o _test_int$alg.c $mapopt ${RANDIN}
+	echo ./nbperf $opts -a $alg -o _test_int$alg.c $mapopt ${RANDIN}
 	command time --format="Time: %e" ./nbperf $opts -a $alg -o _test_int$alg.c $mapopt ${RANDIN}
 	[ -z $PERF ] && echo $CC $CFLAGS -I. -D_INTKEYS -D$alg _test_int$alg.c test_main.c -o _test_int$alg
 	$CC $CFLAGS -I. $PERF -D_INTKEYS -D$alg _test_int$alg.c test_main.c -o _test_int$alg
@@ -57,14 +61,14 @@ perf() {
         command time --format="Runtime: %e" ./_test_int$alg ${RANDIN}
     elif [ -z $hash ]
     then
-	echo nbperf $opts -a $alg -o _test_${alg}.c $mapopt ${WORDSIN}
+	echo ./nbperf $opts -a $alg -o _test_${alg}.c $mapopt ${WORDSIN}
 	command time --format="Time: %e" ./nbperf $opts -a $alg -o _test_${alg}.c $mapopt ${WORDSIN}
         [ -z $PERF ] && echo $CC $CFLAGS -I. -D$alg _test_${alg}.c test_main.c mi_vector_hash.c -o _test_${alg}
 	$CC $CFLAGS -I. $PERF -D$alg _test_${alg}.c test_main.c mi_vector_hash.c -o _test_${alg}
         echo ./_test_${alg} ${WORDSIN}
         command time --format="Runtime: %e" ./_test_${alg} ${WORDSIN}
     else
-	echo nbperf $opts -a $alg -h $hash -o _test_${alg}_${hash}.c $mapopt ${WORDSIN}
+	echo ./nbperf $opts -a $alg -h $hash -o _test_${alg}_${hash}.c $mapopt ${WORDSIN}
 	command time --format="Time: %e" ./nbperf $opts -a $alg -h $hash -o _test_${alg}_${hash}.c $mapopt ${WORDSIN}
         [ -z $PERF ] && echo $CC $CFLAGS -I. -D$alg -Dh_$hash _test_${alg}_${hash}.c test_main.c -o _test_${alg}_${hash}
 	$CC $CFLAGS -I. $PERF -D$alg -Dh_$hash _test_${alg}_${hash}.c test_main.c -o _test_${alg}_${hash}

@@ -296,6 +296,15 @@ set_hash(struct nbperf *nbperf, const char *arg)
 		nbperf->seed_hash = mi_vector_hash_seed;
 		nbperf->compute_hash = mi_vector_hash_compute;
 		nbperf->print_hash = mi_vector_hash_print;
+#ifdef ASAN
+		errx(1, "This hash function is disallowed with address-sanitizer");
+#else
+# if defined(__has_feature)
+#  if __has_feature(address_sanitizer)
+		errx(1, "This hash function is disallowed with address-sanitizer");
+#  endif
+# endif
+#endif
 		return;
 	} else if (strcmp(arg, "wyhash") == 0) {
 		nbperf->hash_size = 4;
@@ -370,7 +379,19 @@ main(int argc, char **argv)
 	int looped, ch;
 	int (*build_hash)(struct nbperf *) = chm_compute;
 
+#ifdef ASAN
+	set_hash(&nbperf, "wyhash");
+#else
+# if defined(__has_feature)
+#  if __has_feature(address_sanitizer)
+	set_hash(&nbperf, "wyhash");
+#  else
 	set_hash(&nbperf, "mi_vector_hash");
+#  endif
+# else
+	set_hash(&nbperf, "mi_vector_hash");
+# endif
+#endif
 
 	while ((ch = getopt(argc, argv, "a:c:fh:i:m:n:o:psI")) != -1) {
 		switch (ch) {
