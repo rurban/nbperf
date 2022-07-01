@@ -89,6 +89,30 @@ as the input is constant.
 
 The **nbperf** utility exits 0 on success, and >0 if an error occurs.
 
+# COMPARISON
+
+1. This nbperf variant extends the original NetBSD code with support for
+much better, safer and faster hashes. The original `mi_vector_hash` reads
+past strings for up to 3 bytes, and when such a string is at the end of a page,
+it might fail. wyhash and on x86_64 or aarch64 hardware-assisted CRC allows
+much faster run-time hashing, whilst not reading out of bounds.
+In my gperf port I have some performance graphs with chm, chm3, bpz:
+https://gitlab.com/rurban/gperf/-/blob/hashfuncs/doc/run.svg
+
+2. It supports **integer keys** with much faster run-time lookup than for strings.
+It is currently the only perfect hash generator for integers, such as e.g. for
+fast unicode property lookups.
+
+3. It supports smaller 16bit hashes when the key size fits into 16bit, i.e. max 65534 keys.
+This enables faster run-time hashing. The internal hash must not generate 3
+independent 32bit values, 3 16bit values are enough, which is usually twice as fast.
+
+4. **gperf** integer key support and perfect hash support for larger keysizes is
+still in work. **PostgresQL** uses a perl script for its CHM support with strings only.
+**perl5** uses slower run-time perfect hashes for its unicode tables.
+**cmph** is only suitable for huge keysizes, and carries a heavy run-time overhead,
+plus needs the run-time library.
+
 # SEE ALSO
 
 * gperf(1)
