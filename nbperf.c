@@ -95,7 +95,7 @@ mi_vector_hash_compute(struct nbperf *nbperf, const void *key, size_t keylen,
 	mi_vector_hash(key, keylen, nbperf->seed[0], hashes);
 }
 
-static void
+void
 mi_vector_hash_print(struct nbperf *nbperf, const char *indent, const char *key,
     const char *keylen, const char *hash)
 {
@@ -376,9 +376,10 @@ main(int argc, char **argv)
 		switch (ch) {
 		case 'a':
 			/* Accept bdz as alias for netbsd-6 compat. */
-			if (strcmp(optarg, "chm") == 0)
+			if (strcmp(optarg, "chm") == 0) {
 				build_hash = chm_compute;
-			else if (strcmp(optarg, "chm3") == 0)
+				nbperf.hash_size = 2;
+			} else if (strcmp(optarg, "chm3") == 0)
 				build_hash = chm3_compute;
 			else if ((strcmp(optarg, "bpz") == 0 ||
 				     strcmp(optarg, "bdz") == 0))
@@ -448,14 +449,17 @@ main(int argc, char **argv)
 	if (argc > 1)
 		usage();
 
-	if (build_hash == bpz_compute && nbperf.intkeys > 0) {
+	if (build_hash == chm_compute && nbperf.hash_size == 3)
+		nbperf.hash_size = 2; // wyhash not
+	if (nbperf.intkeys &&
+	    (build_hash == bpz_compute || build_hash == chm3_compute)) {
 		nbperf.hash_size = 4;
 		nbperf.compute_hash = inthash4_compute;
 	}
 	if (build_hash == bpz_compute && nbperf.hash_size < 3)
 		errx(1, "Unsupport algorithm: %s", "bpz");
-	if (build_hash == chm3_compute && nbperf.intkeys)
-		errx(1, "Unsupport algorithm: %s", "chm3");
+	//if (build_hash == chm3_compute && nbperf.intkeys)
+	//	errx(1, "Unsupport algorithm: %s", "chm3");
 
 	if (argc == 1) {
 		input = fopen(argv[0], "r");

@@ -4,7 +4,7 @@
 set -e
 WORDS=/usr/share/dict/words
 CC=cc
-if [ -z $CFLAGS ]; then
+if [ -z "$CFLAGS" ]; then
     CFLAGS="-O2 -g -fno-strict-aliasing"
     MACHINE=$(uname -m)
     if [ _$MACHINE = _x86_64 ]
@@ -105,8 +105,7 @@ perf bdz wyhash -p
 perf chm "" -Ip
 perf chm "" -I
 perf chm "" -Ifp
-#FIXME
-#perf chm3 "" -I
+perf chm3 "" -I
 perf bdz "" -Ip
 perf bdz "" -I
 perf bdz "" -Ifp

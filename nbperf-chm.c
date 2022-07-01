@@ -205,6 +205,9 @@ print_hash(struct nbperf *nbperf, struct state *state)
         if (nbperf->hash_size == 2 && nbperf->hashes16)
                 /* we read only 2, but write 4 (1x 64bit) into it. */
                 fprintf(nbperf->output, "\tuint16_t h[4];\n\n");
+        else if (nbperf->hash_size == 2)
+                /* most hashes writes to 3 32bit hashes */
+                fprintf(nbperf->output, "\tuint32_t h[3];\n\n");
         else
                 fprintf(nbperf->output, "\tuint32_t h[%zu];\n\n", nbperf->hash_size);
 	(*nbperf->print_hash)(nbperf, "\t", "key", "keylen", "h");
@@ -223,21 +226,23 @@ print_hash(struct nbperf *nbperf, struct state *state)
 		fprintf(nbperf->output, "\th[1] ^= (h[0] == h[1]);\n");
 
 #if GRAPH_SIZE >= 3
-	if (state->graph.hash_fudge & 2) {
+	if (nbperf->hash_size > 2 && state->graph.hash_fudge & 2) {
 		fprintf(nbperf->output,
 		    "\th[2] ^= (h[0] == h[2] || h[1] == h[2]);\n");
 		fprintf(nbperf->output,
 		    "\th[2] ^= 2 * (h[0] == h[2] || h[1] == h[2]);\n");
 	}
+	if (nbperf->hash_size > 2)
+		fprintf(nbperf->output,
+		    "\treturn (g[h[0]] + g[h[1]] + g[h[2]]) %% "
+		    "%" PRIu32 ";\n",
+		    state->graph.e);
+	else // for short hashes
 #endif
-
-#if GRAPH_SIZE >= 3
-	fprintf(nbperf->output, "\treturn (g[h[0]] + g[h[1]] + g[h[2]]) %% "
-	    "%" PRIu32 ";\n", state->graph.e);
-#else
-	fprintf(nbperf->output, "\treturn (g[h[0]] + g[h[1]]) %% "
-	    "%" PRIu32 ";\n", state->graph.e);
-#endif
+	fprintf(nbperf->output,
+		    "\treturn (g[h[0]] + g[h[1]]) %% "
+		    "%" PRIu32 ";\n",
+		    state->graph.e);
 	fprintf(nbperf->output, "}\n");
 
 	if (nbperf->map_output != NULL) {

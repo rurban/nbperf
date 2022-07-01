@@ -36,9 +36,13 @@ check: $(PROG) _words1000 $(RANDBIG)
 	$(CC) $(CFLAGS) -I. -c _test_bdz_wy.c
 	./$(PROG) -h wyhash -a chm3 -o _test_chm3_wy.c $(WORDS)
 	$(CC) $(CFLAGS) -I. -c _test_chm3_wy.c
+	@echo
 	@echo test building intkeys
 	./$(PROG) -I -o _test_int.c $(RANDBIG)
 	$(CC) $(CFLAGS) -I. -c _test_int.c
+	./$(PROG) -I -a bdz -o _test_intbdz.c $(RANDBIG)
+	$(CC) $(CFLAGS) -I. -c _test_intbdz.c
+	@echo
 	@echo test all combinations and results with a small set
 	CFLAGS="$(CFLAGS)" ./test
 perf: $(PROG)

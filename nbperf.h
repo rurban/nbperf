@@ -66,3 +66,5 @@ int chm_compute(struct nbperf *);
 int chm3_compute(struct nbperf *);
 int bpz_compute(struct nbperf *);
 void print_coda(struct nbperf *);
+void mi_vector_hash_print(struct nbperf *nbperf, const char *indent, const char *key,
+                          const char *keylen, const char *hash);
