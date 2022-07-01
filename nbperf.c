@@ -454,6 +454,8 @@ main(int argc, char **argv)
 	}
 	if (build_hash == bpz_compute && nbperf.hash_size < 3)
 		errx(1, "Unsupport algorithm: %s", "bpz");
+	if (build_hash == chm3_compute && nbperf.intkeys)
+		errx(1, "Unsupport algorithm: %s", "chm3");
 
 	if (argc == 1) {
 		input = fopen(argv[0], "r");

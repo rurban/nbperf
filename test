@@ -105,7 +105,8 @@ perf bdz wyhash -p
 perf chm "" -Ip
 perf chm "" -I
 perf chm "" -Ifp
-perf chm3 "" -I
+#FIXME
+#perf chm3 "" -I
 perf bdz "" -Ip
 perf bdz "" -I
 perf bdz "" -Ifp
