@@ -169,7 +169,7 @@ print_hash(struct nbperf *nbperf, struct state *state)
 			"%s(const void * __restrict key, size_t keylen)\n",
 			nbperf->hash_name);
 	else
-		fprintf(nbperf->output,	"%s(const uint32_t key)\n", nbperf->hash_name);
+		fprintf(nbperf->output,	"%s(const int32_t key)\n", nbperf->hash_name);
 	fprintf(nbperf->output, "{\n");
 	if (state->graph.v >= 65536) {
 		g_type = "uint32_t";

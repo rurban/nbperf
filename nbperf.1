@@ -143,10 +143,10 @@ flag is specified, it will be static.
 .Pp
 If the
 .Fl I
-flag is specified, the keys are integers, and the generated
-hash function will have the signature
+flag is specified, the keys are interpreted as integers (not hex), and
+the generated hash function will have the signature
 .Ft uint32_t
-.Fn hash "const uint32_t key"
+.Fn inthash "const int32_t key"
 .Pp
 After each failing iteration, a dot is written to stderr.
 .Pp
