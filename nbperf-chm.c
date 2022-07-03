@@ -202,14 +202,16 @@ print_hash(struct nbperf *nbperf, struct state *state)
 		fprintf(nbperf->output, "\n\t};\n");
 	else
 		fprintf(nbperf->output, "\t};\n");
-        if (nbperf->hash_size == 2 && nbperf->hashes16)
-                /* we read only 2, but write 4 (1x 64bit) into it. */
-                fprintf(nbperf->output, "\tuint16_t h[4];\n\n");
-        else if (nbperf->hash_size == 2)
-                /* most hashes writes to 3 32bit hashes */
-                fprintf(nbperf->output, "\tuint32_t h[3];\n\n");
-        else
-                fprintf(nbperf->output, "\tuint32_t h[%zu];\n\n", nbperf->hash_size);
+	if (nbperf->hashes16) {
+                if (nbperf->hash_size == 2)
+			fprintf(nbperf->output, "\tuint16_t h[4];\n\n");
+                else
+			fprintf(nbperf->output, "\tuint16_t h[8];\n\n");
+	}
+	else if (nbperf->hash_size == 2)
+		fprintf(nbperf->output, "\tuint32_t h[2];\n\n");
+	else /* but most hashes writes to 3 or 4 32bit hashes. */
+		fprintf(nbperf->output, "\tuint32_t h[4];\n\n");
 	(*nbperf->print_hash)(nbperf, "\t", "key", "keylen", "h");
 
 	fprintf(nbperf->output, "\n\th[0] = h[0] %% %" PRIu32 ";\n",

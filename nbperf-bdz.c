@@ -236,7 +236,7 @@ print_hash(struct nbperf *nbperf, struct state *state)
 
 	fprintf(nbperf->output, "\tuint32_t idx, idx2;\n");
         if (nbperf->hashes16)
-                fprintf(nbperf->output, "\tuint16_t h[4];\n\n");
+                fprintf(nbperf->output, "\tuint16_t h[8];\n\n");
         else
                 fprintf(nbperf->output, "\tuint32_t h[%zu];\n\n", nbperf->hash_size);
 
