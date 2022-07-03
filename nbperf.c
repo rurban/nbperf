@@ -129,7 +129,7 @@ wyhash_compute(struct nbperf *nbperf, const void *key, size_t keylen,
     uint32_t *hashes)
 {
 	uint64_t seed = *(uint64_t *)nbperf->seed;
-	mi_wyhash3(key, keylen, seed, (uint64_t *)hashes);
+	mi_wyhash4(key, keylen, seed, (uint64_t *)hashes);
 }
 
 static void
@@ -138,7 +138,7 @@ wyhash_print(struct nbperf *nbperf, const char *indent, const char *key,
 {
 	uint64_t seed = *(uint64_t *)nbperf->seed;
 	fprintf(nbperf->output,
-	    "%smi_wyhash3(%s, %s, UINT64_C(0x%" PRIx64 "), (uint64_t*)%s);\n",
+	    "%smi_wyhash4(%s, %s, UINT64_C(0x%" PRIx64 "), (uint64_t*)%s);\n",
 	    indent, key, keylen, seed, hash);
 }
 static void

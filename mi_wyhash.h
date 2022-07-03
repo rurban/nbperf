@@ -15,7 +15,7 @@ mi_wyhash(const void *key, uint64_t keylen, unsigned seed, uint32_t *hashes)
 }
 */
 
-static inline void mi_wyhash3(const void *key, size_t len, uint64_t seed, uint64_t *hashes){
+static inline void mi_wyhash4(const void *key, size_t len, uint64_t seed, uint64_t *hashes){
   const uint64_t secret[4] = { _wyp[0],_wyp[1],_wyp[2],_wyp[3] };
   const uint8_t *p=(const uint8_t *)key; seed^=secret[0];	uint64_t	a,	b;
   if(_likely_(len<=16)){
