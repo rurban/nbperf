@@ -60,7 +60,7 @@ int main(int argc, char **argv)
     errno = 0;
     while (1 == fscanf(f, "%u\n", &map[i]) && !errno) {
         i++;
-        if (i > lines) {
+        if (i >= lines) {
             fprintf(stderr, "more than %lu lines in %s\n", lines, mapfile);
             lines *= 2;
             map = realloc (map, lines * 4);
@@ -80,7 +80,7 @@ int main(int argc, char **argv)
     errno = 0;
     while (1 == fscanf(f, "%u\n", &map[i]) && !errno) {
         i++;
-        if (i > lines) {
+        if (i >= lines) {
             fprintf(stderr, "more than %lu lines in %s\n", lines, input);
             lines *= 2;
             map = realloc (map, lines * 4);
