@@ -327,7 +327,7 @@ set_hash(struct nbperf *nbperf, const char *arg)
 #endif
 		return;
 	} else if (strcmp(arg, "wyhash") == 0) {
-		nbperf->hash_size = 8;
+		nbperf->hash_size = 4;
 		nbperf->compute_hash = wyhash4_compute;
 		nbperf->hash_header = "mi_wyhash.h";
 		nbperf->seed_hash = wyhash_seed;
@@ -417,13 +417,12 @@ main(int argc, char **argv)
 		switch (ch) {
 		case 'a':
 			/* Accept bdz as alias for netbsd-6 compat. */
-			if (strcmp(optarg, "chm") == 0) {
+			if (strcmp(optarg, "chm") == 0)
 				build_hash = chm_compute;
-				//nbperf.hash_size = 2;
-			} else if (strcmp(optarg, "chm3") == 0)
+			else if (strcmp(optarg, "chm3") == 0)
 				build_hash = chm3_compute;
 			else if ((strcmp(optarg, "bpz") == 0 ||
-				     strcmp(optarg, "bdz") == 0))
+                                  strcmp(optarg, "bdz") == 0))
 				build_hash = bpz_compute;
 			else
 				errx(1, "Unsupport algorithm: %s", optarg);
@@ -492,15 +491,14 @@ main(int argc, char **argv)
 
 	//if (build_hash == chm_compute && nbperf.hash_size == 3)
 	//	nbperf.hash_size = 2; // wyhash not
-	if (nbperf.intkeys &&
-	    (build_hash == bpz_compute || build_hash == chm3_compute)) {
-		nbperf.hash_size = 4;
-		nbperf.compute_hash = inthash4_compute;
+	if (build_hash == bpz_compute || build_hash == chm3_compute) {
+		if (nbperf.intkeys) {
+			nbperf.hash_size = 4;
+			nbperf.compute_hash = inthash4_compute;
+		}
+		if (nbperf.hash_size < 3)
+			errx(1, "Unsupported algorithm with hash_size %d", nbperf.hash_size);
 	}
-	if (build_hash == bpz_compute && nbperf.hash_size < 3)
-		errx(1, "Unsupport algorithm: %s", "bpz");
-	//if (build_hash == chm3_compute && nbperf.intkeys)
-	//	errx(1, "Unsupport algorithm: %s", "chm3");
 
 	if (argc == 1) {
 		input = fopen(argv[0], "r");
@@ -565,20 +563,22 @@ main(int argc, char **argv)
 	/* with less keys we can use smaller and esp. faster 16bit hashes */
 	if (curlen <= 65534) {
 		nbperf.hashes16 = 1;
-		if (nbperf.intkeys > 0) {
-			if (nbperf.hash_size == 2)
-				nbperf.compute_hash = inthash2_compute;
-			else
-				nbperf.compute_hash = inthash_compute;
-		} else if (nbperf.compute_hash == crc_compute) {
-			nbperf.hash_size = 2;
-			nbperf.hash_header = "crc2.h";
-			nbperf.compute_hash = crc2_compute;
-		} else if (nbperf.compute_hash == wyhash4_compute) {
-			nbperf.hash_size = 2;
-			nbperf.compute_hash = wyhash2_compute;
+		if (build_hash == chm_compute) {
+			if (nbperf.intkeys > 0) {
+				if (nbperf.hash_size == 2)
+					nbperf.compute_hash = inthash2_compute;
+				else
+					nbperf.compute_hash = inthash_compute;
+			} else if (nbperf.compute_hash == crc_compute) {
+				nbperf.hash_size = 2;
+				nbperf.hash_header = "crc2.h";
+				nbperf.compute_hash = crc2_compute;
+			} else if (nbperf.compute_hash == wyhash4_compute) {
+				nbperf.hash_size = 2;
+				nbperf.compute_hash = wyhash2_compute;
+			}
 		}
-	}
+        }
 
 	looped = 0;
 	int rv;

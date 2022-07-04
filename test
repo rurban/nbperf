@@ -87,9 +87,9 @@ perf chm fnv
 perf chm fnv3
 perf chm3 fnv3
 perf bdz fnv3 -f
-perf chm crc
-perf chm crc -f
-perf chm crc -fp
+#perf chm crc
+#perf chm crc -f
+#perf chm crc -fp
 perf chm wyhash -f
 perf chm3 wyhash -f
 perf bdz wyhash -f
@@ -99,12 +99,6 @@ perf bdz wyhash -fp
 perf chm wyhash -p
 perf chm3 wyhash -p
 perf bdz wyhash -p
-#perf chm wyhash -fps
-#perf chm3 wyhash -fps
-#perf bdz wyhash -fps
-#perf chm wyhash -fs
-#perf chm3 wyhash -fs
-#perf bdz wyhash -fs
 
 perf chm "" -Ip
 perf chm "" -I

@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stddef.h>
 
 /* MPH needs at least 96 bit */
 static inline void fnv3(const void *key, size_t len, uint64_t seed,

@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stddef.h>
 
 static inline void fnv(const void *key, size_t len, uint64_t seed,
                        uint64_t *hashes)
