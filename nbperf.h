@@ -59,7 +59,7 @@ struct nbperf {
 	void (*print_hash)(struct nbperf *, const char *, const char *,
 	    const char *, const char *);
 	void (*compute_hash)(struct nbperf *, const void *, size_t, uint32_t *);
-	uint32_t seed[1];
+	uint32_t seed[2];
 };
 
 int chm_compute(struct nbperf *);

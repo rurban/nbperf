@@ -1,6 +1,7 @@
 .\"	$NetBSD: nbperf.1,v 1.8 2021/01/07 16:03:08 joerg Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2022 Reini Urban
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -35,7 +36,7 @@
 .Nd compute a perfect hash function
 .Sh SYNOPSIS
 .Nm
-.Op Fl fpsI
+.Op Fl fIps
 .Op Fl a Ar algorithm
 .Op Fl c Ar utilisation
 .Op Fl h Ar hash
@@ -107,13 +108,13 @@ See
 .El
 .Bl -tag -width "wyhash"
 .It Sy wyhash
-64bit version of wyhash. Only for -a chm.
+64bit version of wyhash.
 See
 .Xr wyhash 3 .
 .El
 .Bl -tag -width "fnv"
 .It Sy fnv
-64bit fnv-1a. Only for -a chm.
+64bit fnv-1a. Only for -a chm or with less than 65534 keys.
 See
 .Xr fnv 3 .
 .El
@@ -122,6 +123,12 @@ See
 2x 64bit fnv-1a. Also for -a chm3 and bdz.
 See
 .Xr fnv 3 .
+.El
+.Bl -tag -width "crc"
+.It Sy crc
+32bit iSCSI CRC32 in hardware if supported at compile-time, or software fallback.
+See
+.Xr crc32 1 .
 .El
 .Pp
 The number of iterations can be limited with

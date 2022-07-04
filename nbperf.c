@@ -58,10 +58,7 @@ __RCSID("$NetBSD: nbperf.c,v 1.7 2021/01/12 14:21:18 joerg Exp $")
 #include "fnv3.h"
 #include "mi_vector_hash.h"
 #include "mi_wyhash.h"
-#ifdef HAVE_CRC
-#include "crc2.h"
 #include "crc3.h"
-#endif
 
 static /*__dead*/
     void
@@ -200,7 +197,6 @@ fnv3_print(struct nbperf *nbperf, const char *indent, const char *key,
 	    "%sfnv3(%s, %s, UINT64_C(0x%" PRIx64 "), (uint64_t*)%s);\n", indent,
 	    key, keylen, seed, hash);
 }
-#ifdef HAVE_CRC
 static void
 crc_compute(struct nbperf *nbperf, const void *key, size_t keylen,
     uint32_t *hashes)
@@ -214,7 +210,7 @@ crc2_compute(struct nbperf *nbperf, const void *key, size_t keylen,
     uint32_t *hashes)
 {
 	uint64_t seed = *(uint64_t *)nbperf->seed;
-        // produces one 64bit hash
+        // produces one 64bit hash, resp. two 32bit hashes
 	crc2(key, keylen, seed, (uint64_t *)hashes);
 }
 static void
@@ -227,7 +223,6 @@ crc_print(struct nbperf *nbperf, const char *indent, const char *key,
 	    indent, nbperf->compute_hash == crc2_compute ? "2" : "3", key,
 	    keylen, seed, hash);
 }
-#endif
 
 void
 inthash_compute(struct nbperf *nbperf, const void *key, size_t keylen,
@@ -350,7 +345,7 @@ set_hash(struct nbperf *nbperf, const char *arg)
 	}
 #ifdef HAVE_CRC
 	else if (strcmp(arg, "crc") == 0) {
-		nbperf->hash_size = 4;
+		nbperf->hash_size = 3;
 		nbperf->compute_hash = crc_compute;
 		nbperf->hash_header = "crc3.h";
 		nbperf->seed_hash = fnv_seed;
