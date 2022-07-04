@@ -37,8 +37,8 @@
 #include "nbtool_config.h"
 #endif
 
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: graph2.c,v 1.5 2021/01/07 16:03:08 joerg Exp $")
+//#include <sys/cdefs.h>
+//__RCSID("$NetBSD: graph2.c,v 1.5 2021/01/07 16:03:08 joerg Exp $")
 
 #include <err.h>
 #include <inttypes.h>
@@ -206,7 +206,7 @@ SIZED2(_hash)(struct nbperf *nbperf, struct SIZED(graph) * graph)
 {
 	struct SIZED(edge) * e;
 	uint32_t hashes[4];
-	uint16_t hashes16[4];
+	uint16_t hashes16[8];
 	size_t i, j;
 
 #if GRAPH_SIZE == 2

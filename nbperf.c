@@ -90,7 +90,7 @@ mi_vector_hash_seed(struct nbperf *nbperf)
 
 static void
 mi_vector_hash_compute(struct nbperf *nbperf, const void *key, size_t keylen,
-    uint32_t *hashes)
+    uint32_t hashes[3])
 {
 	mi_vector_hash(key, keylen, nbperf->seed[0], hashes);
 }
@@ -125,21 +125,34 @@ wyhash_seed(struct nbperf *nbperf)
 }
 
 static void
-wyhash_compute(struct nbperf *nbperf, const void *key, size_t keylen,
+wyhash2_compute(struct nbperf *nbperf, const void *key, size_t keylen,
+    uint32_t *hashes)
+{
+	uint64_t seed = *(uint64_t *)nbperf->seed;
+	mi_wyhash2(key, keylen, seed, hashes);
+}
+static void
+wyhash4_compute(struct nbperf *nbperf, const void *key, size_t keylen,
     uint32_t *hashes)
 {
 	uint64_t seed = *(uint64_t *)nbperf->seed;
 	mi_wyhash4(key, keylen, seed, (uint64_t *)hashes);
 }
-
 static void
 wyhash_print(struct nbperf *nbperf, const char *indent, const char *key,
     const char *keylen, const char *hash)
 {
 	uint64_t seed = *(uint64_t *)nbperf->seed;
-	fprintf(nbperf->output,
-	    "%smi_wyhash4(%s, %s, UINT64_C(0x%" PRIx64 "), (uint64_t*)%s);\n",
-	    indent, key, keylen, seed, hash);
+        if (nbperf->compute_hash == wyhash2_compute)
+		fprintf(nbperf->output,
+		    "%smi_wyhash2(%s, %s, UINT64_C(0x%" PRIx64
+		    "), (uint32_t*)%s);\n",
+		    indent, key, keylen, seed, hash);
+        else
+		fprintf(nbperf->output,
+		    "%smi_wyhash4(%s, %s, UINT64_C(0x%" PRIx64
+		    "), (uint64_t*)%s);\n",
+		    indent, key, keylen, seed, hash);
 }
 static void
 fnv_compute(struct nbperf *nbperf, const void *key, size_t keylen,
@@ -193,7 +206,7 @@ crc_compute(struct nbperf *nbperf, const void *key, size_t keylen,
     uint32_t *hashes)
 {
 	uint64_t seed = *(uint64_t *)nbperf->seed;
-        // produces two 64bit hashes (needed for 3 hashes)
+        // produces three 32bit hashes from 2 seeds
 	crc3(key, keylen, seed, (uint64_t *)hashes);
 }
 static void
@@ -307,40 +320,40 @@ set_hash(struct nbperf *nbperf, const char *arg)
 #endif
 		return;
 	} else if (strcmp(arg, "wyhash") == 0) {
-		nbperf->hash_size = 4;
+		nbperf->hash_size = 8;
+		nbperf->compute_hash = wyhash4_compute;
 		nbperf->hash_header = "mi_wyhash.h";
 		nbperf->seed_hash = wyhash_seed;
-		nbperf->compute_hash = wyhash_compute;
 		nbperf->print_hash = wyhash_print;
 		return;
 	} else if (strcmp(arg, "fnv") == 0) {
 		nbperf->hash_size = 2;
+		nbperf->compute_hash = fnv_compute;
 		nbperf->hash_header = "fnv.h";
 		nbperf->seed_hash = fnv_seed;
-		nbperf->compute_hash = fnv_compute;
 		nbperf->print_hash = fnv_print;
 		return;
 	} else if (strcmp(arg, "fnv3") == 0) {
 		nbperf->hash_size = 4;
+		nbperf->compute_hash = fnv3_compute;
 		nbperf->hash_header = "fnv3.h";
 		nbperf->seed_hash = fnv_seed;
-		nbperf->compute_hash = fnv3_compute;
 		nbperf->print_hash = fnv3_print;
 		return;
 	} else if (strcmp(arg, "inthash") == 0) {
 		nbperf->hash_header = NULL;
-		nbperf->seed_hash = fnv_seed;
 		nbperf->hash_size = 2;
 		nbperf->compute_hash = inthash_compute;
+		nbperf->seed_hash = fnv_seed;
 		nbperf->print_hash = inthash_print;
 		return;
 	}
 #ifdef HAVE_CRC
 	else if (strcmp(arg, "crc") == 0) {
 		nbperf->hash_size = 4;
+		nbperf->compute_hash = crc_compute;
 		nbperf->hash_header = "crc3.h";
 		nbperf->seed_hash = fnv_seed;
-		nbperf->compute_hash = crc_compute;
 		nbperf->print_hash = crc_print;
 		return;
 	}
@@ -399,7 +412,7 @@ main(int argc, char **argv)
 			/* Accept bdz as alias for netbsd-6 compat. */
 			if (strcmp(optarg, "chm") == 0) {
 				build_hash = chm_compute;
-				nbperf.hash_size = 2;
+				//nbperf.hash_size = 2;
 			} else if (strcmp(optarg, "chm3") == 0)
 				build_hash = chm3_compute;
 			else if ((strcmp(optarg, "bpz") == 0 ||
@@ -470,8 +483,8 @@ main(int argc, char **argv)
 	if (argc > 1)
 		usage();
 
-	if (build_hash == chm_compute && nbperf.hash_size == 3)
-		nbperf.hash_size = 2; // wyhash not
+	//if (build_hash == chm_compute && nbperf.hash_size == 3)
+	//	nbperf.hash_size = 2; // wyhash not
 	if (nbperf.intkeys &&
 	    (build_hash == bpz_compute || build_hash == chm3_compute)) {
 		nbperf.hash_size = 4;
@@ -544,16 +557,17 @@ main(int argc, char **argv)
 	nbperf.keylens = keylens;
 	/* with less keys we can use smaller and esp. faster 16bit hashes */
 	if (curlen <= 65534) {
+		nbperf.hashes16 = 1;
 		if (nbperf.intkeys > 0) {
-			nbperf.hashes16 = 1;
-			nbperf.hash_size = 2;
 			nbperf.compute_hash = inthash_compute;
 		} else if (nbperf.compute_hash == crc_compute) {
-			nbperf.hashes16 = 1;
 			nbperf.hash_size = 2;
 			nbperf.hash_header = "crc2.h";
 			nbperf.compute_hash = crc2_compute;
-		}
+		} else if (nbperf.compute_hash == wyhash4_compute) {
+			nbperf.hash_size = 2;
+			nbperf.compute_hash = wyhash2_compute;
+                }
 	}
 
 	looped = 0;

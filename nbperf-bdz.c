@@ -37,8 +37,8 @@
 #include "nbtool_config.h"
 #endif
 
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: nbperf-bdz.c,v 1.10 2021/01/07 16:03:08 joerg Exp $")
+//#include <sys/cdefs.h>
+//__RCSID("$NetBSD: nbperf-bdz.c,v 1.10 2021/01/07 16:03:08 joerg Exp $")
 
 #include <err.h>
 #include <inttypes.h>
@@ -236,9 +236,9 @@ print_hash(struct nbperf *nbperf, struct state *state)
 
 	fprintf(nbperf->output, "\tuint32_t idx, idx2;\n");
         if (nbperf->hashes16)
-                fprintf(nbperf->output, "\tuint16_t h[8];\n\n");
+                fprintf(nbperf->output, "\tuint16_t h[%u];\n\n", nbperf->hash_size * 2);
         else
-                fprintf(nbperf->output, "\tuint32_t h[%zu];\n\n", nbperf->hash_size);
+                fprintf(nbperf->output, "\tuint32_t h[%u];\n\n", nbperf->hash_size);
 
 	(*nbperf->print_hash)(nbperf, "\t", "key", "keylen", "h");
 

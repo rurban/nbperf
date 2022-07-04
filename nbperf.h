@@ -54,7 +54,7 @@ struct nbperf {
 
 	double c;
 
-	size_t hash_size; /* number of 32bit hashes */
+	unsigned hash_size; /* number of 32bit hashes */
 	void (*seed_hash)(struct nbperf *);
 	void (*print_hash)(struct nbperf *, const char *, const char *,
 	    const char *, const char *);

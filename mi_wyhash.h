@@ -1,9 +1,9 @@
 #include <stdint.h>
 #include "wyhash.h"
 
-/* for chm only
+/* for chm or hashes16 */
 static inline void
-mi_wyhash(const void *key, uint64_t keylen, unsigned seed, uint32_t *hashes)
+mi_wyhash2(const void *key, uint64_t keylen, uint64_t seed, uint32_t *hashes)
 {
     union {
 	uint64_t u64;
@@ -13,7 +13,6 @@ mi_wyhash(const void *key, uint64_t keylen, unsigned seed, uint32_t *hashes)
     hashes[0] = tmp.u32[0];
     hashes[1] = tmp.u32[1];
 }
-*/
 
 static inline void mi_wyhash4(const void *key, size_t len, uint64_t seed, uint64_t *hashes){
   const uint64_t secret[4] = { _wyp[0],_wyp[1],_wyp[2],_wyp[3] };
