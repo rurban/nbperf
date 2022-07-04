@@ -239,7 +239,7 @@ inthash2_compute(struct nbperf *nbperf, const void *key, size_t keylen,
     uint32_t *hashes)
 {
 	(void)keylen;
-	*hashes = (int32_t)(ptrdiff_t)key * (UINT32_C(0xEB382D69) + nbperf->seed[0]) +
+	*hashes = ((ptrdiff_t)key & 0xFFFFFFFF) * (UINT32_C(0xEB382D69) + nbperf->seed[0]) +
 	    nbperf->seed[1];
 }
 void

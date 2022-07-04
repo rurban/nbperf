@@ -18,30 +18,42 @@ $(PROG): $(SRCS) mi_vector_hash.c mi_vector_hash.h wyhash.h nbtool_config.h
 	$(CC) $(CFLAGS) -DHAVE_NBTOOL_CONFIG_H $(SRCS) mi_vector_hash.c -o $@
 
 $(RANDBIG):
-	seq 160000 | random > $(RANDBIG)
+	seq 160000 | random > $@
+_rand100:
+	seq 200 | random > $@
+_words: $(WORDS)
+	cp $(WORDS) $@
 _words1000:
 	head -n 1000 $(WORDS) > $@
 
-check: $(PROG) _words1000 $(RANDBIG)
+check: $(PROG) _words1000 _words $(RANDBIG)
 	@echo test building a few with big sets
 	./$(PROG) -o _test_chm.c $(WORDS)
-	$(CC) $(CFLAGS) -I. -c _test_chm.c
-	./$(PROG) -a bdz -o _test_bdz.c $(WORDS)
-	$(CC) $(CFLAGS) -I. -c _test_bdz.c
+	$(CC) $(CFLAGS) -I. -Dchm -o _test_chm _test_chm.c test_main.c mi_vector_hash.c
+	./_test_chm $(WORDS)
+	./$(PROG) -a bdz -o _test_bdz.c -m _words.map _words
+	$(CC) $(CFLAGS) -I. -Dbdz -o _test_bdz _test_bdz.c test_main.c mi_vector_hash.c
+	./_test_bdz _words
 	./$(PROG) -a chm3 -o _test_chm3.c $(WORDS)
-	$(CC) $(CFLAGS) -I. -c _test_chm3.c
+	$(CC) $(CFLAGS) -I. -Dchm3 -o _test_chm3 _test_chm3.c test_main.c mi_vector_hash.c
+	./_test_chm3 $(WORDS)
 	./$(PROG) -h wyhash -o _test_chm_wy.c $(WORDS)
-	$(CC) $(CFLAGS) -I. -c _test_chm_wy.c
-	./$(PROG) -h wyhash -a bdz -o _test_bdz_wy.c $(WORDS)
-	$(CC) $(CFLAGS) -I. -c _test_bdz_wy.c
+	$(CC) $(CFLAGS) -I. -Dchm -o _test_chm_wy _test_chm_wy.c test_main.c
+	./_test_chm_wy $(WORDS)
+	./$(PROG) -h wyhash -a bdz -o _test_bdz_wy.c -m _words.map _words
+	$(CC) $(CFLAGS) -I. -Dbdz -o _test_bdz_wy _test_bdz_wy.c test_main.c 
+	./_test_bdz_wy _words
 	./$(PROG) -h wyhash -a chm3 -o _test_chm3_wy.c $(WORDS)
-	$(CC) $(CFLAGS) -I. -c _test_chm3_wy.c
+	$(CC) $(CFLAGS) -I. -Dchm3 -o _test_chm3_wy _test_chm3_wy.c test_main.c
+	./_test_chm3_wy $(WORDS)
 	@echo
 	@echo test building intkeys
 	./$(PROG) -I -o _test_int.c $(RANDBIG)
-	$(CC) $(CFLAGS) -I. -c _test_int.c
-	./$(PROG) -I -a bdz -o _test_intbdz.c $(RANDBIG)
-	$(CC) $(CFLAGS) -I. -c _test_intbdz.c
+	$(CC) $(CFLAGS) -I. -Dchm -D_INTKEYS -o _test_int _test_int.c test_main.c
+	./_test_int $(RANDBIG)
+	./$(PROG) -I -a bdz -o _test_intbdz.c -m $(RANDBIG).map $(RANDBIG)
+	$(CC) $(CFLAGS) -I. -Dbdz -D_INTKEYS -o _test_intbdz _test_intbdz.c test_main.c
+	./_test_intbdz $(RANDBIG)
 	@echo
 	@echo test all combinations and results with a small set
 	CFLAGS="$(CFLAGS)" ./test

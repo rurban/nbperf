@@ -35,17 +35,7 @@
 *.i*86
 *.x86_64
 *.hex
-
-# Debug files
-*.dSYM/
-*.su
-*.idb
-*.pdb
-
-.gdbinit
 nbperf
-_test_*.c
-_test_*.o
 test_bdz
 test_chm
 test_chm3
@@ -65,5 +55,22 @@ _test_chm3_fnv3
 _test_chm3_wyhash
 _test_intchm
 _test_intbdz
+_test_bdz_wy
+_test_chm3_wy
+_test_chm_wy
+_test_int*
+_test_big*
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+.gdbinit
+
+# Other
+*.patch
+_test_*.c
+_test_*.o
 _words*
 _rand*
