@@ -235,6 +235,14 @@ inthash_compute(struct nbperf *nbperf, const void *key, size_t keylen,
 	    nbperf->seed[1];
 }
 void
+inthash2_compute(struct nbperf *nbperf, const void *key, size_t keylen,
+    uint32_t *hashes)
+{
+	(void)keylen;
+	*hashes = (int32_t)(ptrdiff_t)key * (UINT32_C(0xEB382D69) + nbperf->seed[0]) +
+	    nbperf->seed[1];
+}
+void
 inthash4_compute(struct nbperf *nbperf, const void *key, size_t keylen,
     uint32_t *hashes)
 {
@@ -252,8 +260,12 @@ inthash_print(struct nbperf *nbperf, const char *indent, const char *key,
     const char *keylen, const char *hash)
 {
 	(void)keylen;
-	fprintf(nbperf->output, "%s_inthash(%s, (uint64_t*)%s);\n", indent, key,
-	    hash);
+	if (nbperf->hashes16)
+	    fprintf(nbperf->output, "%s_inthash2(%s, (uint32_t*)%s);\n", indent, key,
+		    hash);
+	else
+	    fprintf(nbperf->output, "%s_inthash(%s, (uint64_t*)%s);\n", indent, key,
+		    hash);
 }
 
 void
@@ -287,8 +299,8 @@ print_coda(struct nbperf *nbperf)
 	    " */\n/* seed[0]: %" PRIu32 ", seed[1]: %" PRIu32 " */\n",
 	    nbperf->seed[0], nbperf->seed[1]);
 
-	if (!nbperf->intkeys)
-		fprintf(nbperf->output, "#include <stdlib.h>\n");
+	//if (!nbperf->intkeys)
+	//	fprintf(nbperf->output, "#include <stdlib.h>\n");
 	fprintf(nbperf->output, "#include <stdint.h>\n");
 	if (nbperf->hash_header)
 		fprintf(nbperf->output, "#include \"%s\"\n\n",
@@ -554,7 +566,10 @@ main(int argc, char **argv)
 	if (curlen <= 65534) {
 		nbperf.hashes16 = 1;
 		if (nbperf.intkeys > 0) {
-			nbperf.compute_hash = inthash_compute;
+			if (nbperf.hash_size == 2)
+				nbperf.compute_hash = inthash2_compute;
+			else
+				nbperf.compute_hash = inthash_compute;
 		} else if (nbperf.compute_hash == crc_compute) {
 			nbperf.hash_size = 2;
 			nbperf.hash_header = "crc2.h";
@@ -562,7 +577,7 @@ main(int argc, char **argv)
 		} else if (nbperf.compute_hash == wyhash4_compute) {
 			nbperf.hash_size = 2;
 			nbperf.compute_hash = wyhash2_compute;
-                }
+		}
 	}
 
 	looped = 0;

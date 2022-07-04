@@ -18,7 +18,7 @@ int main(int argc, char **argv)
     size_t line_allocated;
     FILE *f;
     int verbose = 0;
-    unsigned i = 0;
+    unsigned i = 1;
     uint32_t h;
 #if defined _INTKEYS || defined bdz
     uint32_t *map;
@@ -116,9 +116,11 @@ int main(int argc, char **argv)
 # if (defined chm || defined chm3) && !defined _INTKEYS
         assert(h == i);
 # else
-#  ifndef _INTKEYS
+        if (h != map[i] && verbose)
+#if defined _INTKEYS
+            printf("%s: %u != %u\n", line, h, map[i]);
+#endif
         assert(h == map[i]);
-#  endif
 # endif
 #endif
         i++;

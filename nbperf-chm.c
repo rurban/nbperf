@@ -154,12 +154,21 @@ print_hash(struct nbperf *nbperf, struct state *state)
 
 	print_coda(nbperf);
 	if (nbperf->intkeys) {
-		fprintf(nbperf->output, "\nstatic void _inthash(const int32_t key, uint64_t *h)\n");
-		fprintf(nbperf->output, "{\n");
-		fprintf(nbperf->output, "	*h = (int64_t)key * (UINT64_C(0x9DDFEA08EB382D69) + UINT64_C(%u))\n"
-			"\t\t + UINT32_C(%u);\n",
-			nbperf->seed[0], nbperf->seed[1]);
-		fprintf(nbperf->output, "}\n\n");
+		if (nbperf->hashes16) {
+			fprintf(nbperf->output, "\nstatic void _inthash2(const int32_t key, uint32_t *h)\n");
+			fprintf(nbperf->output, "{\n");
+			fprintf(nbperf->output, "	*h = key * (UINT32_C(0xEB382D69) + UINT32_C(%u))\n"
+				"\t\t + UINT32_C(%u);\n",
+				nbperf->seed[0], nbperf->seed[1]);
+			fprintf(nbperf->output, "}\n\n");
+		} else {
+			fprintf(nbperf->output, "\nstatic void _inthash(const int32_t key, uint64_t *h)\n");
+			fprintf(nbperf->output, "{\n");
+			fprintf(nbperf->output, "	*h = (int64_t)key * (UINT64_C(0x9DDFEA08EB382D69) + UINT64_C(%u))\n"
+				"\t\t + UINT32_C(%u);\n",
+				nbperf->seed[0], nbperf->seed[1]);
+			fprintf(nbperf->output, "}\n\n");
+		}
 	}
 
 	fprintf(nbperf->output, "%suint32_t ",
