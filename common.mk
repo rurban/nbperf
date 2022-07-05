@@ -52,6 +52,7 @@ check: $(PROG) _words1000 _words $(RANDBIG)
 	CFLAGS="$(CFLAGS)" ./test
 perf: $(PROG)
 	@echo time all combinations with big sets
+	./test 500
 	./test 2000
 	./test 5000
 	./test 10000

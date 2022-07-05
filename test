@@ -89,22 +89,28 @@ perf chm fnv3
 perf chm3 fnv3
 perf bdz fnv3 -f
 perf chm crc
-perf chm crc -f
-perf chm crc -fp
-perf chm wyhash -f
-perf chm3 wyhash -f
-perf bdz wyhash -f
-perf chm wyhash -fp
-perf chm3 wyhash -fp
-perf bdz wyhash -fp
-perf chm wyhash -p
-perf chm3 wyhash -p
-perf bdz wyhash -p
+if [ -z $PERF]; then
+    perf bdz fnv3 -f
+    perf chm crc -f
+    perf chm crc -fp
+    perf chm wyhash -f
+    perf chm3 wyhash -f
+    perf bdz wyhash -f
+    perf chm wyhash -fp
+    perf chm3 wyhash -fp
+    perf bdz wyhash -fp
+    perf chm wyhash -p
+    perf chm3 wyhash -p
+    perf bdz wyhash -p
+fi
 
-perf chm "" -Ip
 perf chm "" -I
-perf chm "" -Ifp
 perf chm3 "" -I
-perf bdz "" -Ip
 perf bdz "" -I
-perf bdz "" -Ifp
+
+if [ -z $PERF]; then
+    perf chm "" -Ip
+    perf chm "" -Ifp
+    perf bdz "" -Ip
+    perf bdz "" -Ifp
+fi

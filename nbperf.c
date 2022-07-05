@@ -629,7 +629,6 @@ main(int argc, char **argv)
 				nbperf.hashes16 = 0;
 #if 0
 				nbperf.hash_size = 2;
-				nbperf.hash_header = "crc2.h";
 				nbperf.compute_hash = crc2_compute;
 #endif
 #endif
