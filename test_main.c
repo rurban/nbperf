@@ -20,8 +20,10 @@ int main(int argc, char **argv)
     int verbose = 0;
     unsigned i = 1;
     uint32_t h;
-#if defined _INTKEYS || defined bdz
+#if defined bdz
     uint32_t *map;
+#elif defined _INTKEYS
+    int32_t *map;
 #endif
 
     if (argc > 1 && strcmp(argv[i], "-v") == 0)
@@ -78,7 +80,7 @@ int main(int argc, char **argv)
 	exit(1);
     }
     errno = 0;
-    while (1 == fscanf(f, "%u\n", &map[i]) && !errno) {
+    while (1 == fscanf(f, "%d\n", &map[i]) && !errno) {
         i++;
         if (i >= lines) {
             fprintf(stderr, "more than %lu lines in %s\n", lines, input);
@@ -102,28 +104,32 @@ int main(int argc, char **argv)
 	    line[line_len] = '\0';
 	}
 #ifdef _INTKEYS
-        h = inthash(atoi(line));
+        int32_t l = atoi(line);
+        h = inthash(l);
 #else
         h = hash(line, strlen(line));
 #endif
 	if (verbose)
 #if defined _INTKEYS || defined bdz
-            printf("%s: %u, %u\n", line, h, map[i]);
+            printf("%s: %d == %d\n", line, (int)h, (int)map[i]);
 #else
             printf("%s: %u\n", line, h);
 #endif
+
 #ifndef PERF
 # if (defined chm || defined chm3) && !defined _INTKEYS
         assert(h == i);
-# else
-        if (h != map[i] && verbose)
-#if defined _INTKEYS
-            printf("%s: %u != %u\n", line, h, map[i]);
+#else
+#if defined _INTKEYS && !defined bdz
+	if (l != map[h] && verbose)
+		printf("%s: %d != %d (%u)\n", line, l, map[h], h);
+	assert(l == map[h]);
+#else // bdz
+	assert(h == map[i]);
 #endif
-        assert(h == map[i]);
-# endif
 #endif
-        i++;
+#endif
+	i++;
     }
     free(line);
 #if defined _INTKEYS || defined bdz
