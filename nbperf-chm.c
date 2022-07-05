@@ -37,13 +37,14 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nbperf-chm.c,v 1.4 2021/01/07 16:03:08 joerg Exp $")
+//__RCSID("$NetBSD: nbperf-chm.c,v 1.4 2021/01/07 16:03:08 joerg Exp $")
 
 #include <err.h>
 #include <inttypes.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 #include "nbperf.h"
 
@@ -154,21 +155,11 @@ print_hash(struct nbperf *nbperf, struct state *state)
 
 	print_coda(nbperf);
 	if (nbperf->intkeys) {
-		if (nbperf->hashes16) {
-			fprintf(nbperf->output, "\nstatic void _inthash2(const int32_t key, uint32_t *h)\n");
-			fprintf(nbperf->output, "{\n");
-			fprintf(nbperf->output, "	*h = key * (UINT32_C(0xEB382D69) + UINT32_C(%u))\n"
-				"\t\t + UINT32_C(%u);\n",
-				nbperf->seed[0], nbperf->seed[1]);
-			fprintf(nbperf->output, "}\n\n");
-		} else {
-			fprintf(nbperf->output, "\nstatic void _inthash(const int32_t key, uint64_t *h)\n");
-			fprintf(nbperf->output, "{\n");
-			fprintf(nbperf->output, "	*h = (int64_t)key * (UINT64_C(0x9DDFEA08EB382D69) + UINT64_C(%u))\n"
-				"\t\t + UINT32_C(%u);\n",
-				nbperf->seed[0], nbperf->seed[1]);
-			fprintf(nbperf->output, "}\n\n");
-		}
+#if GRAPH_SIZE >= 3
+		inthash4_addprint(nbperf);
+#else
+                inthash_addprint(nbperf);
+#endif
 	}
 
 	fprintf(nbperf->output, "%suint32_t ",
@@ -211,10 +202,15 @@ print_hash(struct nbperf *nbperf, struct state *state)
 		fprintf(nbperf->output, "\n\t};\n");
 	else
 		fprintf(nbperf->output, "\t};\n");
-	if (nbperf->hashes16)
-		fprintf(nbperf->output, "\tuint16_t h[%u];\n\n", nbperf->hash_size * 2);
+	if (nbperf->hashes16) {
+                if (nbperf->hash_size == 2 && nbperf->intkeys)
+                        fprintf(nbperf->output, "\tuint16_t h[%u];\n\n", 2);
+                else
+                        fprintf(nbperf->output, "\tuint16_t h[%u];\n\n", nbperf->hash_size * 2);
+        }
 	else
-		fprintf(nbperf->output, "\tuint32_t h[%u];\n\n", nbperf->hash_size);
+		fprintf(nbperf->output, "\tuint32_t h[%u];\n\n",
+		    nbperf->hash_size);
 	(*nbperf->print_hash)(nbperf, "\t", "key", "keylen", "h");
 
 	fprintf(nbperf->output, "\n\th[0] = h[0] %% %" PRIu32 ";\n",
@@ -222,32 +218,30 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	fprintf(nbperf->output, "\th[1] = h[1] %% %" PRIu32 ";\n",
 	    state->graph.v);
 #if GRAPH_SIZE >= 3
-        if (nbperf->hash_size > 2)
-                fprintf(nbperf->output, "\th[2] = h[2] %% %" PRIu32 ";\n",
-                        state->graph.v);
+        fprintf(nbperf->output, "\th[2] = h[2] %% %" PRIu32 ";\n",
+                state->graph.v);
 #endif
 
 	if (state->graph.hash_fudge & 1)
 		fprintf(nbperf->output, "\th[1] ^= (h[0] == h[1]);\n");
 
 #if GRAPH_SIZE >= 3
-	if (nbperf->hash_size > 2 && state->graph.hash_fudge & 2) {
+	if (state->graph.hash_fudge & 2) {
 		fprintf(nbperf->output,
 		    "\th[2] ^= (h[0] == h[2] || h[1] == h[2]);\n");
 		fprintf(nbperf->output,
 		    "\th[2] ^= 2 * (h[0] == h[2] || h[1] == h[2]);\n");
 	}
-	if (nbperf->hash_size > 2)
-		fprintf(nbperf->output,
-		    "\treturn (g[h[0]] + g[h[1]] + g[h[2]]) %% "
-		    "%" PRIu32 ";\n",
-		    state->graph.e);
-	else // for short hashes
-#endif
 	fprintf(nbperf->output,
-		    "\treturn (g[h[0]] + g[h[1]]) %% "
-		    "%" PRIu32 ";\n",
-		    state->graph.e);
+	    "\treturn (g[h[0]] + g[h[1]] + g[h[2]]) %% "
+	    "%" PRIu32 ";\n",
+	    state->graph.e);
+#else
+	fprintf(nbperf->output,
+	    "\treturn (g[h[0]] + g[h[1]]) %% "
+	    "%" PRIu32 ";\n",
+	    state->graph.e);
+#endif
 	fprintf(nbperf->output, "}\n");
 
 	if (nbperf->map_output != NULL) {

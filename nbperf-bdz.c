@@ -149,15 +149,7 @@ print_hash(struct nbperf *nbperf, struct state *state)
         fprintf(nbperf->output, "#endif\n\n");
 
 	if (nbperf->intkeys) {
-		fprintf(nbperf->output, "\nstatic void _inthash(const int32_t key, uint64_t *h)\n");
-		fprintf(nbperf->output, "{\n");
-		fprintf(nbperf->output, "	*h = (uint64_t)key * (UINT64_C(0x9DDFEA08EB382D69) + UINT64_C(%u))\n"
-			"\t\t + UINT32_C(%u);\n", nbperf->seed[0], nbperf->seed[1]);
-                /* only needed with 4x 32bit hashes, with 4x 16bit not */
-                if (nbperf->hash_size > 2)
-                        fprintf(nbperf->output, "	*(h+1) = (uint64_t)key * UINT64_C(%u) + UINT32_C(%u);\n",
-                                nbperf->seed[0], nbperf->seed[1]);
-		fprintf(nbperf->output, "}\n\n");
+                inthash4_addprint(nbperf);
 	}
 
 	fprintf(nbperf->output, "%suint32_t\n",
@@ -310,7 +302,7 @@ bpz_compute(struct nbperf *nbperf)
 		nbperf->c = 1.24;
 	if (nbperf->c < 1.24)
 		errx(1, "The argument for option -c must be at least 1.24");
-	if (nbperf->hash_size < 3 && (nbperf->intkeys == 0 || nbperf->c > 65534))
+	if (nbperf->hash_size < 3)
                 errx(1, "The hash function must generate at least 3 values");
 
 	(*nbperf->seed_hash)(nbperf);
