@@ -26,11 +26,12 @@ then
 else
     echo Perf: $1
     PERF=-DPERF
-    N=$(($1 * 2))
-    WORDSIN=_words${1}
-    RANDIN=_rand${N}
-    head -n $1 <${WORDS} >${WORDSIN}
-    seq $N | random > ${RANDIN}
+    N=$1
+    N2=$(($N * 2))
+    WORDSIN=_words${N}
+    RANDIN=_rand${N2}
+    head -n $N <${WORDS} >${WORDSIN}
+    seq $N2 | random > ${RANDIN}
 fi
 
 perf() {

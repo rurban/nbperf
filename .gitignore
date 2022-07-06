@@ -77,3 +77,10 @@ _test_*.c
 _test_*.o
 _words*
 _rand*
+
+# perf
+_perf*
+perf
+run.log
+size.log
+nbperf.log

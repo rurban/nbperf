@@ -10,7 +10,7 @@ uint32_t inthash(const uint32_t key);
 #else
 uint32_t hash(const void * __restrict key, size_t keylen);
 #endif
-#define PERF_ROUNDS  50000
+#define PERF_ROUNDS  100000
 
 int main(int argc, char **argv)
 {
@@ -97,9 +97,6 @@ int main(int argc, char **argv)
 	perror("fopen input");
 	exit(1);
     }
-#ifdef PERF
-    for (int j=0; j < PERF_ROUNDS; j++) {
-#endif
     i = 0;
     line = NULL;
     line_allocated = 0;
@@ -110,9 +107,17 @@ int main(int argc, char **argv)
 	}
 #ifdef _INTKEYS
         int32_t l = atoi(line);
-        h = inthash(l);
+#endif
+#ifdef PERF
+        for (int j=0; j < PERF_ROUNDS; j++) {
+#endif
+#ifdef _INTKEYS
+            h = inthash(l);
 #else
-        h = hash(line, strlen(line));
+            h = hash(line, strlen(line));
+#endif
+#ifdef PERF
+        } // perf loop
 #endif
 	if (verbose)
 #if defined _INTKEYS || defined bdz
@@ -137,10 +142,6 @@ int main(int argc, char **argv)
 	i++;
     }
     free(line);
-#ifdef PERF
-    rewind(f);
-    } // perf loop
-#endif
 #if defined _INTKEYS || defined bdz
     free(map);
 #endif

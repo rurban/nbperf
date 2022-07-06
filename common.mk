@@ -9,6 +9,8 @@ RANDBIG = _randbig
 
 $(PROG): $(SRCS) mi_vector_hash.c mi_vector_hash.h wyhash.h nbtool_config.h
 	$(CC) $(CFLAGS) -DHAVE_NBTOOL_CONFIG_H $(SRCS) mi_vector_hash.c -o $@
+perf: perf.h perf_test.c perf.cc
+	c++ $(CFLAGS) perf.cc -o $@
 
 $(RANDBIG):
 	seq 160000 | random > $@
@@ -50,20 +52,13 @@ check: $(PROG) _words1000 _words $(RANDBIG)
 	@echo
 	@echo test all combinations and results with a small set
 	CFLAGS="$(CFLAGS)" ./test
-perf: $(PROG)
-	@echo time all combinations with big sets
-	./test 500
-	./test 2000
-	./test 5000
-	./test 10000
-	./test 20000
-	./test 50000
-	./test 100000
-	./test 500000
-	./test 1000000
+run-perf: $(PROG) perf
+	@echo time all combinations with all set sizes
+	./perf && ./perf_img.sh
 
 clean:
-	-rm -f $(PROG) _test_* test_{bdz,chm,chm3}* _words* _rand* a.out
+	-rm -f $(PROG) _test_* test_{bdz,chm,chm3}* _words* _rand* a.out \
+	  _perf_*
 install: $(PROG)
 	sudo cp $(PROG) /usr/local/bin/
 	sudo cp $(HEADERS) /usr/local/include/
