@@ -42,11 +42,20 @@
 #include "nbtool_config.h"
 #endif
 
-//#include <sys/cdefs.h>
-//__RCSID("$NetBSD: mi_vector_hash.c,v 1.1 2013/12/11 01:24:08 joerg Exp $")
+#if defined __FreeBSD__ || defined __NetBSD__
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: mi_vector_hash.c,v 1.1 2013/12/11 01:24:08 joerg Exp $");
+#endif
 
-#if !HAVE_NBTOOL_CONFIG_H || HAVE_ENDIAN_H
-#include <endian.h>
+#if !HAVE_NBTOOL_CONFIG_H && HAVE_ENDIAN_H
+# include <endian.h>
+#else
+# if !defined(__FreeBSD__) && !defined(__DragonFly__)
+   // linux, openbsd, ... (darwin??)
+#  include <endian.h>
+# else
+#  include <sys/endian.h>
+# endif
 #endif
 
 #if defined(_KERNEL) || defined(_STANDALONE)
@@ -60,16 +69,18 @@
 #include <stdlib.h>
 #endif
 
+#ifndef __FreeBSD__
 static inline uint32_t
 le32dec(const void *buf)
 {
-#if 0
+#if defined(_BYTE_ORDER) && _BYTE_ORDER == _BIG_ENDIAN
 	uint8_t const *p = (uint8_t const *)buf;
 	return (((unsigned)p[3] << 24) | (p[2] << 16) | (p[1] << 8) | p[0]);
 #else
         return *(uint32_t*)buf;
 #endif
 }
+#endif
 
 #define mix(a, b, c) do {		\
 	a -= b; a -= c; a ^= (c >> 13);	\

@@ -9,4 +9,3 @@ task:
     - make
   test_script:
     - make check
-    - ./asan.sh

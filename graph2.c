@@ -39,7 +39,7 @@
 
 #ifdef __FreeBSD__
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: graph2.c,v 1.5 2021/01/07 16:03:08 joerg Exp $")
+__RCSID("$NetBSD: graph2.c,v 1.5 2021/01/07 16:03:08 joerg Exp $");
 #endif
 
 #include <err.h>
@@ -49,10 +49,9 @@ __RCSID("$NetBSD: graph2.c,v 1.5 2021/01/07 16:03:08 joerg Exp $")
 #include <string.h>
 #include <stdint.h>
 
-// clang-format off
 #include "nbperf.h"
+
 #include "graph2.h"
-// clang-format on
 
 void
 SIZED2(_setup)(struct SIZED(graph) * graph, uint32_t v, uint32_t e)

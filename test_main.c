@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <errno.h>
+
 #ifdef _INTKEYS
 uint32_t inthash(const uint32_t key);
 #else

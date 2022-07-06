@@ -39,7 +39,7 @@
 
 #ifdef __FreeBSD__
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nbperf-bdz.c,v 1.10 2021/01/07 16:03:08 joerg Exp $")
+__RCSID("$NetBSD: nbperf-bdz.c,v 1.10 2021/01/07 16:03:08 joerg Exp $");
 #endif
 
 #include <err.h>
