@@ -37,8 +37,10 @@
 #include "nbtool_config.h"
 #endif
 
-//#include <sys/cdefs.h>
-//__RCSID("$NetBSD: nbperf.c,v 1.7 2021/01/12 14:21:18 joerg Exp $")
+#ifdef __FreeBSD__
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: nbperf.c,v 1.7 2021/01/12 14:21:18 joerg Exp $")
+#endif
 
 #include <endian.h>
 #include <err.h>
