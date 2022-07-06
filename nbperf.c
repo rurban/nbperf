@@ -37,8 +37,8 @@
 #include "nbtool_config.h"
 #endif
 
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: nbperf.c,v 1.7 2021/01/12 14:21:18 joerg Exp $")
+//#include <sys/cdefs.h>
+//__RCSID("$NetBSD: nbperf.c,v 1.7 2021/01/12 14:21:18 joerg Exp $")
 
 #include <endian.h>
 #include <err.h>
@@ -50,8 +50,8 @@ __RCSID("$NetBSD: nbperf.c,v 1.7 2021/01/12 14:21:18 joerg Exp $")
 #include <time.h>
 #include <unistd.h>
 
-
 #include "nbperf.h"
+#define HAVE_CRC
 
 #include "fnv.h"
 #include "fnv3.h"
@@ -624,9 +624,13 @@ main(int argc, char **argv)
 					nbperf.compute_hash = inthash_compute;
 #ifdef HAVE_CRC
 			} else if (nbperf.compute_hash == crc_compute) {
+			        // crc2 optim still broken
+				nbperf.hashes16 = 0;
+#if 0
 				nbperf.hash_size = 2;
 				nbperf.hash_header = "crc2.h";
 				nbperf.compute_hash = crc2_compute;
+#endif
 #endif
 			} else if (nbperf.compute_hash == wyhash4_compute) {
 				nbperf.hash_size = 2;

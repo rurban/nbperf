@@ -12,6 +12,8 @@
 
 #if !defined HAVE_HW
 
+#include <stddef.h>
+
 /*
  * CRC-32C table for the SW calc.
  * poly = 0x1EDC6F41

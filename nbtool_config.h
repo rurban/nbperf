@@ -3,4 +3,4 @@
 #define __RCSID(x)
 #define __dead volatile
 
-// #define HAVE_CRC
+#define HAVE_CRC
