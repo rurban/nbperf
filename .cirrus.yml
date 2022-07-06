@@ -1,0 +1,12 @@
+# Build configuration for https://cirrus-ci.com/github/rurban/nbperf
+
+freebsd_instance:
+  image_family: freebsd-13-0
+task:
+  install_script:
+    - pkg install -y bsdgames
+  build_script:
+    - make
+  test_script:
+    - make check
+    - ./asan.sh
