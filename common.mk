@@ -6,13 +6,6 @@ SRCS+=	nbperf-bdz.c nbperf-chm.c nbperf-chm3.c	graph2.c graph3.c
 HEADERS = mi_vector_hash.h mi_wyhash.h wyhash.h fnv3.h fnv.h
 WORDS = /usr/share/dict/words
 RANDBIG = _randbig
-CC = cc
-CFLAGS = -O2 -g -fno-strict-aliasing -Wall -Wextra
-
-MACHINE := $(shell uname -m)
-ifeq (x86_64,$(MACHINE))
-CFLAGS += -march=native
-endif
 
 $(PROG): $(SRCS) mi_vector_hash.c mi_vector_hash.h wyhash.h nbtool_config.h
 	$(CC) $(CFLAGS) -DHAVE_NBTOOL_CONFIG_H $(SRCS) mi_vector_hash.c -o $@
