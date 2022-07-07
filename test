@@ -89,11 +89,11 @@ perf chm fnv
 perf chm fnv3
 perf chm3 fnv3
 perf bdz fnv3 -f
-#perf chm crc
+perf chm crc
 if [ -z $PERF]; then
     perf bdz fnv3 -f
-    #perf chm crc -f
-    #perf chm crc -fp
+    perf chm crc -f
+    perf chm crc -fp
     perf chm wyhash -f
     perf chm3 wyhash -f
     perf bdz wyhash -f

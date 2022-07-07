@@ -52,8 +52,7 @@ __RCSID("$NetBSD: nbperf.c,v 1.7 2021/01/12 14:21:18 joerg Exp $");
 #include <unistd.h>
 
 #include "nbperf.h"
-// Broken GH #7
-//#define HAVE_CRC
+#define HAVE_CRC
 
 #include "fnv.h"
 #include "fnv3.h"
