@@ -10,22 +10,23 @@
 #include <sys/stat.h>
 #include <vector>
 #include <string>
+#include <cstring>
 #include <climits>
 using namespace std;
 
-const string options[] = {
+vector<string> options = {
 	"-a chm -p",
 	"-a chm3 -p",
-	"-a bpz -p",
+	"-a bdz -p",
 	"-a chm -h wyhash -p",
 	"-a chm3 -h wyhash -p",
-	"-a bpz -h wyhash -p",
+	"-a bdz -h wyhash -p",
 	"-a chm -h fnv -p",
 	"-a chm3 -h fnv3 -p",
 	"-a bpz -h fnv3 -p",
-	//"-a chm -h crc -p",
-	//"-a chm3 -h crc -p",
-	//"-a bpz -h crc -p",
+	"-a chm -h crc -p",
+	"-a chm3 -h crc -p",
+	"-a bpz -h crc -p",
 	"-I -p",
 };
 const uint32_t sizes[] = { 200, 400, 800, 2000, 4000, 8000, 20000, 100000,
@@ -38,9 +39,9 @@ const uint32_t sizes[] = { 200, 400, 800, 2000, 4000, 8000, 20000, 100000,
 // in seconds
 #define NBPERF_TIMEOUT 15
 #define PERF_PRE "_perf_"
-static char perf_in[32] = PERF_PRE "2000000.nbperf";
-static char perf_c[32] = PERF_PRE "2000000.c";
 static char perf_exe[32] = PERF_PRE "2000000";
+static char perf_in[40] = PERF_PRE "2000000.nbperf";
+static char perf_c[40] = PERF_PRE "2000000.c";
 
 #define PICK(n) ((unsigned)rand()) % (n)
 char buf[128];
@@ -61,11 +62,13 @@ static int random_int(char *buf, const size_t buflen) {
   return 1;
 }
 
-static inline void set_names (const size_t size, const bool isword) {
-  const char *w = isword ? "word": "int";
-  snprintf(perf_in, sizeof perf_in, "%s%s%zu%s", PERF_PRE, w, size, ".nbperf");
-  snprintf(perf_c, sizeof perf_c, "%s%s%zu%s", PERF_PRE, w, size, ".c");
-  snprintf(perf_exe, sizeof perf_exe, "%s%s%zu", PERF_PRE, w, size);
+static inline void set_names (const char *alg, const char *hash,
+                              const size_t size, const bool isword)
+{
+  const char *w = isword ? "": "int";
+  snprintf(perf_exe, sizeof perf_exe, "%s%s%s_%s%zu", PERF_PRE, w, alg, hash, size);
+  snprintf(perf_in, sizeof perf_in, "%s%s", perf_exe, ".nbperf");
+  snprintf(perf_c, sizeof perf_c, "%s%s", perf_exe, ".c");
 }
 
 static inline void cleanup_files (void) {
@@ -74,14 +77,15 @@ static inline void cleanup_files (void) {
   unlink(perf_exe);
 }
 
-static inline void create_set (const size_t size, const bool isword) {
+static inline void create_set (const char *alg, const char *hash,
+                               const size_t size, const bool isword) {
   char cmd[160];
   static unsigned lines = 0;
   int ret;
 
   (void)ret;
-  printf("Creating %s set of size %zu\n", isword ? "word" : "int", size);
-  set_names (size, isword);
+  set_names (alg, hash, size, isword);
+  printf("Creating %s\n", perf_exe);
   if (!isword) {
     FILE *f = fopen("words.tmp","w");
     for (unsigned i=0; i<size; i++)
@@ -129,17 +133,18 @@ static inline int run_nbperf (FILE* f, const uint32_t size, const char *cmd) {
    fprintf(f, "%20u %20lu\n", size, t / PERF_LOOP);
    return ret;
 }
-static inline int compile_result (bool needs_mi_vector, const char *d_intkeys) {
+static inline int compile_result (bool needs_mi_vector, const char *defines) {
    char cmd[128];
    snprintf(cmd, sizeof cmd, "cc -O2 -I. %s %s perf_test.c %s -o %s",
-            d_intkeys, perf_c, needs_mi_vector ? "mi_vector_hash.c" : "", perf_exe);
-   printf("%s", cmd);
+            defines, perf_c, needs_mi_vector ? "mi_vector_hash.c" : "", perf_exe);
+   printf("%s\n", cmd);
    return system(cmd);
 }
 static inline int run_result (const char *log, const uint32_t size) {
    char cmd[128];
    snprintf(cmd, sizeof cmd, "./%s %s %s %u", perf_exe, perf_in,
             log, size);
+   //printf("%s\n", cmd);
    return system(cmd);
  }
 
@@ -153,12 +158,39 @@ int main (int argc, char **argv)
    FILE *fsize = fopen("size.log", "w");
    srand(0xbeef);
 
+   if (argc > 1) {
+       options.clear();
+       options.push_back("");
+       for (int i = 1; i < argc; i++) {
+           if (i > 1)
+               options[0] += " ";
+           options[0] += argv[i];
+       }
+   }
+
    for (auto option : options) {
 
      const bool isword = option.find("-I") == string::npos;
-     if (argc > 1) {
-       option.push_back(' ');
-       option.append(argv[1]);
+     const bool is_bdz = option.find("-a bdz") != string::npos;
+     const bool is_chm3 = option.find("-a chm3") != string::npos;
+     const bool is_chm = !is_bdz && !is_chm3;
+     const char *alg = is_chm ? "chm"
+         : is_chm3 ? "chm3"
+         : is_bdz ? "bdz"
+         : NULL;
+     const char *hash;
+     size_t hpos = option.find("-h ");
+     if (hpos != string::npos) {
+         string rest = option.substr(hpos+3);
+         size_t ppos = rest.find(" ");
+         if (ppos != string::npos) {
+             int len = rest.length();
+             hash = rest.substr(0, len - ppos).c_str();
+         }
+         else
+             hash = rest.c_str();
+     } else {
+         hash = "";
      }
      printf("------------------------ %s ------------------------\n", option.c_str());
      fprintf(comp, "option: %s\n", option.c_str());
@@ -169,17 +201,22 @@ int main (int argc, char **argv)
 
      for(unsigned i=0; i<(sizeof sizes)/(sizeof *sizes); i++)
        {
-         char cmd[128];
+         char cmd[160];
          int ret = 0;
          const uint32_t size = sizes[i];
-         create_set (sizes[i], isword);
-         set_names (size, isword);
-         bool needs_mi_vector = option.find("-h ") == string::npos;
-         //bool is_fnv = option.find("-h fnv") != string::npos;
+         create_set (alg, hash, sizes[i], isword);
+         const bool needs_mi_vector = option.find("-h ") == string::npos;
+         //const bool is_fnv = option.find("-h fnv") != string::npos;
          //if (size == 20000 && is_fnv)
          //   option += " -f";
-	 snprintf(cmd, sizeof cmd, "timeout %d ./nbperf %s -o %s %s",
-	     NBPERF_TIMEOUT, option.c_str(), perf_c, perf_in);
+         if (is_bdz)
+             snprintf(cmd, sizeof cmd,
+                      "timeout %d ./nbperf %s -m %s.map -o %s %s",
+                      NBPERF_TIMEOUT, option.c_str(), perf_in, perf_c, perf_in);
+         else
+             snprintf(cmd, sizeof cmd,
+                      "timeout %d ./nbperf %s -o %s %s",
+                      NBPERF_TIMEOUT, option.c_str(), perf_c, perf_in);
 	 printf("size %u: %s\n", size, cmd);
 
          //#ifndef DUMMY
@@ -189,7 +226,16 @@ int main (int argc, char **argv)
          if (ret != 0)
              continue;
 #ifndef DUMMY
-         ret = compile_result (needs_mi_vector, isword ? "" : "-D_INTKEYS");
+         string defines = "";
+         if (!isword)
+             defines += "-D_INTKEYS ";
+         if (is_bdz && isword)
+             defines += "-Dbdz ";
+#if defined __amd64__ || defined __i386
+         if (strcmp (hash, "crc") == 0)
+             defines += "-march=native";
+#endif
+         ret = compile_result (needs_mi_vector, defines.c_str());
          printf("  => %d\n", ret);
 #else
          ret = 0;
@@ -213,10 +259,14 @@ int main (int argc, char **argv)
    for(unsigned i=0; i<(sizeof sizes)/(sizeof *sizes); i++)
      {
        const uint32_t size = sizes[i];
-       set_names (size, true);
-       cleanup_files ();
-       set_names (size, false);
-       cleanup_files ();
+       for (auto alg: {"chm", "chm3", "bdz"}) {
+           for (auto hash: {"", "wyhash", "fnv", "crc"}) {
+               set_names (alg, hash, size, true);
+               cleanup_files ();
+           }
+           set_names (alg, "", size, false);
+           cleanup_files ();
+       }
      }
 #endif
    fclose(comp);

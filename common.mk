@@ -58,7 +58,7 @@ run-perf: $(PROG) perf
 
 clean:
 	-rm -f $(PROG) _test_* test_{bdz,chm,chm3}* _words* _rand* a.out \
-	  _perf_*
+	  _perf_* perf
 install: $(PROG)
 	sudo cp $(PROG) /usr/local/bin/
 	sudo cp $(HEADERS) /usr/local/include/

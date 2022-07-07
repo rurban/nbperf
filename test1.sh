@@ -5,7 +5,7 @@ else
     make clean
 fi
 
-usage() { echo "Usage: $0 [-a alg] [-h hash] [-b] [-Ifps]" 1>&2; exit 1; }
+usage() { echo "Usage: $0 [-bIfps] [-a alg] [-h hash]" 1>&2; exit 1; }
 
 alg=chm
 IN=_words1000

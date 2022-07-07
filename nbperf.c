@@ -68,9 +68,9 @@ static /*__dead*/
     usage(void)
 {
 	fprintf(stderr,
-	    "%s [-fIps] [-c utilisation] [-i iterations] [-n name] "
-	    "[-h hash] [-o output] input\n",
-	    "nbperf" /*getprogname()*/);
+	    "rurban/nbperf v3.0\n"
+	    "nbperf [-fIps] [-c utilisation] [-i iterations] [-n name] "
+	    "[-h hash] [-o output] [-m mapfile] input\n");
 	exit(1);
 }
 
