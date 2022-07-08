@@ -3,7 +3,7 @@
 PROG=	nbperf
 SRCS=	nbperf.c
 SRCS+=	nbperf-bdz.c nbperf-chm.c nbperf-chm3.c	graph2.c graph3.c
-HEADERS = mi_vector_hash.h mi_wyhash.h wyhash.h fnv3.h fnv.h
+HEADERS = mi_vector_hash.h mi_wyhash.h wyhash.h fnv3.h fnv.h crc3.h
 WORDS = /usr/share/dict/words
 RANDBIG = _randbig
 
