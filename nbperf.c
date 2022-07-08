@@ -233,9 +233,10 @@ inthash_compute(struct nbperf *nbperf, const void *key, size_t keylen,
     uint32_t *hashes)
 {
 	(void)keylen;
-	*(uint64_t *)hashes = (int64_t)key *
-		/* mult factor from CityHash to reach into 2nd 32bit slot */
-		(UINT64_C(0x9DDFEA08EB382D69) + (uint64_t)nbperf->seed[0]) +
+        /* mult factor from CityHash to reach into 2nd 32bit slot */
+	*(uint64_t *)hashes = ((int64_t)key *
+				  (UINT64_C(0x9DDFEA08EB382D69) +
+				      (uint64_t)nbperf->seed[0])) +
 	    nbperf->seed[1];
 }
 void
@@ -243,7 +244,7 @@ inthash2_compute(struct nbperf *nbperf, const void *key, size_t keylen,
     uint32_t *hashes)
 {
 	(void)keylen;
-	*hashes = (int32_t)(ptrdiff_t)key * (UINT32_C(0xEB382D69) + nbperf->seed[0]) +
+	*hashes = ((int32_t)(ptrdiff_t)key * (UINT32_C(0xEB382D69) + nbperf->seed[0])) +
 	    nbperf->seed[1];
 }
 void
@@ -251,16 +252,16 @@ inthash_addprint(struct nbperf *nbperf)
 {
 	if (!nbperf->hashes16) {
 		fprintf(nbperf->output,
-		    "\nstatic void _inthash(const int32_t key, uint64_t *h)\n{\n");
+		    "\nstatic inline void _inthash(const int32_t key, uint64_t *h)\n{\n");
 		fprintf(nbperf->output,
-		    "\t*h = (int64_t)key * (UINT64_C(0x9DDFEA08EB382D69) + UINT64_C(%u))\n"
+		    "\t*h = ((int64_t)key * (UINT64_C(0x9DDFEA08EB382D69) + UINT64_C(%u)))\n"
 		    "\t\t + UINT32_C(%u);\n",
 		    nbperf->seed[0], nbperf->seed[1]);
         } else {
 		fprintf(nbperf->output,
-		    "\nstatic void _inthash2(const int32_t key, uint32_t *h)\n{\n");
+		    "\nstatic inline void _inthash2(const int32_t key, uint32_t *h)\n{\n");
 		fprintf(nbperf->output,
-		    "\t*h = key * (UINT32_C(0xEB382D69) + UINT32_C(%u))\n"
+		    "\t*h = (key * (UINT32_C(0xEB382D69) + UINT32_C(%u)))\n"
 		    "\t\t + UINT32_C(%u);\n",
 		    nbperf->seed[0], nbperf->seed[1]);
 	}
@@ -273,10 +274,11 @@ inthash4_compute(struct nbperf *nbperf, const void *key, size_t keylen,
 {
 	uint64_t *h64 = (uint64_t *)hashes;
 	(void)keylen;
-	h64[0] = (int64_t)key *
-		/* mult factor from CityHash to reach into 2nd 32bit slot, but
-		   not the 3rd */
-		(UINT64_C(0x9DDFEA08EB382D69) + (uint64_t)nbperf->seed[0]) +
+        /* mult factor from CityHash to reach into 2nd 32bit slot, but
+           not the 3rd */
+	h64[0] = ((int64_t)key *
+		     (UINT64_C(0x9DDFEA08EB382D69) +
+			 (uint64_t)nbperf->seed[0])) +
 	    nbperf->seed[1];
 	/* only needed with 4x 32bit hashes, with 4x 16bit not */
 	if (!nbperf->hashes16)
@@ -287,7 +289,7 @@ void
 inthash4_addprint(struct nbperf *nbperf)
 {
 	fprintf(nbperf->output,
-	    "\nstatic void _inthash4(const int32_t key, uint64_t *h)\n");
+	    "\nstatic inline void _inthash4(const int32_t key, uint64_t *h)\n");
 	fprintf(nbperf->output, "{\n");
 	fprintf(nbperf->output,
 	    "\t*h = (int64_t)key * (UINT64_C(0x9DDFEA08EB382D69) + UINT64_C(%u))\n"
@@ -306,11 +308,11 @@ inthash_print(struct nbperf *nbperf, const char *indent, const char *key,
 {
 	(void)keylen;
 	if (nbperf->hashes16)
-	    fprintf(nbperf->output, "%s_inthash2(%s, (uint32_t*)%s);\n", indent, key,
-		    hash);
+		fprintf(nbperf->output, "%s_inthash2(%s, (uint32_t*)%s);\n",
+		    indent, key, hash);
 	else
-	    fprintf(nbperf->output, "%s_inthash(%s, (uint64_t*)%s);\n", indent, key,
-		    hash);
+		fprintf(nbperf->output, "%s_inthash(%s, (uint64_t*)%s);\n",
+		    indent, key, hash);
 }
 void
 inthash4_print(struct nbperf *nbperf, const char *indent, const char *key,
