@@ -1,7 +1,7 @@
 #!/bin/sh
 # requires plotly
 basedir="$(dirname $0)"
-VERSION="rurban/nbperf `git describe --long --tags --dirty --always`"
+VERSION="rurban/nbperf 3.0 g`git describe --long --tags --always`"
 if test -z "$PNG"; then
   PNG="size nbperf run"
 fi
