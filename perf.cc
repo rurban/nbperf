@@ -185,10 +185,8 @@ int main (int argc, char **argv)
      if (hpos != string::npos) {
          string rest = option.substr(hpos+3);
          size_t ppos = rest.find(" ");
-         if (ppos != string::npos) {
-             int len = rest.length();
-             hash = rest.substr(0, len - ppos).c_str();
-         }
+         if (ppos != string::npos)
+             hash = rest.substr(0, ppos).c_str();
          else
              hash = rest.c_str();
      } else {
@@ -233,7 +231,7 @@ int main (int argc, char **argv)
              defines += "-D_INTKEYS ";
          if (is_bdz && isword)
              defines += "-Dbdz ";
-#if defined __amd64__ || defined __i386
+#if defined __amd64__ || defined __x86_64__
          if (strcmp (hash, "crc") == 0)
              defines += "-march=native";
 #endif
