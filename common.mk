@@ -54,7 +54,8 @@ check: $(PROG) _words1000 _words $(RANDBIG)
 	CFLAGS="$(CFLAGS)" ./test
 run-perf: $(PROG) perf
 	@echo time all combinations with all set sizes
-	./perf && ./perf_img.sh
+	git describe --long --tags --always >VERSION
+	./perf && ./perf_img.sh && rm VERSION
 
 clean:
 	-rm -f $(PROG) _test_* test_{bdz,chm,chm3}* _words* _rand* a.out \
