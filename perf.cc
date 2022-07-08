@@ -23,9 +23,9 @@ const string options[] = {
 	"-a chm -h fnv -p",
 	"-a chm3 -h fnv3 -p",
 	"-a bpz -h fnv3 -p",
-	"-a chm -h crc -p",
-	"-a chm3 -h crc -p",
-	"-a bpz -h crc -p",
+	//"-a chm -h crc -p",
+	//"-a chm3 -h crc -p",
+	//"-a bpz -h crc -p",
 	"-I -p",
 };
 const uint32_t sizes[] = { 200, 400, 800, 2000, 4000, 8000, 20000, 100000,
