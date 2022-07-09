@@ -51,16 +51,21 @@ Supported arguments for **-h**:
 
   64-bit version of wyhash, extended to 128-bit.
   See [wyhash(3)](https://github.com/wangyi-fudan/wyhash).
+  This is usually the fastest and most stable hash.
 
 * **fnv**:
 
-  64-bit variant of FNV-1a. Only for -a chm.
+  64-bit or 128-bit variants of FNV-1a.
   See [fnv(3)](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function).
+  This is not as good as expected yet.
 
-* **fnv3**:
+* **crc**:
 
-  128-bit variant of FNV-1a. Also for -a chm3 and bdz.
-  See [fnv(3)](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function).
+  Various SW and HW variants of iSCSI CRC32c.
+  See [crc(3)](https://en.wikipedia.org/wiki/Cyclic_redundancy_check).
+  This is not as good as expected yet. Ensure that you use -msse4, -mcrc or 
+  -march=native or similar for the much faster HW variant.
+
 
 The number of iterations can be limited with **-i**.  **nbperf**
 outputs a function matching `uint32_t hash(const void * restrict, size_t)`

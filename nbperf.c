@@ -54,7 +54,6 @@ __RCSID("$NetBSD: nbperf.c,v 1.7 2021/01/12 14:21:18 joerg Exp $");
 #include "nbperf.h"
 #define HAVE_CRC
 
-#include "fnv.h"
 #include "fnv3.h"
 #include "mi_vector_hash.h"
 #include "mi_wyhash.h"
@@ -389,13 +388,6 @@ set_hash(struct nbperf *nbperf, const char *arg)
 		nbperf->print_hash = wyhash_print;
 		return;
 	} else if (strcmp(arg, "fnv") == 0) {
-		nbperf->hash_size = 2;
-		nbperf->compute_hash = fnv_compute;
-		nbperf->hash_header = "fnv.h";
-		nbperf->seed_hash = fnv_seed;
-		nbperf->print_hash = fnv_print;
-		return;
-	} else if (strcmp(arg, "fnv3") == 0) {
 		nbperf->hash_size = 4;
 		nbperf->compute_hash = fnv3_compute;
 		nbperf->hash_header = "fnv3.h";
@@ -637,6 +629,10 @@ main(int argc, char **argv)
 			} else if (nbperf.compute_hash == wyhash4_compute) {
 				nbperf.hash_size = 2;
 				nbperf.compute_hash = wyhash2_compute;
+			} else if (nbperf.compute_hash == fnv3_compute) {
+				nbperf.hash_size = 2;
+				nbperf.compute_hash = fnv_compute;
+                                nbperf.print_hash = fnv_print;
 			}
 		}
         }

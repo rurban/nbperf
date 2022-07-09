@@ -114,19 +114,17 @@ See
 .El
 .Bl -tag -width "fnv"
 .It Sy fnv
-64bit fnv-1a. Only for -a chm or with less than 65534 keys.
-See
-.Xr fnv 3 .
-.El
-.Bl -tag -width "fnv3"
-.It Sy fnv3
-2x 64bit fnv-1a. Also for -a chm3 and bdz.
+64 or 128bit fnv-1a variants.
+This is not as good as expected yet.
 See
 .Xr fnv 3 .
 .El
 .Bl -tag -width "crc"
 .It Sy crc
-32bit iSCSI CRC32 in hardware if supported at compile-time, or software fallback.
+Various variants of 32bit iSCSI CRC32c in hardware if supported at compile-time,
+or software fallback.
+Ensure that you use -msse4, -mcrc or -march=native or similar for the much faster HW variant.
+This is not as good as expected yet.
 See
 .Xr crc32 1 .
 .El

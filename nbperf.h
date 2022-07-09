@@ -1,6 +1,7 @@
 /*	$NetBSD: nbperf.h,v 1.5 2021/01/07 16:03:08 joerg Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2022 Reini Urban
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
