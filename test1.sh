@@ -5,12 +5,14 @@ else
     make clean
 fi
 
-usage() { echo "Usage: $0 [-bIfpsx] [-a alg] [-h hash]" 1>&2; exit 1; }
+usage() { echo "Usage: $0 [-bfIpsx] [-a alg] [-h hash] [-S size]" 1>&2; exit 1; }
 
 alg=chm
+WORDS=/usr/share/dict/words
 IN=_words1000
 hashc=mi_vector_hash.c
-while getopts "a:h:bIfpsx" o; do
+
+while getopts "a:h:S:bIfpsx" o; do
     case "$o" in
         a) alg=$OPTARG
            if [ $alg != chm -a $alg != chm3 -a $alg != bdz ]; then
@@ -18,18 +20,20 @@ while getopts "a:h:bIfpsx" o; do
                usage
            fi
            ;;
+        b) big=1 ;;
+        f) opts="$opts -f" ;;
         h) hash=$OPTARG
            opts="$opts -h $hash"
            if [ x$hash != xmi_vector_hash ]; then unset hashc; fi
            ;;
-        b) big=1 ;;
         I) intkeys=1
            unset hashc
            opts="$opts -I"
            copts="-D_INTKEYS"
            ;;
-        f) opts="$opts -f" ;;
+        p) opts="$opts -p" ;;
         s) opts="$opts -s" ;;
+        S) size=$OPTARG ;;
         x) intkeys=1
            unset hashc
            opts="$opts -I"
@@ -54,10 +58,18 @@ if [ -n "$intkeys" ]; then
         IN=_rand100
         out=int${alg}
     fi
+    if [ -n $size ]; then
+        IN=_rand${size}
+        seq $(( $size * 2 )) | random > ${IN}
+    fi
 else
     if [ -n "$big" ]; then
         IN=_words
         out=big${alg}
+    fi
+    if [ -n $size ]; then
+        IN=_words${size}
+        head -n ${size} <${WORDS} >$IN
     fi
 fi
 if [ x$alg = xbdz ]; then
@@ -71,8 +83,8 @@ echo make CFLAGS="\"${CFLAGS}\"" nbperf ${IN}
 make CFLAGS="${CFLAGS}" nbperf ${IN}
 test -e ${IN} || exit 1
 
-echo ./nbperf -p $opts -a $alg -o _test_${out}.c $IN
-./nbperf -p $opts -a $alg -o _test_${out}.c $IN
+echo ./nbperf $opts -a $alg -o _test_${out}.c $IN
+./nbperf $opts -a $alg -o _test_${out}.c $IN
 echo cc $CFLAGS -I. -D$alg $copts _test_${out}.c test_main.c $hashc -o _test_${out}
 cc $CFLAGS -I. -D$alg $copts _test_${out}.c test_main.c $hashc -o _test_${out}
 echo ./_test_${out} $IN
