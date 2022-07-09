@@ -148,10 +148,11 @@ flag is specified, it will be static.
 .Pp
 If the
 .Fl I
-flag is specified, the keys are interpreted as integers (not hex), and
+flag is specified, the keys are interpreted as integers, and
 the generated hash function will have the signature
 .Ft uint32_t
 .Fn inthash "const int32_t key".
+With -I you can skip empty lines or comment lines with '#'.
 The
 .Fl h
 flag is ignored then.

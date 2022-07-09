@@ -5,7 +5,7 @@ else
     make clean
 fi
 
-usage() { echo "Usage: $0 [-bIfps] [-a alg] [-h hash]" 1>&2; exit 1; }
+usage() { echo "Usage: $0 [-bIfpsx] [-a alg] [-h hash]" 1>&2; exit 1; }
 
 alg=chm
 IN=_words1000
@@ -30,6 +30,12 @@ while getopts "a:h:bIfps" o; do
            ;;
         f) opts="$opts -f" ;;
         s) opts="$opts -s" ;;
+        x) intkeys=1
+           unset hashc
+           opts="$opts -I"
+           copts="-D_INTKEYS"
+           hex=1
+           ;;
         *) usage ;;
     esac
 done
@@ -38,7 +44,10 @@ out=$alg
 
 if [ -n "$intkeys" ]; then
     [ -z $hash ] || usage
-    if [ -n "$big" ]; then
+    if [ -n "$hex" ]; then
+        IN=_randhex
+        out=inthex${alg}
+    elif [ -n "$big" ]; then
         IN=_randbig
         out=intbig${alg}
     else

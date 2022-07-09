@@ -6,6 +6,7 @@ SRCS+=	nbperf-bdz.c nbperf-chm.c nbperf-chm3.c	graph2.c graph3.c
 HEADERS = mi_vector_hash.h mi_wyhash.h wyhash.h fnv3.h crc3.h
 WORDS = /usr/share/dict/words
 RANDBIG = _randbig
+RANDHEX = _randhex
 
 $(PROG): $(SRCS) mi_vector_hash.c mi_vector_hash.h wyhash.h nbtool_config.h
 	$(CC) $(CFLAGS) -DHAVE_NBTOOL_CONFIG_H $(SRCS) mi_vector_hash.c -o $@
@@ -14,6 +15,8 @@ perf: perf.h perf_test.c perf.cc
 
 $(RANDBIG):
 	seq 160000 | random > $@
+$(RANDHEX):
+	seq 2000 | random | xargs printf "0x%x\n" > $@
 _rand100:
 	seq 200 | random > $@
 _words: $(WORDS)
@@ -21,7 +24,7 @@ _words: $(WORDS)
 _words1000:
 	head -n 1000 $(WORDS) > $@
 
-check: $(PROG) _words1000 _words $(RANDBIG)
+check: $(PROG) _words1000 _words $(RANDBIG) $(RANDHEX)
 	@echo test building a few with big sets
 	./$(PROG) -o _test_chm.c $(WORDS)
 	$(CC) $(CFLAGS) -I. -Dchm -o _test_chm _test_chm.c test_main.c mi_vector_hash.c
@@ -49,6 +52,9 @@ check: $(PROG) _words1000 _words $(RANDBIG)
 	./$(PROG) -I -a bdz -o _test_intbdz.c -m $(RANDBIG).map $(RANDBIG)
 	$(CC) $(CFLAGS) -I. -Dbdz -D_INTKEYS -o _test_intbdz _test_intbdz.c test_main.c
 	./_test_intbdz $(RANDBIG)
+	./$(PROG) -I -o _test_inthex.c $(RANDHEX)
+	$(CC) $(CFLAGS) -I. -Dchm -D_INTKEYS -o _test_inthex _test_inthex.c test_main.c
+	./_test_inthex $(RANDHEX)
 	@echo
 	@echo test all combinations and results with a small set
 	CFLAGS="$(CFLAGS)" ./test
@@ -59,7 +65,7 @@ run-perf: $(PROG) perf
 
 clean:
 	-rm -f $(PROG) _test_* test_{bdz,chm,chm3}* _words* _rand* a.out \
-	  _perf_* perf
+	  perf _perf_*
 install: $(PROG)
 	sudo cp $(PROG) /usr/local/bin/
 	sudo cp $(HEADERS) /usr/local/include/

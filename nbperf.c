@@ -580,12 +580,23 @@ main(int argc, char **argv)
 		}
 		if (nbperf.intkeys) {
 			uint64_t i;
-			errno = 0;
-			i = strtod(line, &eos);
-			if (errno || (eos[0] != '\n' && eos[0] != '\r'))
-				errx(2,
-				    "Invalid integer key \"%s\" at line %lu of %s",
-				    line, curlen, nbperf.input);
+			if (!line_len || line[0] == '#') {
+				continue; // skip comment or empy lines, intkeys only
+			}
+			if (line[0] == '0' &&
+			    (line[1] == 'x' || line[1] == 'X')) {
+				if (1 != sscanf(&line[2], "%lx", &i))
+					errx(2,
+					    "Invalid integer hex key \"%s\" at line %lu of %s",
+					    line, curlen, nbperf.input);
+			} else {
+				errno = 0;
+				i = strtod(line, &eos);
+				if (errno || (eos[0] != '\n' && eos[0] != '\r'))
+					errx(2,
+					    "Invalid integer key \"%s\" at line %lu of %s",
+					    line, curlen, nbperf.input);
+			}
 			memcpy(&keys[curlen], &i, sizeof(char *));
 		} else if (line_len % 4 == 0) {
 			if ((keys[curlen] = strndup(line, line_len)) == NULL)

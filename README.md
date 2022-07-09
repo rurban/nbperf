@@ -75,9 +75,11 @@ responsibility of the caller to pass in only valid keys or compare the
 resulting index to the key.  The function name can be changed using
 **-n _name_**.  If the **-s** flag is specified, it will be static.
 
-If the **-I** flag is specified, the keys interpreted as integers (not hex),
+If the **-I** flag is specified, the keys interpreted as integers,
 and the generated hash function will have the signature
 `uint32_t inthash (const int32_t key)`.
+With -I you can skip empty lines or comment lines with '#'.
+The **-h** flag is ignored then.
 
 After each failing iteration, a dot is written to stderr.
 
