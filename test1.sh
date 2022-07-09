@@ -10,7 +10,7 @@ usage() { echo "Usage: $0 [-bIfpsx] [-a alg] [-h hash]" 1>&2; exit 1; }
 alg=chm
 IN=_words1000
 hashc=mi_vector_hash.c
-while getopts "a:h:bIfps" o; do
+while getopts "a:h:bIfpsx" o; do
     case "$o" in
         a) alg=$OPTARG
            if [ $alg != chm -a $alg != chm3 -a $alg != bdz ]; then
