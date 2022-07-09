@@ -153,22 +153,6 @@ wyhash_print(struct nbperf *nbperf, const char *indent, const char *key,
 		    indent, key, keylen, seed, hash);
 }
 static void
-fnv_compute(struct nbperf *nbperf, const void *key, size_t keylen,
-    uint32_t *hashes)
-{
-	uint64_t seed = *(uint64_t *)nbperf->seed;
-	fnv(key, keylen, seed, (uint64_t *)hashes);
-}
-static void
-fnv_print(struct nbperf *nbperf, const char *indent, const char *key,
-    const char *keylen, const char *hash)
-{
-	uint64_t seed = *(uint64_t *)nbperf->seed;
-	fprintf(nbperf->output,
-	    "%sfnv(%s, %s, UINT64_C(0x%" PRIx64 "), (uint64_t*)%s);\n", indent,
-	    key, keylen, seed, hash);
-}
-static void
 fnv_seed(struct nbperf *nbperf)
 {
 	static uint32_t predictable_counter = 0;
@@ -181,7 +165,6 @@ fnv_seed(struct nbperf *nbperf)
 		nbperf->seed[1] = arc4random();
 	}
 }
-
 static void
 fnv3_compute(struct nbperf *nbperf, const void *key, size_t keylen,
     uint32_t *hashes)
@@ -190,13 +173,21 @@ fnv3_compute(struct nbperf *nbperf, const void *key, size_t keylen,
 	fnv3(key, keylen, seed, (uint64_t *)hashes);
 }
 static void
-fnv3_print(struct nbperf *nbperf, const char *indent, const char *key,
+fnv_compute(struct nbperf *nbperf, const void *key, size_t keylen,
+    uint32_t *hashes)
+{
+	uint64_t seed = *(uint64_t *)nbperf->seed;
+	fnv(key, keylen, seed, (uint64_t *)hashes);
+}
+static void
+fnv_print(struct nbperf *nbperf, const char *indent, const char *key,
     const char *keylen, const char *hash)
 {
 	uint64_t seed = *(uint64_t *)nbperf->seed;
 	fprintf(nbperf->output,
-	    "%sfnv3(%s, %s, UINT64_C(0x%" PRIx64 "), (uint64_t*)%s);\n", indent,
-	    key, keylen, seed, hash);
+	    "%sfnv%s(%s, %s, UINT64_C(0x%" PRIx64 "), (uint64_t*)%s);\n", indent,
+                nbperf->compute_hash == fnv3_compute ? "3" : "",
+                key, keylen, seed, hash);
 }
 #ifdef HAVE_CRC
 static void
@@ -392,7 +383,7 @@ set_hash(struct nbperf *nbperf, const char *arg)
 		nbperf->compute_hash = fnv3_compute;
 		nbperf->hash_header = "fnv3.h";
 		nbperf->seed_hash = fnv_seed;
-		nbperf->print_hash = fnv3_print;
+		nbperf->print_hash = fnv_print;
 		return;
 	} else if (strcmp(arg, "inthash") == 0) {
 		nbperf->hash_header = NULL;
@@ -619,6 +610,7 @@ main(int argc, char **argv)
 	nbperf.n = curlen;
 	nbperf.keys = keys;
 	nbperf.keylens = keylens;
+
 	/* with less keys we can use smaller and esp. faster 16bit hashes */
 	if (curlen <= 65534) {
 		nbperf.hashes16 = 1;
@@ -630,7 +622,7 @@ main(int argc, char **argv)
 					nbperf.compute_hash = inthash_compute;
 #ifdef HAVE_CRC
 			} else if (nbperf.compute_hash == crc_compute) {
-			        // crc2 optim still broken
+			        // FIXME crc2 optim still broken
 				nbperf.hashes16 = 0;
 #if 0
 				nbperf.hash_size = 2;
@@ -643,10 +635,20 @@ main(int argc, char **argv)
 			} else if (nbperf.compute_hash == fnv3_compute) {
 				nbperf.hash_size = 2;
 				nbperf.compute_hash = fnv_compute;
-                                nbperf.print_hash = fnv_print;
 			}
 		}
-        }
+	} else if (build_hash == chm_compute) {
+		if (nbperf.compute_hash == fnv3_compute) {
+			nbperf.hash_size = 2;
+			nbperf.compute_hash = fnv_compute;
+		}
+#ifdef HAVE_CRC
+		else if (nbperf.compute_hash == crc_compute) {
+			nbperf.hash_size = 2;
+			nbperf.compute_hash = crc2_compute;
+		}
+#endif
+	}
 
 	looped = 0;
 	int rv;

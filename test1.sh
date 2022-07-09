@@ -15,9 +15,12 @@ hashc=mi_vector_hash.c
 while getopts "a:h:S:bIfpsx" o; do
     case "$o" in
         a) alg=$OPTARG
-           if [ $alg != chm -a $alg != chm3 -a $alg != bdz ]; then
+           if [ $alg != chm -a $alg != chm3 -a $alg != bdz -a $alg != bpz ]; then
                echo Invalid -a $alg
                usage
+           fi
+           if [ $alg = bpz ]; then
+               alg=bdz
            fi
            ;;
         b) big=1 ;;
@@ -58,7 +61,7 @@ if [ -n "$intkeys" ]; then
         IN=_rand100
         out=int${alg}
     fi
-    if [ -n $size ]; then
+    if [ -n "$size" ]; then
         IN=_rand${size}
         seq $(( $size * 2 )) | random > ${IN}
     fi
@@ -67,7 +70,7 @@ else
         IN=_words
         out=big${alg}
     fi
-    if [ -n $size ]; then
+    if [ -n "$size" ]; then
         IN=_words${size}
         head -n ${size} <${WORDS} >$IN
     fi

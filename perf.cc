@@ -6,8 +6,10 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <unistd.h>
-#include "perf.h"
 #include <sys/stat.h>
+
+#include "perf.h"
+
 #include <vector>
 #include <string>
 #include <cstring>
