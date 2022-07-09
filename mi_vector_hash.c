@@ -64,10 +64,6 @@ __RCSID("$NetBSD: mi_vector_hash.c,v 1.1 2013/12/11 01:24:08 joerg Exp $");
 #include <lib/libkern/libkern.h>
 #else
 
-#if defined __FreeBSD__ || defined __NetBSD__
-#include "namespace.h"
-#endif
-
 #include <stdint.h>
 #include <stdlib.h>
 #endif
