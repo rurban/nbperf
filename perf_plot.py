@@ -38,14 +38,17 @@ def plot_from_data(name_plot_hash, title):
    grid_color = "#C9C9C9"
    plot_bgcolor = "#F9F9F9"
    paper_bgcolor = "#F6F8FA"
-   # lst has 6 items
+   # lst has 10 items
    color_list = [
        "#003f5c", # dark blue
+       "#0000ff", # blue
+       "#808000", # olive
        "#006400", # green
        "#955196", # violet
        "#dd5182", # reddish
        "#ff6e54", # orange
        "#ffa600", # yellow-orange
+       "#ffff00", # yellow
        "#ffdf10",
        "#ffdff0",
    ]
