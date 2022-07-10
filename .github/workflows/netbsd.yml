@@ -1,0 +1,13 @@
+name: netbsd
+on: [push, pull_request]
+
+jobs:
+  netbsd:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 1
+    # --device=/dev/kvm not in this ubuntu
+    - run: docker run --rm -v $PWD:/mnt -w /mnt docker.io/madworx/netbsd:9.0-x86_64 sh -c "make check"

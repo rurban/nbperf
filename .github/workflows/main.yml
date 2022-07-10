@@ -1,4 +1,4 @@
-name: Github CI
+name: Ubuntu
 on: [push, pull_request]
 
 jobs:
