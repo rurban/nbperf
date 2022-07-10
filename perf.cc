@@ -81,14 +81,13 @@ static inline void cleanup_files (void) {
   unlink(perf_exe);
 }
 
-static inline void create_set (const char *alg, const char *hash,
+static inline int create_set (const char *alg, const string hash,
                                const size_t size, const bool isword) {
   char cmd[160];
   static unsigned lines = 0;
-  int ret;
+  int ret = 0;
 
-  (void)ret;
-  set_names (alg, hash, size, isword);
+  set_names (alg, hash.c_str(), size, isword);
   printf("Creating %s\n", perf_exe);
   if (!isword) {
     FILE *f = fopen("words.tmp","w");
@@ -101,7 +100,7 @@ static inline void create_set (const char *alg, const char *hash,
     snprintf(cmd, sizeof cmd, "sort -n <words.tmp | uniq >%s", perf_in);
     ret = system(cmd);
     unlink("words.tmp");
-    return;
+    return ret;
   }
   if (!lines)
     {
@@ -129,6 +128,7 @@ static inline void create_set (const char *alg, const char *hash,
                 " | grep -v \",\" | sort | uniq >%s", size + 2, perf_in);
        ret = system(cmd);
      }
+   return ret;
  }
 static inline int run_nbperf (FILE* f, const uint32_t size, const char *cmd) {
    uint64_t t = timer_start();
@@ -182,17 +182,15 @@ int main (int argc, char **argv)
          : is_chm3 ? "chm3"
          : is_bdz ? "bdz"
          : NULL;
-     const char *hash;
+     string hash;
      size_t hpos = option.find("-h ");
      if (hpos != string::npos) {
-         string rest = option.substr(hpos+3);
+         string rest = option.substr(hpos + 3);
          size_t ppos = rest.find(" ");
          if (ppos != string::npos)
-             hash = rest.substr(0, ppos).c_str();
+             hash = rest.substr(0, ppos);
          else
-             hash = rest.c_str();
-     } else {
-         hash = "";
+           hash = string(rest);
      }
      printf("------------------------ %s ------------------------\n", option.c_str());
      fprintf(comp, "option: %s\n", option.c_str());
@@ -206,7 +204,9 @@ int main (int argc, char **argv)
          char cmd[160];
          int ret = 0;
          const uint32_t size = sizes[i];
-         create_set (alg, hash, sizes[i], isword);
+         ret = create_set (alg, hash, sizes[i], isword);
+         if (ret != 0)
+             continue;
          const bool needs_mi_vector = option.find("-h ") == string::npos;
          //const bool is_fnv = option.find("-h fnv") != string::npos;
          //if (size == 20000 && is_fnv)
@@ -234,7 +234,7 @@ int main (int argc, char **argv)
          if (is_bdz && isword)
              defines += "-Dbdz ";
 #if defined __amd64__ || defined __x86_64__
-         if (strcmp (hash, "crc") == 0)
+         if (hash == "crc")
              defines += "-march=native";
 #endif
          ret = compile_result (needs_mi_vector, defines.c_str());
