@@ -87,6 +87,7 @@ main (int argc, char *argv[])
           ret = 1;
           printf ("NOT in word set %s, hash %u != index %u\n", buf, h, map[j]);
           fclose(f);
+          free (map);
           abort();
         }
 #endif
@@ -105,6 +106,9 @@ main (int argc, char *argv[])
   f = fopen (log, "a");
   fprintf(f, "%20u %20lu\n", size, t / PERF_LOOP);
   fclose(f);
-  
+#ifdef bdz
+  free (map);
+#endif
+
   return ret;
 }

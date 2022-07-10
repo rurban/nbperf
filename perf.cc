@@ -46,6 +46,7 @@ const uint32_t sizes[] = { 200, 400, 800, 2000, 4000, 8000, 20000, 100000,
 static char perf_exe[32] = PERF_PRE "2000000";
 static char perf_in[40] = PERF_PRE "2000000.nbperf";
 static char perf_c[40] = PERF_PRE "2000000.c";
+static char cflags[256] = "-O2";
 
 #define PICK(n) ((unsigned)rand()) % (n)
 char buf[128];
@@ -138,14 +139,14 @@ static inline int run_nbperf (FILE* f, const uint32_t size, const char *cmd) {
    return ret;
 }
 static inline int compile_result (bool needs_mi_vector, const char *defines) {
-   char cmd[128];
-   snprintf(cmd, sizeof cmd, "cc -O2 -I. %s %s perf_test.c %s -o %s",
-            defines, perf_c, needs_mi_vector ? "mi_vector_hash.c" : "", perf_exe);
+   char cmd[256];
+   snprintf(cmd, sizeof cmd, "cc %s -I. %s %s perf_test.c %s -o %s",
+            cflags, defines, perf_c, needs_mi_vector ? "mi_vector_hash.c" : "", perf_exe);
    printf("%s\n", cmd);
    return system(cmd);
 }
 static inline int run_result (const char *log, const uint32_t size) {
-   char cmd[128];
+   char cmd[256];
    snprintf(cmd, sizeof cmd, "./%s %s %s %u", perf_exe, perf_in,
             log, size);
    //printf("%s\n", cmd);
@@ -161,6 +162,8 @@ int main (int argc, char **argv)
    FILE *run = fopen("run.log", "w");
    FILE *fsize = fopen("size.log", "w");
    srand(0xbeef);
+   if (getenv("CFLAGS"))
+     strcpy (cflags, getenv("CFLAGS"));
 
    if (argc > 1) {
        options.clear();
