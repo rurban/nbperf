@@ -675,5 +675,9 @@ main(int argc, char **argv)
 		for (unsigned i = 0; i < curlen; i++)
 			free((void *)keys[i]);
 	free(keys);
+	if (nbperf.output)
+		fclose(nbperf.output);
+	if (nbperf.map_output)
+		fclose(nbperf.map_output);
 	return 0;
 }
