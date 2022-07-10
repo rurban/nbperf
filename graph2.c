@@ -164,12 +164,12 @@ found_dups:
 static inline void
 SIZED2(_add_edge)(struct SIZED(graph) * graph, uint32_t edge)
 {
-	struct SIZED(edge) *e = graph->edges + edge;
+	struct SIZED(edge) *e = &graph->edges[edge];
 	struct SIZED(vertex) * v;
 	size_t i;
 
 	for (i = 0; i < GRAPH_SIZE; ++i) {
-		v = graph->verts + e->vertices[i];
+		v = &graph->verts[e->vertices[i]];
 		v->edges ^= edge;
 		++v->degree;
 	}
@@ -178,12 +178,12 @@ SIZED2(_add_edge)(struct SIZED(graph) * graph, uint32_t edge)
 static inline void
 SIZED2(_remove_edge)(struct SIZED(graph) * graph, uint32_t edge)
 {
-	struct SIZED(edge) *e = graph->edges + edge;
+	struct SIZED(edge) *e = &graph->edges[edge];
 	struct SIZED(vertex) * v;
 	size_t i;
 
 	for (i = 0; i < GRAPH_SIZE; ++i) {
-		v = graph->verts + e->vertices[i];
+		v = &graph->verts[e->vertices[i]];
 		v->edges ^= edge;
 		--v->degree;
 	}
@@ -192,7 +192,7 @@ SIZED2(_remove_edge)(struct SIZED(graph) * graph, uint32_t edge)
 static inline void
 SIZED2(_remove_vertex)(struct SIZED(graph) * graph, uint32_t vertex)
 {
-	struct SIZED(vertex) *v = graph->verts + vertex;
+	struct SIZED(vertex) *v = &graph->verts[vertex];
 	uint32_t e;
 
 	if (v->degree == 1) {
