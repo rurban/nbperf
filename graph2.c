@@ -48,18 +48,20 @@ __RCSID("$NetBSD: graph2.c,v 1.5 2021/01/07 16:03:08 joerg Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <assert.h>
 
 #include "nbperf.h"
 
 #include "graph2.h"
 
 void
-SIZED2(_setup)(struct SIZED(graph) * graph, uint32_t v, uint32_t e)
+SIZED2(_setup)(struct SIZED(graph) * graph, uint32_t v, uint32_t e, uint32_t va)
 {
 	graph->v = v;
+	graph->va = va;
 	graph->e = e;
 
-	graph->verts = calloc(sizeof(*graph->verts), v);
+	graph->verts = calloc(sizeof(*graph->verts), va);
 	graph->edges = calloc(sizeof(*graph->edges), e);
 	graph->output_order = calloc(sizeof(uint32_t), e);
 
@@ -169,6 +171,7 @@ SIZED2(_add_edge)(struct SIZED(graph) * graph, uint32_t edge)
 	size_t i;
 
 	for (i = 0; i < GRAPH_SIZE; ++i) {
+	        assert(e->vertices[i] < graph->va);
 		v = &graph->verts[e->vertices[i]];
 		v->edges ^= edge;
 		++v->degree;
@@ -183,6 +186,7 @@ SIZED2(_remove_edge)(struct SIZED(graph) * graph, uint32_t edge)
 	size_t i;
 
 	for (i = 0; i < GRAPH_SIZE; ++i) {
+	        assert(e->vertices[i] < graph->va);
 		v = &graph->verts[e->vertices[i]];
 		v->edges ^= edge;
 		--v->degree;
@@ -211,14 +215,14 @@ SIZED2(_hash)(struct nbperf *nbperf, struct SIZED(graph) * graph)
 	size_t i, j;
 
 #if GRAPH_SIZE == 2
-	if (nbperf->allow_hash_fudging && (graph->v & 1) != 1)
+	if (nbperf->allow_hash_fudging && (graph->va & 1) != 1)
 		errx(1, "vertex count must have lowest bit set");
 #else
-	if (nbperf->allow_hash_fudging && (graph->v & 3) != 3)
+	if (nbperf->allow_hash_fudging && (graph->va & 3) != 3)
 		errx(1, "vertex count must have lowest 2 bits set");
 #endif
 
-	memset(graph->verts, 0, sizeof(*graph->verts) * graph->v);
+	memset(graph->verts, 0, sizeof(*graph->verts) * graph->va);
 	graph->hash_fudge = 0;
 
 	for (i = 0; i < graph->e; ++i) {
@@ -237,6 +241,7 @@ SIZED2(_hash)(struct nbperf *nbperf, struct SIZED(graph) * graph)
 			if (j == 1 && e->vertices[0] == e->vertices[1]) {
 				if (!nbperf->allow_hash_fudging)
 					return -1;
+                                // this needs to bump the graph->v by one
 				e->vertices[1] ^= 1; /* toogle bit to differ */
 				graph->hash_fudge |= 1;
 			}
@@ -248,6 +253,7 @@ SIZED2(_hash)(struct nbperf *nbperf, struct SIZED(graph) * graph)
 					return -1;
 				graph->hash_fudge |= 2;
 				e->vertices[2] ^= 1;
+                                // this needs to bump the graph->v by two
 				e->vertices[2] ^= 2 *
 				    (e->vertices[0] == e->vertices[2] ||
 					e->vertices[1] == e->vertices[2]);

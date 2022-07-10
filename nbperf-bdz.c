@@ -298,7 +298,7 @@ bpz_compute(struct nbperf *nbperf)
 {
 	struct state state;
 	int retval = -1;
-	uint32_t v, e;
+	uint32_t v, e, va;
 
 	if (nbperf->c == 0)
 		nbperf->c = 1.24;
@@ -314,10 +314,12 @@ bpz_compute(struct nbperf *nbperf)
 		++v;
 	if (v < 10)
 		v = 10;
-	if (nbperf->allow_hash_fudging)
-		v |= 3;
+	if (nbperf->allow_hash_fudging) // two more as reserve
+		va = (v + 2) | 3;
+	else
+		va = v;
 
-	graph3_setup(&state.graph, v, e);
+	graph3_setup(&state.graph, v, e, va);
 
 	state.holes64k = calloc(sizeof(uint32_t), (v + 65535) / 65536);
 	state.holes64 = calloc(sizeof(uint16_t), (v + 63) / 64 );

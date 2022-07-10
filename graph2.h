@@ -79,11 +79,11 @@ struct SIZED(graph) {
 	uint32_t output_index;
 	uint32_t *output_order;
 	uint8_t *visited;
-	uint32_t e, v;
+	uint32_t e, v, va;
 	int hash_fudge;
 };
 
-void	SIZED2(_setup)(struct SIZED(graph) *, uint32_t, uint32_t);
+void	SIZED2(_setup)(struct SIZED(graph) *, uint32_t v, uint32_t e, uint32_t va);
 void	SIZED2(_free)(struct SIZED(graph) *);
 
 int	SIZED2(_hash)(struct nbperf *, struct SIZED(graph) *);

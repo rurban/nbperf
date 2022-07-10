@@ -261,7 +261,7 @@ chm_compute(struct nbperf *nbperf)
 {
 	struct state state;
 	int retval = -1;
-	uint32_t v, e;
+	uint32_t v, e, va;
 
 #if GRAPH_SIZE >= 3
 	if (nbperf->c == 0)
@@ -291,13 +291,17 @@ chm_compute(struct nbperf *nbperf)
 		++v;
 	if (v < 10)
 		v = 10;
-	if (nbperf->allow_hash_fudging)
-		v |= 3;
+	if (nbperf->allow_hash_fudging) // two more as reserve
+		va = (v + 2) | 3;
+	else
+		va = v;
 #else
 	if (v == 2 * nbperf->n)
 		++v;
-	if (nbperf->allow_hash_fudging)
-		v |= 1;
+	if (nbperf->allow_hash_fudging) // one more as reserve
+		va = (v + 1) | 1;
+	else
+		va = v;
 #endif
 
 	state.g = calloc(sizeof(uint32_t), v);
@@ -305,7 +309,7 @@ chm_compute(struct nbperf *nbperf)
 	if (state.g == NULL || state.visited == NULL)
 		err(1, "malloc failed");
 
-	SIZED2(_setup)(&state.graph, v, e);
+	SIZED2(_setup)(&state.graph, v, e, va);
 	if (SIZED2(_hash)(nbperf, &state.graph))
 		goto failed;
 	if (SIZED2(_output_order)(&state.graph))
