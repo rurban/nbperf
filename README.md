@@ -4,7 +4,7 @@ nbperf — compute a minimal perfect hash function
 
 # SYNOPSIS
 
-    nbperf [-fpsI] [-a algorithm] [-c utilisation] [-h hash] [-i iterations]
+    nbperf [-fIMps] [-a algorithm] [-c utilisation] [-h hash] [-i iterations]
            [-m map-file] [-n name] [-o output] [input]
 
 # DESCRIPTION
@@ -64,9 +64,8 @@ Supported arguments for **-h**:
 
   Various SW and HW variants of iSCSI CRC32c.
   See [crc(3)](https://en.wikipedia.org/wiki/Cyclic_redundancy_check).
-  This is not as good as expected yet. Ensure that you use -msse4, -mcrc or 
+  This is not as good as expected yet. Ensure that you use -msse4, -mcrc or
   -march=native or similar for the much faster HW variant.
-
 
 The number of iterations can be limited with **-i**.  **nbperf**
 outputs a function matching `uint32_t hash(const void * restrict, size_t)`
@@ -75,6 +74,9 @@ argument, for strings not including the terminating NUL.  It is the
 responsibility of the caller to pass in only valid keys or compare the
 resulting index to the key.  The function name can be changed using
 **-n _name_**.  If the **-s** flag is specified, it will be static.
+
+If the **-f** flag is specified, hash fudging will be allowed. I.e.
+slightly slower hashes.
 
 If the **-I** flag is specified, the keys interpreted as integers,
 and the generated hash function will have the signature
@@ -91,9 +93,6 @@ stable way.  This may take longer than the normal random seed, but
 ensures that the output is the same for repeated in‐ vocations as long
 as the input is constant.
 
-If the **-f** flag is specified, hash fudging will be allowed. I.e.
-slightly slower hashes.
-
 After each failing iteration, a dot is written to stderr.
 
 **nbperf** checks for duplicate keys on the first iteration that passed
@@ -106,27 +105,35 @@ The **nbperf** utility exits 0 on success, and >0 if an error occurs.
 
 # COMPARISON
 
-1. This nbperf variant extends the original NetBSD code with support for
-much better, safer and faster hashes. The original `mi_vector_hash` reads
-past strings for up to 3 bytes, and when such a string is at the end of a page,
-it might fail. wyhash and on x86_64 or aarch64 hardware-assisted CRC allows
-much faster run-time hashing, whilst not reading out of bounds.
+1.
+This nbperf variant extends the original NetBSD code with support
+for much better, safer and faster hashes. The original
+`mi_vector_hash` reads past strings for up to 3 bytes, and when such a
+string is at the end of a page, it might fail. wyhash and on x86_64 or
+aarch64 hardware-assisted CRC allows much faster run-time hashing,
+whilst not reading out of bounds.
 
-2. It supports **integer keys** with much faster run-time lookup than for strings.
-It is currently the only perfect hash generator for integers, such as e.g. for
-fast unicode property lookups.
+2.
+It supports **integer keys** with much faster run-time lookup than
+for strings.  It is currently the only perfect hash generator for
+integers, such as e.g. for fast unicode property lookups.
 
-3. It supports smaller 16bit hashes when the key size fits into 16bit, i.e. max 65534 keys.
-This enables faster run-time hashing. The internal hash must not generate 3
-independent 32bit values, 3 16bit values are enough, which is usually twice as fast.
+3.
+It supports smaller 16bit hashes when the key size fits into 16bit,
+i.e. max 65534 keys.  This enables faster run-time hashing. The
+internal hash must not generate 3 independent 32bit values, 3 16bit
+values are enough, which is usually twice as fast.
 
-4. It supports Lemire's fastmod.
+4.
+It supports Lemire's fastmod.
 
-5. **gperf** integer key support and perfect hash support for larger keysizes is
-still in work. **PostgresQL** uses a perl script for its CHM support with strings only.
-**perl5** uses slower run-time perfect hashes for its unicode tables.
-**cmph** is only suitable for huge keysizes, and carries a heavy run-time overhead,
-plus needs the run-time library.
+5.
+**gperf** integer key support and perfect hash support for larger
+keysizes is still in work. **PostgresQL** uses a perl script for its
+CHM support with strings only.  **perl5** uses slower run-time perfect
+hashes for its unicode tables.  **cmph** is only suitable for huge
+keysizes, and carries a heavy run-time overhead, plus needs the
+run-time library.
 
 # SEE ALSO
 

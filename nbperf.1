@@ -149,6 +149,10 @@ If the
 flag is specified, it will be static.
 .Pp
 If the
+.Fl f
+flag is specified, hash fudging will be allowed. I.e. slightly slower hashes.
+.Pp
+If the
 .Fl I
 flag is specified, the keys are interpreted as integers, and
 the generated hash function will have the signature
@@ -170,10 +174,6 @@ flag is specified, the hash function is seeded in a stable way.
 This may take longer than the normal random seed, but ensures
 that the output is the same for repeated invocations as long as
 the input is constant.
-.Pp
-If the
-.Fl f
-flag is specified, hash fudging will be allowed. I.e. slightly slower hashes.
 .Pp
 .Pp
 After each failing iteration, a dot is written to stderr.
