@@ -120,8 +120,9 @@ static inline void
 crc2(const void *key, size_t len, uint64_t seed, uint64_t *hashes)
 {
 	uint8_t *buf = (uint8_t *)key;
-	uint32_t  h1 = seed << 32;
-	uint32_t  h2 = seed & 0xFFFFFFFF;
+	const uint32_t *seed32 = (const uint32_t *)&seed;
+	uint32_t  h1 = seed32[0];
+	uint32_t  h2 = seed32[1];
 	uint32_t *h32 = (uint32_t *)hashes;
 
 	// Align the input to the word boundary
@@ -145,8 +146,9 @@ static inline void
 crc3(const void *key, size_t len, uint64_t seed, uint64_t *hashes)
 {
 	uint8_t *buf = (uint8_t *)key;
-	uint32_t  h1 = seed << 32;
-	uint32_t  h2 = seed & 0xFFFFFFFF;
+	const uint32_t *seed32 = (const uint32_t *)&seed;
+	uint32_t  h1 = seed32[0];
+	uint32_t  h2 = seed32[1];
 	uint32_t  h3 = h1 ^ h2;
 	uint32_t *h32 = (uint32_t *)hashes;
 

@@ -622,12 +622,8 @@ main(int argc, char **argv)
 					nbperf.compute_hash = inthash_compute;
 #ifdef HAVE_CRC
 			} else if (nbperf.compute_hash == crc_compute) {
-			        // FIXME crc2 optim still broken
-				nbperf.hashes16 = 0;
-#if 0
 				nbperf.hash_size = 2;
 				nbperf.compute_hash = crc2_compute;
-#endif
 #endif
 			} else if (nbperf.compute_hash == wyhash4_compute) {
 				nbperf.hash_size = 2;
