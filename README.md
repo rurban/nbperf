@@ -17,7 +17,7 @@ The **-m** argument instructs **nbperf** to write the resulting key
 mapping to _map-file_.  Each line gives the result of the hash
 function for the corresponding input key.
 
-The parameter _utilisation_ determines the space efficiency.
+The **-c** _utilisation_ argument determines the space efficiency.
 
 Supported arguments for **-a**:
 
@@ -93,6 +93,9 @@ stable way.  This may take longer than the normal random seed, but
 ensures that the output is the same for repeated in‐ vocations as long
 as the input is constant.
 
+If the **-f** flag is specified, hash fudging will be allowed. I.e.
+slightly slower hashes.
+
 # EXIT STATUS
 
 The **nbperf** utility exits 0 on success, and >0 if an error occurs.
@@ -104,8 +107,6 @@ much better, safer and faster hashes. The original `mi_vector_hash` reads
 past strings for up to 3 bytes, and when such a string is at the end of a page,
 it might fail. wyhash and on x86_64 or aarch64 hardware-assisted CRC allows
 much faster run-time hashing, whilst not reading out of bounds.
-In my gperf port I have some performance graphs with chm, chm3, bpz:
-https://gitlab.com/rurban/gperf/-/blob/hashfuncs/doc/run.svg
 
 2. It supports **integer keys** with much faster run-time lookup than for strings.
 It is currently the only perfect hash generator for integers, such as e.g. for
