@@ -45,34 +45,34 @@ perf() {
         mapopt="-m $map"
     fi
     # intkeys
-    if [ x$opts = x-I -o x$opts = x-Ip -o x$opts = x-Ifp ]
+    if [ x$opts = x-I -o x$opts = x-Ip -o x$opts = x-Ifp -o x$opts = x-IM ]
     then
         if [ x$alg = xbdz ]
         then
             map="${RANDIN}.map"
             mapopt="-m $map"
-        elif [ -z $alg ]
+        elif [ -z "$alg" ]
         then
              alg=chm
         fi
 	echo ./nbperf $opts -a $alg -o _test_int$alg.c $mapopt ${RANDIN}
 	time ./nbperf $opts -a $alg -o _test_int$alg.c $mapopt ${RANDIN}
-	[ -z $PERF ] && echo $CC $CFLAGS -I. -D_INTKEYS -D$alg _test_int$alg.c test_main.c -o _test_int$alg
+	[ -z "$PERF" ] && echo $CC $CFLAGS -I. -D_INTKEYS -D$alg _test_int$alg.c test_main.c -o _test_int$alg
 	$CC $CFLAGS -I. $PERF -D_INTKEYS -D$alg _test_int$alg.c test_main.c -o _test_int$alg
 	echo ./_test_int$alg ${RANDIN}
         time ./_test_int$alg ${RANDIN}
-    elif [ -z $hash ]
+    elif [ -z "$hash" ]
     then
 	echo ./nbperf $opts -a $alg -o _test_${alg}.c $mapopt ${WORDSIN}
 	time ./nbperf $opts -a $alg -o _test_${alg}.c $mapopt ${WORDSIN}
-        [ -z $PERF ] && echo $CC $CFLAGS -I. -D$alg _test_${alg}.c test_main.c mi_vector_hash.c -o _test_${alg}
+        [ -z "$PERF" ] && echo $CC $CFLAGS -I. -D$alg _test_${alg}.c test_main.c mi_vector_hash.c -o _test_${alg}
 	$CC $CFLAGS -I. $PERF -D$alg _test_${alg}.c test_main.c mi_vector_hash.c -o _test_${alg}
         echo ./_test_${alg} ${WORDSIN}
         time ./_test_${alg} ${WORDSIN}
     else
 	echo ./nbperf $opts -a $alg -h $hash -o _test_${alg}_${hash}.c $mapopt ${WORDSIN}
 	time ./nbperf $opts -a $alg -h $hash -o _test_${alg}_${hash}.c $mapopt ${WORDSIN}
-        [ -z $PERF ] && echo $CC $CFLAGS -I. -D$alg -Dh_$hash _test_${alg}_${hash}.c test_main.c -o _test_${alg}_${hash}
+        [ -z "$PERF" ] && echo $CC $CFLAGS -I. -D$alg -Dh_$hash _test_${alg}_${hash}.c test_main.c -o _test_${alg}_${hash}
 	$CC $CFLAGS -I. $PERF -D$alg -Dh_$hash _test_${alg}_${hash}.c test_main.c -o _test_${alg}_${hash}
         echo ./_test_${alg}_${hash} ${WORDSIN}
         time ./_test_${alg}_${hash} ${WORDSIN}
@@ -90,12 +90,16 @@ perf chm3 fnv
 perf bdz fnv
 perf chm crc
 if [ -z $PERF]; then
+    perf chm "" -M
+    perf chm3 "" -M
     perf bdz fnv -f
     perf chm crc -f
     perf chm crc -fp
     perf chm wyhash -f
     perf chm3 wyhash -f
     perf bdz wyhash -f
+    perf chm wyhash -M
+    perf chm3 wyhash -M
     perf chm wyhash -fp
     perf chm3 wyhash -fp
     perf bdz wyhash -fp
@@ -109,8 +113,12 @@ perf chm3 "" -I
 perf bdz "" -I
 
 if [ -z $PERF]; then
+    perf chm "" -IM
+    perf chm3 "" -IM
     perf chm "" -Ip
     perf chm "" -Ifp
+    perf chm3 "" -Ip
+    perf chm3 "" -Ifp
     perf bdz "" -Ip
     perf bdz "" -Ifp
 fi

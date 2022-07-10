@@ -18,8 +18,11 @@ using namespace std;
 
 vector<string> options = {
 	"-a chm -p",
+	"-a chm -Mp",
 	"-a chm3 -p",
+	"-a chm3 -Mp",
 	"-a bdz -p",
+	"-a bdz -Mp",
 	"-a chm -h wyhash -p",
 	"-a chm3 -h wyhash -p",
 	"-a bdz -h wyhash -p",
@@ -30,8 +33,11 @@ vector<string> options = {
 	"-a chm3 -h crc -p",
 	"-a bpz -h crc -p",
 	"-I -p",
+	"-I -Mp",
 	"-I -a chm3 -p",
+	"-I -a chm3 -Mp",
 	"-I -a bdz -p",
+	"-I -a bdz -Mp",
 };
 const uint32_t sizes[] = { 200, 400, 800, 2000, 4000, 8000, 20000, 100000,
 	500000, 2000000 };

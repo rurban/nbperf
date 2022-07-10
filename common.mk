@@ -29,12 +29,21 @@ check: $(PROG) _words1000 _words $(RANDBIG) $(RANDHEX)
 	./$(PROG) -o _test_chm.c $(WORDS)
 	$(CC) $(CFLAGS) -I. -Dchm -o _test_chm _test_chm.c test_main.c mi_vector_hash.c
 	./_test_chm $(WORDS)
-	./$(PROG) -a bdz -o _test_bdz.c -m _words.map _words
-	$(CC) $(CFLAGS) -I. -Dbdz -o _test_bdz _test_bdz.c test_main.c mi_vector_hash.c
-	./_test_bdz _words
 	./$(PROG) -a chm3 -o _test_chm3.c $(WORDS)
 	$(CC) $(CFLAGS) -I. -Dchm3 -o _test_chm3 _test_chm3.c test_main.c mi_vector_hash.c
 	./_test_chm3 $(WORDS)
+	./$(PROG) -a bdz -o _test_bdz.c -m _words.map _words
+	$(CC) $(CFLAGS) -I. -Dbdz -o _test_bdz _test_bdz.c test_main.c mi_vector_hash.c
+	./_test_bdz _words
+	./$(PROG) -M -o _test_Mchm.c $(WORDS)
+	$(CC) $(CFLAGS) -I. -Dchm -o _test_Mchm _test_Mchm.c test_main.c mi_vector_hash.c
+	./_test_Mchm $(WORDS)
+	./$(PROG) -M -o _test_Mchm3.c $(WORDS)
+	$(CC) $(CFLAGS) -I. -Dchm3 -o _test_Mchm3 _test_Mchm3.c test_main.c mi_vector_hash.c
+	./_test_Mchm3 $(WORDS)
+	./$(PROG) -M -a bdz -o _test_Mbdz.c -m _words.map _words
+	$(CC) $(CFLAGS) -I. -Dbdz -o _test_Mbdz _test_Mbdz.c test_main.c mi_vector_hash.c
+	./_test_Mbdz _words
 	./$(PROG) -h wyhash -o _test_chm_wy.c $(WORDS)
 	$(CC) $(CFLAGS) -I. -Dchm -o _test_chm_wy _test_chm_wy.c test_main.c
 	./_test_chm_wy $(WORDS)
@@ -55,6 +64,9 @@ check: $(PROG) _words1000 _words $(RANDBIG) $(RANDHEX)
 	./$(PROG) -I -o _test_inthex.c $(RANDHEX)
 	$(CC) $(CFLAGS) -I. -Dchm -D_INTKEYS -o _test_inthex _test_inthex.c test_main.c
 	./_test_inthex $(RANDHEX)
+	./$(PROG) -IM -o _test_Mint.c $(RANDBIG)
+	$(CC) $(CFLAGS) -I. -Dchm -D_INTKEYS -o _test_Mint _test_Mint.c test_main.c
+	./_test_Mint $(RANDBIG)
 	@echo
 	@echo test all combinations and results with a small set
 	CFLAGS="$(CFLAGS)" ./test

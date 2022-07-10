@@ -36,7 +36,7 @@
 .Nd compute a perfect hash function
 .Sh SYNOPSIS
 .Nm
-.Op Fl fIps
+.Op Fl fIMps
 .Op Fl a Ar algorithm
 .Op Fl c Ar utilisation
 .Op Fl h Ar hash
@@ -159,12 +159,10 @@ The
 .Fl h
 flag is ignored then.
 .Pp
-After each failing iteration, a dot is written to stderr.
-.Pp
-.Nm
-checks for duplicate keys on the first iteration that passed
-basic hash distribution tests.
-In that case, an error message is printed and the program terminates.
+If the
+.Fl M
+flag is specified, the modulo operator uses an optimized Lemire fastmod variant.
+This requires native 128bit multiplication and __uint128_t with bigger keysets.
 .Pp
 If the
 .Fl p
@@ -176,6 +174,14 @@ the input is constant.
 If the
 .Fl f
 flag is specified, hash fudging will be allowed. I.e. slightly slower hashes.
+.Pp
+.Pp
+After each failing iteration, a dot is written to stderr.
+.Pp
+.Nm
+checks for duplicate keys on the first iteration that passed
+basic hash distribution tests.
+In that case, an error message is printed and the program terminates.
 .Pp
 .Sh EXIT STATUS
 .Ex -std
@@ -196,6 +202,8 @@ fast unicode property lookups.
 It supports smaller 16bit hashes when the key size fits into 16bit, i.e. max 65534 keys.
 This enables faster run-time hashing. The internal hash must not generate 3
 independent 32bit values, 3 16bit values are enough, which is usually twice as fast.
+.Pp
+It supports Lemire's fastmod.
 .Pp
 .Qq Sy "gperf"
 integer key support and perfect hash support for larger keysizes is

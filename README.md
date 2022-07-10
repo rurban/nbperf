@@ -82,11 +82,9 @@ and the generated hash function will have the signature
 With -I you can skip empty lines or comment lines with '#'.
 The **-h** flag is ignored then.
 
-After each failing iteration, a dot is written to stderr.
-
-**nbperf** checks for duplicate keys on the first iteration that passed
-basic hash distribution tests.  In that case, an error message is
-printed and the program terminates.
+If the **-M** flag is specified, the modulo operator uses an optimized
+Lemire fastmod variant. This requires native 128bit multiplication and
+`__uint128_t` with bigger keysets.
 
 If the **-p** flag is specified, the hash function is seeded in a
 stable way.  This may take longer than the normal random seed, but
@@ -95,6 +93,12 @@ as the input is constant.
 
 If the **-f** flag is specified, hash fudging will be allowed. I.e.
 slightly slower hashes.
+
+After each failing iteration, a dot is written to stderr.
+
+**nbperf** checks for duplicate keys on the first iteration that passed
+basic hash distribution tests.  In that case, an error message is
+printed and the program terminates.
 
 # EXIT STATUS
 
@@ -116,7 +120,9 @@ fast unicode property lookups.
 This enables faster run-time hashing. The internal hash must not generate 3
 independent 32bit values, 3 16bit values are enough, which is usually twice as fast.
 
-4. **gperf** integer key support and perfect hash support for larger keysizes is
+4. It supports Lemire's fastmod.
+
+5. **gperf** integer key support and perfect hash support for larger keysizes is
 still in work. **PostgresQL** uses a perl script for its CHM support with strings only.
 **perl5** uses slower run-time perfect hashes for its unicode tables.
 **cmph** is only suitable for huge keysizes, and carries a heavy run-time overhead,

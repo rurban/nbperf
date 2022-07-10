@@ -215,14 +215,71 @@ print_hash(struct nbperf *nbperf, struct state *state)
 		    nbperf->hash_size);
 	(*nbperf->print_hash)(nbperf, "\t", "key", "keylen", "h");
 
-	fprintf(nbperf->output, "\n\th[0] = h[0] %% %" PRIu32 ";\n",
-	    state->graph.v);
-	fprintf(nbperf->output, "\th[1] = h[1] %% %" PRIu32 ";\n",
-	    state->graph.v);
+	if (nbperf->fastmod) {
+		if (nbperf->hashes16) {
+			fprintf(nbperf->output,
+			    "\n\tconst uint32_t m = UINT32_C(0xFFFFFFFF) / %" PRIu16
+			    " + 1;\n", state->graph.v);
+			fprintf(nbperf->output,
+			    "\tconst uint32_t low0 = m * h[0];\n");
+			fprintf(nbperf->output,
+			    "\tconst uint32_t low1 = m * h[1];\n");
 #if GRAPH_SIZE >= 3
-        fprintf(nbperf->output, "\th[2] = h[2] %% %" PRIu32 ";\n",
-                state->graph.v);
+			fprintf(nbperf->output,
+			    "\tconst uint32_t low2 = m * h[2];\n");
 #endif
+			fprintf(nbperf->output,
+			    "\th[0] = (uint16_t)((((uint64_t)low0) * %" PRIu32
+			    ") >> 32);\n",
+			    state->graph.v);
+			fprintf(nbperf->output,
+			    "\th[1] = (uint16_t)((((uint64_t)low1) * %" PRIu32
+			    ") >> 32);\n",
+			    state->graph.v);
+#if GRAPH_SIZE >= 3
+			fprintf(nbperf->output,
+			    "\th[2] = (uint16_t)((((uint64_t)low2) * %" PRIu32
+			    ") >> 32);\n",
+			    state->graph.v);
+#endif
+		} else {
+			fprintf(nbperf->output,
+			    "\n\tconst uint64_t m = UINT64_C(0xFFFFFFFFFFFFFFFF) / %" PRIu32
+			    " + 1;\n",
+			    state->graph.v);
+			fprintf(nbperf->output,
+			    "\tconst uint64_t low0 = m * h[0];\n");
+			fprintf(nbperf->output,
+			    "\tconst uint64_t low1 = m * h[1];\n");
+#if GRAPH_SIZE >= 3
+			fprintf(nbperf->output,
+			    "\tconst uint64_t low2 = m * h[2];\n");
+#endif
+			fprintf(nbperf->output,
+			    "\th[0] = (uint32_t)((((__uint128_t)low0) * %" PRIu32
+			    ") >> 64);\n",
+			    state->graph.v);
+			fprintf(nbperf->output,
+			    "\th[1] = (uint32_t)((((__uint128_t)low1) * %" PRIu32
+			    ") >> 64);\n",
+			    state->graph.v);
+#if GRAPH_SIZE >= 3
+			fprintf(nbperf->output,
+			    "\th[2] = (uint32_t)((((__uint128_t)low2) * %" PRIu32
+			    ") >> 64);\n",
+			    state->graph.v);
+#endif
+		}
+	} else {
+		fprintf(nbperf->output, "\n\th[0] = h[0] %% %" PRIu32 ";\n",
+                        state->graph.v);
+                fprintf(nbperf->output, "\th[1] = h[1] %% %" PRIu32 ";\n",
+                        state->graph.v);
+#if GRAPH_SIZE >= 3
+                fprintf(nbperf->output, "\th[2] = h[2] %% %" PRIu32 ";\n",
+                        state->graph.v);
+#endif
+	}
 
 	if (state->graph.hash_fudge & 1)
 		fprintf(nbperf->output, "\th[1] ^= (h[0] == h[1]);\n");

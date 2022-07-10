@@ -52,6 +52,7 @@ struct nbperf {
 	unsigned check_duplicates : 1;
 	unsigned has_duplicates : 1;
 	unsigned hashes16 : 1; // 16bit hashes only
+	unsigned fastmod : 1;
 
 	double c;
 

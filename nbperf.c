@@ -67,7 +67,7 @@ static /*__dead*/
 {
 	fprintf(stderr,
 	    "rurban/nbperf v3.0\n"
-	    "nbperf [-fIps] [-c utilisation] [-i iterations] [-n name] "
+	    "nbperf [-fIMps] [-c utilisation] [-i iterations] [-n name] "
 	    "[-h hash] [-o output] [-m mapfile] input\n");
 	exit(1);
 }
@@ -451,7 +451,7 @@ main(int argc, char **argv)
 # endif
 #endif
 
-	while ((ch = getopt(argc, argv, "a:c:fh:i:m:n:o:psI")) != -1) {
+	while ((ch = getopt(argc, argv, "a:c:fh:i:m:n:o:psIM")) != -1) {
 		switch (ch) {
 		case 'a':
 			/* Accept bdz as alias for netbsd-6 compat. */
@@ -492,6 +492,9 @@ main(int argc, char **argv)
 			set_hash(&nbperf, "inthash");
 			if (strcmp(nbperf.hash_name, "hash") == 0)
 				nbperf.hash_name = "inthash";
+			break;
+		case 'M':
+			nbperf.fastmod = 1;
 			break;
 		case 'm':
 			if (nbperf.map_output)

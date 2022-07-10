@@ -43,8 +43,11 @@ test_bdz_wy
 test_chm3_wy
 test_chm_wy
 _test_bdz
+_test_Mbdz
 _test_chm
+_test_Mchm
 _test_chm3
+_test_Mchm3
 _test_bdz_fnv
 _test_bdz_wyhash
 _test_bdz_crc
@@ -59,6 +62,7 @@ _test_intbdz
 _test_bdz_wy
 _test_chm3_wy
 _test_chm_wy
+_test_Mint*
 _test_int*
 _test_big*
 
