@@ -78,10 +78,11 @@ resulting index to the key.  The function name can be changed using
 If the **-f** flag is specified, hash fudging will be allowed. I.e.
 slightly slower hashes.
 
-If the **-I** flag is specified, the keys interpreted as integers,
+If the **-I** flag is specified, the keys are interpreted as integers,
 and the generated hash function will have the signature
 `uint32_t inthash (const int32_t key)`.
 With -I you can skip empty lines or comment lines with '#'.
+Hex numbers are supported also.
 The **-h** flag is ignored then.
 
 If the **-M** flag is specified, the modulo operator uses an optimized
