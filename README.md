@@ -46,6 +46,7 @@ Supported arguments for **-h**:
 
   Platform-independent version of Jenkins parallel hash.  This accesses the
   strings in 4-bytes, which will trip valgrind and asan. See `mi_vector_hash(3)`.
+  The default hash.
 
 * **wyhash**:
 
