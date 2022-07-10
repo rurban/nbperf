@@ -78,12 +78,16 @@ main (int argc, char *argv[])
         {
           ret = 1;
           printf ("NOT in word set %s, hash %u != index %u\n", buf, h, j);
+          fclose(f);
+          abort();
         }
 #else
       if (h != map[j])
         {
           ret = 1;
           printf ("NOT in word set %s, hash %u != index %u\n", buf, h, map[j]);
+          fclose(f);
+          abort();
         }
 #endif
       i++;
