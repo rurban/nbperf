@@ -105,8 +105,10 @@ sorting_cmp(const void *a_, const void *b_)
 		return 1;
 	i = memcmp(sorting_nbperf->keys[*a], sorting_nbperf->keys[*b],
 	    sorting_nbperf->keylens[*a]);
-	if (i == 0)
+	if (i == 0) {
 		sorting_found = 1;
+		err(1, "Duplicate %s\n", sorting_nbperf->keys[*a]);
+        }
 	return i;
 }
 
@@ -125,8 +127,10 @@ sorting_intcmp(const void *a_, const void *b_)
 	}
 	i = memcmp((const void *)&sorting_nbperf->keys[*a],
 	    (const void *)&sorting_nbperf->keys[*b], sizeof(char *));
-	if (i == 0)
+	if (i == 0) {
 		sorting_found = 1;
+		err(1, "Duplicate %lu\n", (unsigned long)sorting_nbperf->keys[*a]);
+        }
 	return i;
 }
 
