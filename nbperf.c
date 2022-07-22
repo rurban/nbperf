@@ -61,9 +61,8 @@ __RCSID("$NetBSD: nbperf.c,v 1.7 2021/01/12 14:21:18 joerg Exp $");
 #include "crc3.h"
 #endif
 
-static /*__dead*/
-    void
-    usage(void)
+static void
+usage(void)
 {
 	fprintf(stderr,
 	    "rurban/nbperf v3.0\n"
@@ -189,6 +188,7 @@ fnv_print(struct nbperf *nbperf, const char *indent, const char *key,
                 nbperf->compute_hash == fnv3_compute ? "3" : "",
                 key, keylen, seed, hash);
 }
+
 #ifdef HAVE_CRC
 static void
 crc_compute(struct nbperf *nbperf, const void *key, size_t keylen,
