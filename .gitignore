@@ -79,6 +79,7 @@ _test_*.c
 _test_*.o
 _words*
 _rand*
+VERSION
 
 # perf
 _perf*

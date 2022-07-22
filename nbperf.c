@@ -52,6 +52,9 @@ __RCSID("$NetBSD: nbperf.c,v 1.7 2021/01/12 14:21:18 joerg Exp $");
 #include <unistd.h>
 
 #include "nbperf.h"
+#ifndef VERSION
+#define VERSION 3.0
+#endif
 #define HAVE_CRC
 
 #include "fnv3.h"
@@ -65,9 +68,9 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-	    "rurban/nbperf v3.0\n"
+	    "rurban/nbperf v%s\n"
 	    "nbperf [-fIMps] [-c utilisation] [-i iterations] [-n name] "
-	    "[-h hash] [-o output] [-m mapfile] input\n");
+                "[-h hash] [-o output] [-m mapfile] input\n", VERSION);
 	exit(1);
 }
 

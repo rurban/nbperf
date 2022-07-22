@@ -1,7 +1,7 @@
 #!/bin/sh
 # requires plotly
 basedir="$(dirname $0)"
-VERSION="rurban/nbperf 3.0 g`cat VERSION`"
+VERSION="rurban/nbperf `cat VERSION`"
 if test -z "$PNG"; then
   PNG="size nbperf run"
 fi
