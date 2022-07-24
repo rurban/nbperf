@@ -47,6 +47,7 @@ __RCSID("$NetBSD: nbperf-bdz.c,v 1.10 2021/01/07 16:03:08 joerg Exp $");
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 #include "nbperf.h"
 
@@ -354,10 +355,11 @@ bpz_compute(struct nbperf *nbperf)
 	struct state state;
 	int retval = -1;
 	uint32_t v, e, va;
+        const double min_c = 1.24;
 
 	if (nbperf->c == 0)
-		nbperf->c = 1.24;
-	if (nbperf->c < 1.24)
+		nbperf->c = min_c;
+	if (nbperf->c != -2 && nbperf->c < min_c)
 		errx(1, "The argument for option -c must be at least 1.24");
 	if (nbperf->hash_size < 3)
                 errx(1, "The hash function must generate at least 3 values");
@@ -365,10 +367,24 @@ bpz_compute(struct nbperf *nbperf)
 	(*nbperf->seed_hash)(nbperf);
 	e = nbperf->n;
 	v = nbperf->c * nbperf->n;
-	if (1.24 * nbperf->n > v)
+
+        /* With -c -2 prefer v as next power of two.
+           But with bigger sets the space overhead might be too much.
+         */
+        if (nbperf->c == -2) {
+                v = 1 << (uint32_t)ceil(log2((double)nbperf->n));
+                nbperf->c = (v * 1.0) / nbperf->n;
+                // c might still be too small
+                while (nbperf->c < min_c) {
+                        v *= 2;
+                        nbperf->c = (v * 1.0) / nbperf->n;
+                }
+        }
+        
+	if (min_c * nbperf->n > v)
 		++v;
-	if (v < 10)
-		v = 10;
+	if (v < 8)
+		v = 8;
 	if (nbperf->allow_hash_fudging) // two more as reserve
 		va = (v + 2) | 3;
 	else

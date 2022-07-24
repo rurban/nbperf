@@ -12,7 +12,7 @@ WORDS=/usr/share/dict/words
 IN=_words1000
 hashc=mi_vector_hash.c
 
-while getopts "a:h:S:bIMfpsx" o; do
+while getopts "a:h:S:c:bIMfpsx" o; do
     case "$o" in
         a) alg=$OPTARG
            if [ $alg != chm -a $alg != chm3 -a $alg != bdz -a $alg != bpz ]; then
@@ -29,6 +29,7 @@ while getopts "a:h:S:bIMfpsx" o; do
            opts="$opts -h $hash"
            if [ x$hash != xmi_vector_hash ]; then unset hashc; fi
            ;;
+        c) opts="$opts -c $OPTARG" ;;
         I) intkeys=1
            unset hashc
            opts="$opts -I"

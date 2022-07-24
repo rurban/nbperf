@@ -47,6 +47,7 @@ __RCSID("$NetBSD: nbperf-chm.c,v 1.4 2021/01/07 16:03:08 joerg Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <math.h>
 
 #include "nbperf.h"
 
@@ -321,19 +322,21 @@ chm_compute(struct nbperf *nbperf)
 	uint32_t v, e, va;
 
 #if GRAPH_SIZE >= 3
+        const double min_c = 1.24;
 	if (nbperf->c == 0)
-		nbperf-> c = 1.24;
+		nbperf->c = min_c;
 
-	if (nbperf->c < 1.24)
+	if (nbperf->c != -2 && nbperf->c < min_c)
 		errx(1, "The argument for option -c must be at least 1.24");
 
 	if (nbperf->hash_size < 3 && !nbperf->hashes16)
 		errx(1, "The hash function must generate at least 3 values");
 #else
+        const double min_c = 2.0;
 	if (nbperf->c == 0)
-		nbperf-> c = 2;
+		nbperf->c = min_c;
 
-	if (nbperf->c < 2)
+	if (nbperf->c != -2 && nbperf->c < min_c)
 		errx(1, "The argument for option -c must be at least 2");
 
 	if (nbperf->hash_size < 2)
@@ -343,18 +346,29 @@ chm_compute(struct nbperf *nbperf)
 	(*nbperf->seed_hash)(nbperf);
 	e = nbperf->n;
 	v = nbperf->c * nbperf->n;
-#if GRAPH_SIZE >= 3
-	if (v == 1.24 * nbperf->n)
+
+        /* With -c -2 prefer v as next power of two.
+           But with bigger sets the space overhead might be too much.
+         */
+        if (nbperf->c == -2) {
+                v = 1 << (uint32_t)ceil(log2((double)nbperf->n));
+                nbperf->c = (v * 1.0) / nbperf->n;
+                // c might still be too small
+                while (nbperf->c < min_c) {
+                        v *= 2;
+                        nbperf->c = (v * 1.0) / nbperf->n;
+                }
+        }
+	if (v == min_c * nbperf->n)
 		++v;
-	if (v < 10)
-		v = 10;
+#if GRAPH_SIZE >= 3
+	if (v < 8)
+		v = 8;
 	if (nbperf->allow_hash_fudging) // two more as reserve
 		va = (v + 2) | 3;
 	else
 		va = v;
 #else
-	if (v == 2 * nbperf->n)
-		++v;
 	if (nbperf->allow_hash_fudging) // one more as reserve
 		va = (v + 1) | 1;
 	else

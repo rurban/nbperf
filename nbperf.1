@@ -67,7 +67,10 @@ key.
 The
 .Fl c
 .Ar utilisation
-argument determines the space efficiency.
+argument determines the space efficiency. With
+.Qq Sy "-c -2"
+the size of the vector array will be a power of two, which
+speeds up the two hash modulo functions.
 .Pp
 Supported arguments for
 .Fl a :
@@ -205,6 +208,11 @@ This enables faster run-time hashing. The internal hash must not generate 3
 independent 32bit values, 3 16bit values are enough, which is usually twice as fast.
 .Pp
 It supports Lemire's fastmod.
+.Pp
+It supports
+.Qq Sy "-c -2"
+to size the intermediate vector array as the next power of 2,
+which speeds up the two hash modulo functions.
 .Pp
 .Qq Sy "gperf"
 integer key support and perfect hash support for larger keysizes is

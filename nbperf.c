@@ -321,6 +321,9 @@ print_coda(struct nbperf *nbperf)
 {
 	int saw_dash = 0;
 	fprintf(nbperf->output, "/* generated with rurban/nbperf ");
+#ifdef VERSION
+	fprintf(nbperf->output, "%s ", VERSION);
+#endif
 	if (nbperf->allow_hash_fudging) {
 		fprintf(nbperf->output, "%sf", saw_dash ? "" : "-");
 		saw_dash = 1;

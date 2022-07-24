@@ -9,7 +9,8 @@ RANDBIG = _randbig
 RANDHEX = _randhex
 
 $(PROG): $(SRCS) mi_vector_hash.c mi_vector_hash.h wyhash.h nbtool_config.h VERSION
-	$(CC) $(CFLAGS) -DVERSION="\"$(shell cat VERSION)\"" -DHAVE_NBTOOL_CONFIG_H $(SRCS) mi_vector_hash.c -o $@
+	$(CC) $(CFLAGS) -DVERSION="\"$(shell cat VERSION)\"" -DHAVE_NBTOOL_CONFIG_H $(SRCS) \
+	  mi_vector_hash.c -o $@ -lm
 perf: perf.h perf_test.c perf.cc
 	c++ $(CFLAGS) perf.cc -o $@
 VERSION: nbtool_config.h nbperf.c

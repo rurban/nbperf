@@ -124,7 +124,10 @@ The **nbperf** utility exits 0 on success, and >0 if an error occurs.
 
 4. It supports Lemire's fastmod.
 
-5. **gperf** integer key support and perfect hash support for larger
+5. It supports -c -2 to size the intermediate vector array as the next power of 2,
+  which speeds up the two hash modulo functions.
+
+6. **gperf** integer key support and perfect hash support for larger
   keysizes is still in work. **PostgresQL** uses a perl script for its
   CHM support with strings only.  **perl5** uses slower run-time perfect
   hashes for its unicode tables.  **cmph** is only suitable for huge

@@ -37,7 +37,11 @@ fi
 perf() {
     alg=$1
     hash=$2
-    opts=$3
+    if [ -n "$3" ]; then
+        shift
+        shift
+        opts=$*
+    fi
     map=
     mapopt=
     if [ x$alg = xbdz ]; then
@@ -92,6 +96,9 @@ perf chm crc
 if [ -z $PERF]; then
     perf chm "" -M
     perf chm3 "" -M
+    perf chm "" -c -2
+    perf chm3 "" -c -2
+    perf bdz "" -c -2
     perf bdz fnv -f
     perf chm crc -f
     perf chm crc -fp
