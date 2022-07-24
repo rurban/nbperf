@@ -164,22 +164,37 @@ static inline int run_result (const char *log, const uint32_t size) {
  // use sample sizes from 20, 200, 2k, 20k, 200k, 2m for all variants.
 int main (int argc, char **argv)
 {
-   FILE *comp = fopen("nbperf.log", "w");
-   FILE *run = fopen("run.log", "w");
-   FILE *fsize = fopen("size.log", "w");
+   char logcomp[36] = "nbperf.log";
+   char logrun[36] = "run.log";
+   char logsize[36] = "size.log";
    srand(0xbeef);
    if (getenv("CFLAGS"))
      strcpy (cflags, getenv("CFLAGS"));
 
    if (argc > 1) {
+     if (strcmp(argv[1], "--c") == 0) {
+       options = { "-p -a chm",  "-pM",         "-p -c -2",
+                   "-p -a chm3", "-pM -a chm3", "-p -a chm3 -c -2",
+                   "-p -a bdz",  "-pM -a bdz",  "-p -a bdz -c -2" };
+       strncpy(logcomp, "nbperf-c-2.log", sizeof logcomp);
+       strncpy(logrun, "run-c-2.log", sizeof logrun);
+       strncpy(logsize, "size-c-2.log", sizeof logsize);
+     } else {
        options.clear();
        options.push_back("");
        for (int i = 1; i < argc; i++) {
-           if (i > 1)
-               options[0] += " ";
-           options[0] += argv[i];
+         if (i > 1)
+           options[0] += " ";
+         options[0] += argv[i];
        }
+       snprintf(logcomp, sizeof logcomp, "nbperf-%s.log", options[0].c_str());
+       snprintf(logrun, sizeof logrun, "run-%s.log", options[0].c_str());
+       snprintf(logsize, sizeof logsize, "size-%s.log", options[0].c_str());
+     }
    }
+   FILE *comp = fopen(logcomp, "w");
+   FILE *run = fopen(logrun, "w");
+   FILE *fsize = fopen(logsize, "w");
 
    for (auto option : options) {
 
@@ -258,11 +273,11 @@ int main (int argc, char **argv)
            fprintf(fsize, "%20u %20lu\n", size, st.st_size);
 
 #ifndef DUMMY
-           run_result ("run.log", size);
+           run_result (logrun, size);
 #endif
          }
        }
-     run = fopen("run.log", "a");
+     run = fopen(logrun, "a");
      //comp = fopen("nbperf.log", "a");
    }
 

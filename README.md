@@ -18,6 +18,8 @@ mapping to _map-file_.  Each line gives the result of the hash
 function for the corresponding input key.
 
 The **-c** _utilisation_ argument determines the space efficiency.
+With **-c -2** the size of the vector array will be a power of two, which
+speeds up the two hash modulo functions, typically for key sets smaller than 20.000.
 
 Supported arguments for **-a**:
 
