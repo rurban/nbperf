@@ -14,15 +14,13 @@
 #include <string>
 #include <cstring>
 #include <climits>
+#include <algorithm>
 using namespace std;
 
 vector<string> options = {
 	"-a chm -p",
-	"-a chm -Mp",
 	"-a chm3 -p",
-	"-a chm3 -Mp",
 	"-a bdz -p",
-	"-a bdz -Mp",
 	"-a chm -h wyhash -p",
 	"-a chm3 -h wyhash -p",
 	"-a bdz -h wyhash -p",
@@ -33,11 +31,8 @@ vector<string> options = {
 	"-a chm3 -h crc -p",
 	"-a bpz -h crc -p",
 	"-I -p",
-	"-I -Mp",
 	"-I -a chm3 -p",
-	"-I -a chm3 -Mp",
 	"-I -a bdz -p",
-	"-I -a bdz -Mp",
 };
 const uint32_t sizes[] = { 200, 400, 800, 2000, 4000, 8000, 20000, 100000,
 	500000, 2000000 };
@@ -155,7 +150,7 @@ static inline int run_result (const char *log, const uint32_t size) {
    char cmd[256];
    snprintf(cmd, sizeof cmd, "./%s %s %s %u", perf_exe, perf_in,
             log, size);
-   //printf("%s\n", cmd);
+   printf("%s\n", cmd);
    return system(cmd);
  }
 
@@ -187,9 +182,12 @@ int main (int argc, char **argv)
            options[0] += " ";
          options[0] += argv[i];
        }
-       snprintf(logcomp, sizeof logcomp, "nbperf-%s.log", options[0].c_str());
-       snprintf(logrun, sizeof logrun, "run-%s.log", options[0].c_str());
-       snprintf(logsize, sizeof logsize, "size-%s.log", options[0].c_str());
+       string str = options[0];
+       auto end_pos = remove(str.begin(), str.end(), ' ');
+       str.erase(end_pos, str.end());
+       snprintf(logcomp, sizeof logcomp, "nbperf%s.log", str.c_str());
+       snprintf(logrun, sizeof logrun, "run%s.log", str.c_str());
+       snprintf(logsize, sizeof logsize, "size%s.log", str.c_str());
      }
    }
    FILE *comp = fopen(logcomp, "w");

@@ -469,7 +469,7 @@ main(int argc, char **argv)
                                   strcmp(optarg, "bdz") == 0))
 				build_hash = bpz_compute;
 			else
-				errx(1, "Unsupport algorithm: %s", optarg);
+				errx(1, "Unsupported algorithm -a %s. Only chm,chm3,bpz,bdz.", optarg);
 			break;
 		case 'c':
 			errno = 0;
