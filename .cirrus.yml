@@ -4,7 +4,7 @@ freebsd_instance:
   image_family: freebsd-13-0
 task:
   install_script:
-    - pkg install -y bsdgames
+    - pkg install -y bsdgames git
   build_script:
     - make
   test_script:
