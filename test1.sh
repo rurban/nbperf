@@ -5,14 +5,14 @@ else
     make clean
 fi
 
-usage() { echo "Usage: $0 [-bfIMpsx] [-a alg] [-h hash] [-S size]" 1>&2; exit 1; }
+usage() { echo "Usage: $0 [-bdfIMpsx] [-a alg] [-h hash] [-S size]" 1>&2; exit 1; }
 
 alg=chm
 WORDS=/usr/share/dict/words
 IN=_words1000
 hashc=mi_vector_hash.c
 
-while getopts "a:h:S:c:bIMfpsx" o; do
+while getopts "a:h:S:c:m:bdIMfpsx" o; do
     case "$o" in
         a) alg=$OPTARG
            if [ $alg != chm -a $alg != chm3 -a $alg != bdz -a $alg != bpz ]; then
@@ -30,11 +30,13 @@ while getopts "a:h:S:c:bIMfpsx" o; do
            if [ x$hash != xmi_vector_hash ]; then unset hashc; fi
            ;;
         c) opts="$opts -c $OPTARG" ;;
+        d) opts="$opts -d" ;;
         I) intkeys=1
            unset hashc
            opts="$opts -I"
            copts="-D_INTKEYS"
            ;;
+        m) opts="$opts -m $OPTARG" ;;
         M) opts="$opts -M" ;;
         p) opts="$opts -p" ;;
         s) opts="$opts -s" ;;

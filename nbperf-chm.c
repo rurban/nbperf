@@ -164,6 +164,20 @@ print_hash(struct nbperf *nbperf, struct state *state)
                 inthash_addprint(nbperf);
 #endif
 	}
+	if (nbperf->embed_data) {
+                fprintf(nbperf->output, "%sconst char * %s_keys[%" PRIu64 "] = {\n",
+                        nbperf->static_hash ? "static " : "",
+                        nbperf->hash_name, nbperf->n);
+                for (size_t i = 0; i < nbperf->n; i++) {
+                        if (!i)
+                                fprintf(nbperf->output, "\t");
+                        if ((i + 1) % 4)
+                                fprintf(nbperf->output, "\"%s\", ", nbperf->keys[i]);
+                        else
+                                fprintf(nbperf->output, "\"%s\",\t/* %lu */\n\t", nbperf->keys[i], i+1);
+                }
+                fprintf(nbperf->output, "};\n");
+        }
 
 	fprintf(nbperf->output, "%suint32_t ",
 	    nbperf->static_hash ? "static " : "");
