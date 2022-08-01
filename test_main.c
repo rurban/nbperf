@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+//#define NDEBUG
 #include <assert.h>
 #include <errno.h>
 
@@ -22,7 +23,7 @@ int main(int argc, char **argv)
     int verbose = 0;
     unsigned i = 1;
     uint32_t h;
-#if defined bdz
+#if defined bdz && !defined _NOMAP
     uint32_t *map;
 #elif defined _INTKEYS
     int32_t *map;
@@ -47,11 +48,11 @@ int main(int argc, char **argv)
     char *w = "englis";
     h = hash(w, strlen(w));
     if (verbose)
-        printf("%s: %x\n", w, h); // false-positive! englis == Luz's
+        printf("%s: %u\n", w, h); // false-positive! englis == Luz's
 # endif
 #endif
 
-#if defined bdz
+#if defined bdz && !defined _NOMAP
     size_t lines = 1000;
     map = calloc (lines, 4);
     i = 0;
@@ -120,29 +121,33 @@ int main(int argc, char **argv)
         } // perf loop
 #endif
 	if (verbose)
-#if defined _INTKEYS || defined bdz
-            printf("%s: %d == %d\n", line, (int)h, (int)map[i]);
+#if defined _INTKEYS || (defined bdz && !defined _NOMAP)
+            printf("%s[%u]: %d == %d\n", line, i, (int)h, (int)map[i]);
 #else
-            printf("%s: %u\n", line, h);
+        printf("%s[%u]: %u\n", line, i, h);
 #endif
 
 #ifndef PERF
-# if (defined chm || defined chm3) && !defined _INTKEYS
+# if (defined chm || defined chm3 || defined _NOMAP) && !defined _INTKEYS
+	if (h != i && verbose)
+            printf("%s[%u]: %d != %u\n", line, i, i, h);
         assert(h == i);
 #else
 #if defined _INTKEYS && !defined bdz
 	if (l != map[h] && verbose)
-		printf("%s: %d != %d (%u)\n", line, l, map[h], h);
+            printf("%s[%u]: %d != %d (%u)\n", line, i, l, map[h], h);
 	assert(l == map[h]);
 #else // bdz
-	assert(h == map[i]);
+	if (map[h] != i && verbose)
+            printf("%s[%u]: %d != %u (%u)\n", line, i, i, map[h], h);
+	assert(map[h] == i);
 #endif
 #endif
 #endif
 	i++;
     }
     free(line);
-#if defined _INTKEYS || defined bdz
+#if defined _INTKEYS || (defined bdz && !defined _NOMAP)
     free(map);
 #endif
     fclose(f);

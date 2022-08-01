@@ -431,7 +431,7 @@ main(int argc, char **argv)
 		.allow_hash_fudging = 0,
 		.intkeys = 0,
 		.embed_data = 0,
-		.embed_map = 0,
+		.embed_map = 1,
 	};
 	FILE *input;
 	size_t curlen = 0, curalloc = 0;
@@ -508,15 +508,12 @@ main(int argc, char **argv)
 			nbperf.fastmod = 1;
 			break;
 		case 'm':
-			if (strcmp(optarg, "embed") == 0)
-				nbperf.embed_map = 1;
-                        else {
-				if (nbperf.map_output)
-					fclose(nbperf.map_output);
-				nbperf.map_output = fopen(optarg, "w");
-				if (nbperf.map_output == NULL)
-					err(2, "cannot open map file");
-			}
+			if (nbperf.map_output)
+				fclose(nbperf.map_output);
+			nbperf.map_output = fopen(optarg, "w");
+			if (nbperf.map_output == NULL)
+				err(2, "cannot open map file");
+                        nbperf.embed_map = 0;
 			break;
 		case 'n':
 			nbperf.hash_name = optarg;

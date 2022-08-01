@@ -169,32 +169,6 @@ print_hash(struct nbperf *nbperf, struct state *state)
                 }
                 fprintf(nbperf->output, "};\n\n");
         }
-	if (nbperf->embed_map) {
-                const char *m_type;
-                if (nbperf->n >= 4294967295U)
-                        m_type = "uint64_t";
-                else if (nbperf->n >= 65536)
-                        m_type = "uint32_t";
-                else if (nbperf->n >= 256)
-                        m_type = "uint16_t";
-                else
-                        m_type = "uint8_t";
-                assert(state->graph.e == nbperf->n);
-                fprintf(nbperf->output,
-                        "static const %s %s_map[%zu] = {\n",
-                        m_type, nbperf->hash_name, nbperf->n);
-		for (i = 0; i < state->graph.e; ++i) {
-                        if (!i)
-                                fprintf(nbperf->output, "\t");
-			fprintf(nbperf->output, "%" PRIu32,
-			    state->result_map[i]);
-                        if ((i + 1) % 10)
-                                fprintf(nbperf->output, ", ");
-                        else
-                                fprintf(nbperf->output, ",\n\t");
-                }
-                fprintf(nbperf->output, "};\n");
-	}
 
 	fprintf(nbperf->output, "%suint32_t\n",
 	    nbperf->static_hash ? "static " : "");
@@ -206,6 +180,43 @@ print_hash(struct nbperf *nbperf, struct state *state)
 		fprintf(nbperf->output,	"%s(const int32_t key)\n", nbperf->hash_name);
 	fprintf(nbperf->output, "{\n");
 
+	if (nbperf->embed_map) {
+                const char *m_type;
+                int m_width, per_line;
+                if (nbperf->n >= 4294967295U) {
+                        m_type = "uint64_t";
+                        m_width = 16;
+                        per_line = 2;
+                }
+                else if (nbperf->n >= 65536) {
+                        m_type = "uint32_t";
+                        m_width = 10;
+                        per_line = 5;
+                }
+                else if (nbperf->n >= 256) {
+                        m_type = "uint16_t";
+                        m_width = 5;
+                        per_line = 8;
+                }
+                else {
+                        m_type = "uint8_t";
+                        m_width = 3;
+                        per_line = 10;
+                }
+                assert(state->graph.e == nbperf->n);
+                fprintf(nbperf->output,
+                        "\tstatic const %s map[%zu] = {\n",
+                        m_type, nbperf->n);
+		for (i = 0; i < state->graph.e; ++i) {
+                        if (!i)
+                                fprintf(nbperf->output, "\t    ");
+			fprintf(nbperf->output, "%*u,",
+                                m_width, state->result_map[i]);
+                        if ((i + 1) % per_line == 0)
+                                fprintf(nbperf->output, "\n\t    ");
+                }
+                fprintf(nbperf->output, "};\n");
+	}
 	fprintf(nbperf->output,
 	    "\tstatic const uint64_t g1[%" PRId32 "] = {\n",
 	    (state->graph.v + 63) / 64);
@@ -378,9 +389,11 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	    "\tidx2 = idx - holes64[idx >> 6] - holes64k[idx >> 16];\n"
 	    "\tidx2 -= popcount64(  g1[idx >> 6]\n"
             "\t                   & g2[idx >> 6]\n"
-	    "\t                   & (((uint64_t)1 << (idx & 63)) - 1));\n"
-            "\treturn idx2;\n");
-            //"\treturn %s_map[idx2];\n", nbperf->hash_name);
+            "\t                   & (((uint64_t)1 << (idx & 63)) - 1));\n");
+        if (nbperf->embed_map)
+                fprintf(nbperf->output, "\treturn map[idx2];\n");
+        else
+                fprintf(nbperf->output, "\treturn idx2;\n");
 
 	fprintf(nbperf->output, "}\n");
 

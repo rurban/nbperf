@@ -5,7 +5,10 @@ else
     make clean
 fi
 
-usage() { echo "Usage: $0 [-bdfIMpsx] [-a alg] [-h hash] [-S size]" 1>&2; exit 1; }
+usage() {
+    echo "Usage: $0 [-bdfIMpsx] [-a alg] [-h hash] [-S size] [-m mapfile] [-c num]" 1>&2;
+    exit 1;
+}
 
 alg=chm
 WORDS=/usr/share/dict/words
@@ -36,7 +39,7 @@ while getopts "a:h:S:c:m:bdIMfpsx" o; do
            opts="$opts -I"
            copts="-D_INTKEYS"
            ;;
-        m) opts="$opts -m $OPTARG" ;;
+        m) mapfile=$OPTARG ;;
         M) opts="$opts -M" ;;
         p) opts="$opts -p" ;;
         s) opts="$opts -s" ;;
@@ -79,8 +82,11 @@ else
         head -n ${size} <${WORDS} >$IN
     fi
 fi
-if [ x$alg = xbdz ]; then
-    opts="$opts -m $IN.map"
+copts="-D$alg $copts"
+if [ -n "$mapfile" ]; then
+    opts="$opts -m $mapfile"
+elif [ x$alg = xbdz ]; then
+    copts="$copts -D_NOMAP"
 fi
 if [ -n "$hash" ]; then
     out="${out}_${hash}"
@@ -92,8 +98,8 @@ test -e ${IN} || exit 1
 
 echo ./nbperf $opts -a $alg -o _test_${out}.c $IN
 ./nbperf $opts -a $alg -o _test_${out}.c $IN
-echo cc $CFLAGS -I. -D$alg $copts _test_${out}.c test_main.c $hashc -o _test_${out}
-cc $CFLAGS -I. -D$alg $copts _test_${out}.c test_main.c $hashc -o _test_${out}
+echo cc $CFLAGS -I. $copts _test_${out}.c test_main.c $hashc -o _test_${out}
+cc $CFLAGS -I. $copts _test_${out}.c test_main.c $hashc -o _test_${out}
 echo ./_test_${out} $IN
 ./_test_${out} $IN
 
