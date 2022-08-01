@@ -157,6 +157,8 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	int g_width;
 
 	print_coda(nbperf);
+        if (nbperf->embed_data)
+                fprintf(nbperf->output, "#include <string.h>\n");
 	if (nbperf->intkeys) {
 #if GRAPH_SIZE >= 3
 		inthash4_addprint(nbperf);
@@ -165,7 +167,7 @@ print_hash(struct nbperf *nbperf, struct state *state)
 #endif
 	}
 	if (nbperf->embed_data) {
-                fprintf(nbperf->output, "%sconst char * %s_keys[%" PRIu64 "] = {\n",
+                fprintf(nbperf->output, "%sconst char * const %s_keys[%" PRIu64 "] = {\n",
                         nbperf->static_hash ? "static " : "",
                         nbperf->hash_name, nbperf->n);
                 for (size_t i = 0; i < nbperf->n; i++) {
@@ -179,8 +181,9 @@ print_hash(struct nbperf *nbperf, struct state *state)
                 fprintf(nbperf->output, "};\n");
         }
 
-	fprintf(nbperf->output, "%suint32_t ",
-	    nbperf->static_hash ? "static " : "");
+	fprintf(nbperf->output, "%s%s\n",
+                nbperf->n >= 4294967295U ? "uint64_t" : "uint32_t",
+                nbperf->static_hash ? "static " : "");
 	if (!nbperf->intkeys)
 		fprintf(nbperf->output,
 			"%s(const void * __restrict key, size_t keylen)\n",
@@ -201,6 +204,8 @@ print_hash(struct nbperf *nbperf, struct state *state)
 		g_width = 2;
 		per_line = 10;
 	}
+	if (nbperf->embed_data)
+                fprintf(nbperf->output, "\t%s result;\n", g_type);
 	fprintf(nbperf->output, "\tstatic const %s g[%" PRId32 "] = {\n",
 	    g_type, state->graph.v);
 	for (i = 0; i < state->graph.v; ++i) {
@@ -306,16 +311,20 @@ print_hash(struct nbperf *nbperf, struct state *state)
 		fprintf(nbperf->output,
 		    "\th[2] ^= 2 * (h[0] == h[2] || h[1] == h[2]);\n");
 	}
-	fprintf(nbperf->output,
-	    "\treturn (g[h[0]] + g[h[1]] + g[h[2]]) %% "
-	    "%" PRIu32 ";\n",
-	    state->graph.e);
+        fprintf(nbperf->output,
+	    "\t%s (g[h[0]] + g[h[1]] + g[h[2]]) %% "
+                "%" PRIu32 ";\n", nbperf->embed_data ? "result =" : "return",
+                state->graph.e);
 #else
 	fprintf(nbperf->output,
-	    "\treturn (g[h[0]] + g[h[1]]) %% "
-	    "%" PRIu32 ";\n",
+	    "\t%s (g[h[0]] + g[h[1]]) %% "
+	    "%" PRIu32 ";\n", nbperf->embed_data ? "result =" : "return",
 	    state->graph.e);
 #endif
+        if (nbperf->embed_data)
+                fprintf(nbperf->output, "\treturn (strcmp(%s_keys[result], key) == 0)"
+                        " ? result : (uint32_t)-1;\n",
+                        nbperf->hash_name);
 	fprintf(nbperf->output, "}\n");
 
 	if (nbperf->map_output != NULL) {

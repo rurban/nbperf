@@ -33,11 +33,13 @@ while getopts "a:h:S:c:m:bdIMfpsx" o; do
            if [ x$hash != xmi_vector_hash ]; then unset hashc; fi
            ;;
         c) opts="$opts -c $OPTARG" ;;
-        d) opts="$opts -d" ;;
+        d) opts="$opts -d"
+           copts="-D_DATA $copts"
+           ;;
         I) intkeys=1
            unset hashc
            opts="$opts -I"
-           copts="-D_INTKEYS"
+           copts="-D_INTKEYS $copts"
            ;;
         m) mapfile=$OPTARG ;;
         M) opts="$opts -M" ;;
@@ -47,7 +49,7 @@ while getopts "a:h:S:c:m:bdIMfpsx" o; do
         x) intkeys=1
            unset hashc
            opts="$opts -I"
-           copts="-D_INTKEYS"
+           copts="-D_INTKEYS $copts"
            hex=1
            ;;
         *) usage ;;
