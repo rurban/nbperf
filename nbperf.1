@@ -37,7 +37,7 @@
 .Nd compute a perfect hash function
 .Sh SYNOPSIS
 .Nm
-.Op Fl fIMps
+.Op Fl dfIMps
 .Op Fl a Ar algorithm
 .Op Fl c Ar utilisation
 .Op Fl h Ar hash
@@ -62,7 +62,11 @@ argument instructs
 to write the resulting key mapping to
 .Ar map-file .
 Each line gives the result of the hash function for the corresponding input
-key.
+key. When the 
+.Ar map-file
+argument is
+.Qq Sy embed ,
+the map is embedded into the hash source function instead.
 .Pp
 The
 .Fl c
@@ -153,6 +157,10 @@ If the
 flag is specified, it will be static.
 .Pp
 If the
+.Fl d
+flag is specified, the hash keys will be embdedded into generated C source.
+.Pp
+If the
 .Fl f
 flag is specified, hash fudging will be allowed. I.e. slightly slower hashes.
 .Pp
@@ -214,9 +222,12 @@ It supports
 to size the intermediate vector array as the next power of 2,
 which speeds up the two hash modulo functions.
 .Pp
+It supports embedding the keys and the bdz map into the source.
+.Pp
 .Qq Sy "gperf"
 integer key support and perfect hash support for larger keysizes is
-still in work.
+still in work. gperf awllows embedded definitions of custom structs with our
+keys, and has many more options.
 .Qq Sy "PostgresQL"
 uses a perl script for its CHM support with strings only.
 .Qq Sy "perl5"

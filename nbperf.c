@@ -69,7 +69,7 @@ usage(void)
 {
 	fprintf(stderr,
 	    "rurban/nbperf v%s\n"
-	    "nbperf [-fIMps] [-c utilisation] [-i iterations] [-n name] "
+	    "nbperf [-dfIMps] [-c utilisation] [-i iterations] [-n name] "
                 "[-h hash] [-o output] [-m mapfile] input\n", VERSION);
 	exit(1);
 }
@@ -430,6 +430,8 @@ main(int argc, char **argv)
 		.has_duplicates = 0,
 		.allow_hash_fudging = 0,
 		.intkeys = 0,
+		.embed_data = 0,
+		.embed_map = 0,
 	};
 	FILE *input;
 	size_t curlen = 0, curalloc = 0;
@@ -457,7 +459,7 @@ main(int argc, char **argv)
 # endif
 #endif
 
-	while ((ch = getopt(argc, argv, "a:c:fh:i:m:n:o:psIM")) != -1) {
+	while ((ch = getopt(argc, argv, "a:c:dfh:i:m:n:o:psIM")) != -1) {
 		switch (ch) {
 		case 'a':
 			/* Accept bdz as alias for netbsd-6 compat. */
@@ -476,6 +478,9 @@ main(int argc, char **argv)
 			nbperf.c = strtod(optarg, &eos);
 			if (errno || eos[0] || !nbperf.c)
 				errx(2, "Invalid argument for -c");
+			break;
+		case 'd':
+			nbperf.embed_data = 1;
 			break;
 		case 'f':
 			nbperf.allow_hash_fudging = 1;
@@ -503,11 +508,15 @@ main(int argc, char **argv)
 			nbperf.fastmod = 1;
 			break;
 		case 'm':
-			if (nbperf.map_output)
-				fclose(nbperf.map_output);
-			nbperf.map_output = fopen(optarg, "w");
-			if (nbperf.map_output == NULL)
-				err(2, "cannot open map file");
+			if (strcmp(optarg, "embed") == 0)
+				nbperf.embed_map = 1;
+                        else {
+				if (nbperf.map_output)
+					fclose(nbperf.map_output);
+				nbperf.map_output = fopen(optarg, "w");
+				if (nbperf.map_output == NULL)
+					err(2, "cannot open map file");
+			}
 			break;
 		case 'n':
 			nbperf.hash_name = optarg;
