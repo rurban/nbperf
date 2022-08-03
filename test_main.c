@@ -48,7 +48,7 @@ int main(int argc, char **argv)
     char *w = "englis";
     h = hash(w, strlen(w));
     if (verbose)
-        printf("%s: %u\n", w, h); // false-positive! englis == Luz's
+        printf("%s: %d\n", w, h); // false-positive! englis == Luz's
 # endif
 #endif
 
@@ -124,22 +124,22 @@ int main(int argc, char **argv)
 #if defined _INTKEYS || (defined bdz && !defined _NOMAP)
             printf("%s[%u]: %d == %d\n", line, i, (int)h, (int)map[i]);
 #else
-        printf("%s[%u]: %u\n", line, i, h);
+        printf("%s[%u]: %d\n", line, i, h);
 #endif
 
 #ifndef PERF
 # if (defined chm || defined chm3 || defined _NOMAP) && !defined _INTKEYS
 	if (h != i && verbose)
-            printf("%s[%u]: %d != %u\n", line, i, i, h);
+            printf("%s[%u]: %d != %d\n", line, i, i, h);
         assert(h == i);
 #else
 #if defined _INTKEYS && !defined bdz
 	if (l != map[h] && verbose)
-            printf("%s[%u]: %d != %d (%u)\n", line, i, l, map[h], h);
+            printf("%s[%u]: %d != %d (%d)\n", line, i, l, map[h], h);
 	assert(l == map[h]);
 #else // bdz
 	if (map[h] != i && verbose)
-            printf("%s[%u]: %d != %u (%u)\n", line, i, i, map[h], h);
+            printf("%s[%u]: %d != %u (%d)\n", line, i, i, map[h], h);
 	//assert(map[h] == i); // GH #15
 #endif
 #endif

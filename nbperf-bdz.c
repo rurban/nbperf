@@ -150,8 +150,28 @@ print_hash(struct nbperf *nbperf, struct state *state)
 
 	print_coda(nbperf);
 	fprintf(nbperf->output, "#include <string.h>\n");
-        fprintf(nbperf->output, "#ifdef __GNUC__\n"); // since gcc 4.5
+        fprintf(nbperf->output, "#if __GNUC__ > 4 "
+                "|| (__GNUC__ == 4 && __GNUC_MINOR__ >= 5)\n"); // since gcc 4.5
+        fprintf(nbperf->output, "#define HAVE_POPCOUNT64\n");
         fprintf(nbperf->output, "#define popcount64 __builtin_popcountll\n");
+        fprintf(nbperf->output, "#else\n");
+        fprintf(nbperf->output, "static const uint8_t %s_bits_per_byte[256] = {\n", nbperf->hash_name);
+        fprintf(nbperf->output, "\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
+                "\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
+                "\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
+                "\t3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 2, 2, 2, 2, 1,\n"
+                "\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
+                "\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
+                "\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
+                "\t3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 2, 2, 2, 2, 1,\n"
+                "\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
+                "\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
+                "\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
+                "\t3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 2, 2, 2, 2, 1,\n"
+                "\t3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 2, 2, 2, 2, 1,\n"
+                "\t3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 2, 2, 2, 2, 1,\n"
+                "\t3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 2, 2, 2, 2, 1,\n"
+                "\t2, 2, 2, 1, 2, 2, 2, 1, 2, 2, 2, 1, 1, 1, 1, 0 };\n");
         fprintf(nbperf->output, "#endif\n\n");
 
 	if (nbperf->intkeys) {
@@ -285,6 +305,7 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	fprintf(nbperf->output, "%s\t};\n", (i / 64 % 4 ? "\n" : "")); 
 
 	fprintf(nbperf->output, "\tuint32_t idx, idx2;\n");
+	fprintf(nbperf->output, "\tuint64_t x;\n");
         if (nbperf->hashes16)
                 fprintf(nbperf->output, "\tuint16_t h[%u];\n\n", nbperf->hash_size * 2);
         else
@@ -389,12 +410,19 @@ print_hash(struct nbperf *nbperf, struct state *state)
         }
 
 	fprintf(nbperf->output,
-	    "\tidx2 = idx - holes64[idx >> 6] - holes64k[idx >> 16];\n"
-	    "\tidx2 -= popcount64(  g1[idx >> 6]\n"
-            "\t                   & g2[idx >> 6]\n"
-            "\t                   & (((uint64_t)1 << (idx & 63)) - 1));\n");
-        if (nbperf->embed_map)
-                fprintf(nbperf->output, "\t%s map[idx2];\n",
+            "\tidx2 = idx - holes64[idx >> 6] - holes64k[idx >> 16];\n"
+            "\tx = g1[idx >> 6] & g2[idx >> 6] & (((uint64_t)1 << (idx & 63)) - 1);\n"
+	    "#ifdef HAVE_POPCOUNT64\n"
+	    "\tidx2 -= popcount64(x);\n"
+	    "#else\n"
+            "\tfor (int i=0; i < 8; i++) {\n"
+            "\t\tidx2 -= %s_bits_per_byte[x & 255];\n"
+            "\t\tx >>= 8;\n"
+            "\t}\n"
+	    "#endif\n",
+	    nbperf->hash_name);
+	if (nbperf->embed_map)
+		fprintf(nbperf->output, "\t%s map[idx2];\n",
                         nbperf->embed_data ? "result =" : "return");
         else
                 fprintf(nbperf->output, "\t%s idx2;\n",
