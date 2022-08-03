@@ -150,11 +150,14 @@ print_hash(struct nbperf *nbperf, struct state *state)
 
 	print_coda(nbperf);
 	fprintf(nbperf->output, "#include <string.h>\n");
-        fprintf(nbperf->output, "#if __GNUC__ > 4 "
-                "|| (__GNUC__ == 4 && __GNUC_MINOR__ >= 5)\n"); // since gcc 4.5
-        fprintf(nbperf->output, "#define HAVE_POPCOUNT64\n");
-        fprintf(nbperf->output, "#define popcount64 __builtin_popcountll\n");
-        fprintf(nbperf->output, "#else\n");
+        fprintf(nbperf->output, "#if defined __WORDSIZE && __WORDSIZE < 64\n"
+                "#define NO_POPCOUNT64\n"
+                "#endif\n"
+                "#if !defined NO_POPCOUNT64 && (__GNUC__ > 4 "
+                "|| (__GNUC__ == 4 && __GNUC_MINOR__ >= 5))\n" // since gcc 4.5
+                "#define HAVE_POPCOUNT64\n"
+                "#define popcount64 __builtin_popcountll\n"
+                "#else\n");
         fprintf(nbperf->output, "static const uint8_t %s_bits_per_byte[256] = {\n", nbperf->hash_name);
         fprintf(nbperf->output, "\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
                 "\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
