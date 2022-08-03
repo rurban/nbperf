@@ -223,7 +223,7 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	    "\tstatic const uint16_t holes64[%" PRId32 "] = {\n",
 	    (state->graph.v + 63) / 64);
 	for (i = 0; i < state->graph.v; i += 64)
-		fprintf(nbperf->output, "%sUINT32_C(0x%04" PRIx32 "),%s",
+		fprintf(nbperf->output, "%sUINT16_C(0x%04" PRIx32 "),%s",
 		    (i / 64 % 4 == 0 ? "\t    " : " "),
 		    state->holes64[i >> 6],
 		    (i / 64 % 4 == 3 ? "\n" : ""));
@@ -296,7 +296,7 @@ print_hash(struct nbperf *nbperf, struct state *state)
 		    state->graph.v);
 		if (nbperf->hash_size > 2)
 			fprintf(nbperf->output,
-			    "\th[2] = h[2] %% UINT32_C(%" PRIu32 ");\n",
+			    "\th[2] = h[2] %% %" PRIu32 ";\n",
 			    state->graph.v);
 	}
 
