@@ -108,7 +108,7 @@ assign_nodes(struct state *state)
 			t = e->vertices[1];
 		} else {
 			if (state->visited[e->vertices[2]]) {
-                                fprintf(stderr, "Internal illegal state, 3rd vertex visited\n");
+                                fprintf(stderr, "Internal illegal state, all 3 vertices visited.\n");
 				abort();
                         }
 			r = 2;
@@ -334,9 +334,8 @@ print_hash(struct nbperf *nbperf, struct state *state)
 			    "\tconst uint32_t low0 = m * h[0];\n");
 			fprintf(nbperf->output,
 			    "\tconst uint32_t low1 = m * h[1];\n");
-			if (nbperf->hash_size > 2)
-				fprintf(nbperf->output,
-				    "\tconst uint32_t low2 = m * h[2];\n");
+			fprintf(nbperf->output,
+			    "\tconst uint32_t low2 = m * h[2];\n");
 			fprintf(nbperf->output,
 			    "\th[0] = (uint16_t)((((uint64_t)low0) * %" PRIu32
 			    ") >> 32);\n",
@@ -345,11 +344,10 @@ print_hash(struct nbperf *nbperf, struct state *state)
 			    "\th[1] = (uint16_t)((((uint64_t)low1) * %" PRIu32
 			    ") >> 32);\n",
 			    state->graph.v);
-			if (nbperf->hash_size > 2)
-				fprintf(nbperf->output,
-				    "\th[2] = (uint16_t)((((uint64_t)low2) * %" PRIu32
-				    ") >> 32);\n",
-				    state->graph.v);
+			fprintf(nbperf->output,
+			    "\th[2] = (uint16_t)((((uint64_t)low2) * %" PRIu32
+			    ") >> 32);\n",
+			    state->graph.v);
 		} else {
 			fprintf(nbperf->output,
 			    "\n\tconst uint64_t m = UINT64_C(0xFFFFFFFFFFFFFFFF) / %" PRIu32
@@ -359,9 +357,8 @@ print_hash(struct nbperf *nbperf, struct state *state)
 			    "\tconst uint64_t low0 = m * h[0];\n");
 			fprintf(nbperf->output,
 			    "\tconst uint64_t low1 = m * h[1];\n");
-			if (nbperf->hash_size > 2)
-				fprintf(nbperf->output,
-				    "\tconst uint64_t low2 = m * h[2];\n");
+			fprintf(nbperf->output,
+			    "\tconst uint64_t low2 = m * h[2];\n");
 			fprintf(nbperf->output,
 			    "\th[0] = (uint32_t)((((__uint128_t)low0) * %" PRIu32
 			    ") >> 64);\n",
@@ -370,53 +367,40 @@ print_hash(struct nbperf *nbperf, struct state *state)
 			    "\th[1] = (uint32_t)((((__uint128_t)low1) * %" PRIu32
 			    ") >> 64);\n",
 			    state->graph.v);
-			if (nbperf->hash_size > 2)
-				fprintf(nbperf->output,
-				    "\th[2] = (uint32_t)((((__uint128_t)low2) * %" PRIu32
-				    ") >> 64);\n",
-				    state->graph.v);
+			fprintf(nbperf->output,
+			    "\th[2] = (uint32_t)((((__uint128_t)low2) * %" PRIu32
+			    ") >> 64);\n",
+			    state->graph.v);
 		}
 	} else {
 		fprintf(nbperf->output, "\n\th[0] = h[0] %% %" PRIu32 ";\n",
                         state->graph.v);
 		fprintf(nbperf->output, "\th[1] = h[1] %% %" PRIu32 ";\n",
                         state->graph.v);
-		if (nbperf->hash_size > 2)
-			fprintf(nbperf->output,
-			    "\th[2] = h[2] %% %" PRIu32 ";\n", state->graph.v);
+		fprintf(nbperf->output, "\th[2] = h[2] %% %" PRIu32 ";\n",
+		    state->graph.v);
 	}
 
 	if (state->graph.hash_fudge & 1)
 		fprintf(nbperf->output, "\th[1] ^= (h[0] == h[1]);\n");
 
-	if (state->graph.hash_fudge & 2 && nbperf->hash_size > 2) {
+	if (state->graph.hash_fudge & 2) {
 		fprintf(nbperf->output,
 		    "\th[2] ^= (h[0] == h[2] || h[1] == h[2]);\n");
 		fprintf(nbperf->output,
 		    "\th[2] ^= 2 * (h[0] == h[2] || h[1] == h[2]);\n");
 	}
 
-        if (nbperf->hash_size > 2) {
-                fprintf(nbperf->output,
-                        //"\tidx = 9 + %u - g1[h[0]] - g1[h[1]] - g2[h[2]];\n", state->r);
-                        "\tidx = 9 + ((g1[h[0] >> 6] >> (h[0] & 63)) & 1)\n"
-                        "\t        + ((g1[h[1] >> 6] >> (h[1] & 63)) & 1)\n"
-                        "\t        + ((g1[h[2] >> 6] >> (h[2] & 63)) & 1)\n"
-                        "\t        - ((g2[h[0] >> 6] >> (h[0] & 63)) & 1)\n"
-                        "\t        - ((g2[h[1] >> 6] >> (h[1] & 63)) & 1)\n"
-                        "\t        - ((g2[h[2] >> 6] >> (h[2] & 63)) & 1);\n");
-                fprintf(nbperf->output,
-                        "\tidx = h[idx %% 3];\n");
-        }
-        else {
-                fprintf(nbperf->output,
-                        "\tidx = 9 + ((g1[h[0] >> 6] >> (h[0] & 63)) & 1)\n"
-                        "\t        + ((g1[h[1] >> 6] >> (h[1] & 63)) & 1)\n"
-                        "\t        - ((g2[h[0] >> 6] >> (h[0] & 63)) & 1)\n"
-                        "\t        - ((g2[h[1] >> 6] >> (h[1] & 63)) & 1);\n");
-                fprintf(nbperf->output,
-                        "\tidx = h[idx %% 2];\n");
-        }
+        fprintf(nbperf->output,
+                //"\tidx = 9 + %u - g1[h[0]] - g1[h[1]] - g2[h[2]];\n", state->r);
+                "\tidx = 9 + ((g1[h[0] >> 6] >> (h[0] & 63)) & 1)\n"
+                "\t        + ((g1[h[1] >> 6] >> (h[1] & 63)) & 1)\n"
+                "\t        + ((g1[h[2] >> 6] >> (h[2] & 63)) & 1)\n"
+                "\t        - ((g2[h[0] >> 6] >> (h[0] & 63)) & 1)\n"
+                "\t        - ((g2[h[1] >> 6] >> (h[1] & 63)) & 1)\n"
+                "\t        - ((g2[h[2] >> 6] >> (h[2] & 63)) & 1);\n");
+        fprintf(nbperf->output,
+                "\tidx = h[idx %% 3];\n");
 
 	fprintf(nbperf->output,
             "\tidx2 = idx - holes64[idx >> 6] - holes64k[idx >> 16];\n"
