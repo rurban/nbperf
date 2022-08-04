@@ -66,7 +66,7 @@ __RCSID("$NetBSD: nbperf-bdz.c,v 1.10 2021/01/07 16:03:08 joerg Exp $");
  * an acyclic graph can be found with a very high probality.
  *
  * An acyclic graph has an edge order, where at least one vertex of
- * each edge hasn't been seen before.   It is declares the first unvisited
+ * each edge hasn't been seen before.   It declares the first unvisited
  * vertex as authoritive for the edge and assigns a 2bit value to unvisited
  * vertices, so that the sum of all vertices of the edge modulo 4 is
  * the index of the authoritive vertex.
@@ -77,12 +77,15 @@ __RCSID("$NetBSD: nbperf-bdz.c,v 1.10 2021/01/07 16:03:08 joerg Exp $");
 
 struct state {
 	struct SIZED(graph) graph;
+	uint32_t r;
 	uint32_t *visited;
 	uint32_t *holes64k;
 	uint16_t *holes64;
 	uint8_t *g;
 	uint32_t *result_map;
 };
+
+#define UNVISITED 3
 
 static void
 assign_nodes(struct state *state)
@@ -92,7 +95,7 @@ assign_nodes(struct state *state)
 	uint32_t t, r, holes;
 
 	for (i = 0; i < state->graph.v; ++i)
-		state->g[i] = 3;
+		state->g[i] = UNVISITED;
 
 	for (i = 0; i < state->graph.e; ++i) {
 		j = state->graph.output_order[i];
@@ -104,8 +107,10 @@ assign_nodes(struct state *state)
 			r = 1;
 			t = e->vertices[1];
 		} else {
-			if (state->visited[e->vertices[2]])
+			if (state->visited[e->vertices[2]]) {
+                                fprintf(stderr, "Internal illegal state, 3rd vertex visited\n");
 				abort();
+                        }
 			r = 2;
 			t = e->vertices[2];
 		}
@@ -118,8 +123,10 @@ assign_nodes(struct state *state)
 		if (state->visited[e->vertices[2]] == 0)
 			state->visited[e->vertices[2]] = 1;
 
-		state->g[t] = (9 + r - state->g[e->vertices[0]] - state->g[e->vertices[1]]
-		    - state->g[e->vertices[2]]) % 3;
+		state->g[t] = (9 + r
+                               - state->g[e->vertices[0]]
+                               - state->g[e->vertices[1]]
+                               - state->g[e->vertices[2]]) % 3;
 	}
 
 	holes = 0;
@@ -135,7 +142,7 @@ assign_nodes(struct state *state)
 			state->result_map[j] = i - holes;
 		}
 
-		if (state->g[i] == 3)
+		if (state->g[i] == UNVISITED)
 			++holes;
 	}
 }
@@ -158,7 +165,8 @@ print_hash(struct nbperf *nbperf, struct state *state)
                 "#define HAVE_POPCOUNT64\n"
                 "#define popcount64 __builtin_popcountll\n"
                 "#else\n");
-        fprintf(nbperf->output, "static const uint8_t %s_bits_per_byte[256] = {\n", nbperf->hash_name);
+        fprintf(nbperf->output, "static const uint8_t %s_bits_per_byte[256] = {\n",
+                nbperf->hash_name);
         fprintf(nbperf->output, "\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
                 "\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
                 "\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
@@ -316,7 +324,7 @@ print_hash(struct nbperf *nbperf, struct state *state)
 
 	(*nbperf->print_hash)(nbperf, "\t", "key", "keylen", "h");
 
-	if (nbperf->fastmod) {
+	if (nbperf->fastmod) { // TODO and state->graph.v is not power of 2
 		if (nbperf->hashes16) {
 			fprintf(nbperf->output,
 			    "\n\tconst uint32_t m = UINT32_C(0xFFFFFFFF) / %" PRIu16
@@ -370,13 +378,12 @@ print_hash(struct nbperf *nbperf, struct state *state)
 		}
 	} else {
 		fprintf(nbperf->output, "\n\th[0] = h[0] %% %" PRIu32 ";\n",
-		    state->graph.v);
+                        state->graph.v);
 		fprintf(nbperf->output, "\th[1] = h[1] %% %" PRIu32 ";\n",
-		    state->graph.v);
+                        state->graph.v);
 		if (nbperf->hash_size > 2)
 			fprintf(nbperf->output,
-			    "\th[2] = h[2] %% %" PRIu32 ";\n",
-			    state->graph.v);
+			    "\th[2] = h[2] %% %" PRIu32 ";\n", state->graph.v);
 	}
 
 	if (state->graph.hash_fudge & 1)
@@ -391,13 +398,13 @@ print_hash(struct nbperf *nbperf, struct state *state)
 
         if (nbperf->hash_size > 2) {
                 fprintf(nbperf->output,
+                        //"\tidx = 9 + %u - g1[h[0]] - g1[h[1]] - g2[h[2]];\n", state->r);
                         "\tidx = 9 + ((g1[h[0] >> 6] >> (h[0] & 63)) & 1)\n"
                         "\t        + ((g1[h[1] >> 6] >> (h[1] & 63)) & 1)\n"
                         "\t        + ((g1[h[2] >> 6] >> (h[2] & 63)) & 1)\n"
                         "\t        - ((g2[h[0] >> 6] >> (h[0] & 63)) & 1)\n"
                         "\t        - ((g2[h[1] >> 6] >> (h[1] & 63)) & 1)\n"
-                        "\t        - ((g2[h[2] >> 6] >> (h[2] & 63)) & 1);\n"
-                        );
+                        "\t        - ((g2[h[2] >> 6] >> (h[2] & 63)) & 1);\n");
                 fprintf(nbperf->output,
                         "\tidx = h[idx %% 3];\n");
         }
@@ -406,8 +413,7 @@ print_hash(struct nbperf *nbperf, struct state *state)
                         "\tidx = 9 + ((g1[h[0] >> 6] >> (h[0] & 63)) & 1)\n"
                         "\t        + ((g1[h[1] >> 6] >> (h[1] & 63)) & 1)\n"
                         "\t        - ((g2[h[0] >> 6] >> (h[0] & 63)) & 1)\n"
-                        "\t        - ((g2[h[1] >> 6] >> (h[1] & 63)) & 1);\n"
-                        );
+                        "\t        - ((g2[h[1] >> 6] >> (h[1] & 63)) & 1);\n");
                 fprintf(nbperf->output,
                         "\tidx = h[idx %% 2];\n");
         }
@@ -479,6 +485,8 @@ bpz_compute(struct nbperf *nbperf)
 		++v;
 	if (v < 8)
 		v = 8;
+	state.r = ceil(v / 3);
+	if (state.r % 2) state.r++;
 	if (nbperf->allow_hash_fudging) // two more as reserve
 		va = (v + 2) | 3;
 	else

@@ -35,9 +35,12 @@ int main(int argc, char **argv)
 
 #ifdef bdz
     char mapfile[80];
-    assert(strlen(input) < 80);
-    strncpy(mapfile, input, 79);
-    strcat(mapfile, ".map");
+    if (input) {
+        assert(strlen(input) < 80);
+        strncpy(mapfile, input, 79);
+        strcat(mapfile, ".map");
+    } else
+        strcpy(mapfile, "_words.map");
 #endif
 #ifndef PERF
 # ifdef _INTKEYS

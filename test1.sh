@@ -6,7 +6,7 @@ else
 fi
 
 usage() {
-    echo "Usage: $0 [-bdfIMpsx] [-a alg] [-h hash] [-S size] [-m mapfile] [-c num]" 1>&2;
+    echo "Usage: $0 [-bdfIMpsvx] [-a alg] [-h hash] [-S size] [-m mapfile] [-c num]" 1>&2;
     exit 1;
 }
 
@@ -15,7 +15,7 @@ WORDS=/usr/share/dict/words
 IN=_words1000
 hashc=mi_vector_hash.c
 
-while getopts "a:h:S:c:m:bdIMfpsx" o; do
+while getopts "a:h:S:c:m:bdIMfpsvx" o; do
     case "$o" in
         a) alg=$OPTARG
            if [ $alg != chm -a $alg != chm3 -a $alg != bdz -a $alg != bpz ]; then
@@ -46,6 +46,7 @@ while getopts "a:h:S:c:m:bdIMfpsx" o; do
         p) opts="$opts -p" ;;
         s) opts="$opts -s" ;;
         S) size=$OPTARG ;;
+        v) v="-v" ;;
         x) intkeys=1
            unset hashc
            opts="$opts -I"
@@ -102,6 +103,6 @@ echo ./nbperf $opts -a $alg -o _test_${out}.c $IN
 ./nbperf $opts -a $alg -o _test_${out}.c $IN
 echo cc $CFLAGS -I. $copts _test_${out}.c test_main.c $hashc -o _test_${out}
 cc $CFLAGS -I. $copts _test_${out}.c test_main.c $hashc -o _test_${out}
-echo ./_test_${out} $IN
-./_test_${out} $IN
+echo ./_test_${out} $v $IN
+./_test_${out} $v $IN
 
