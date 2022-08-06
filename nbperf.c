@@ -440,8 +440,10 @@ main(int argc, char **argv)
 	size_t line_allocated;
 	const char **keys = NULL;
 	size_t *keylens = NULL;
-	uint32_t max_iterations = 0xffffffU;
-	long long tmp;
+        // chm needs 20, bpz 1000
+#define MAX_ITERATIONS 1000U
+	uint32_t max_iterations = MAX_ITERATIONS;
+	long tmp;
 	int looped, ch;
 	int (*build_hash)(struct nbperf *) = chm_compute;
 
@@ -490,12 +492,10 @@ main(int argc, char **argv)
 			break;
 		case 'i':
 			errno = 0;
-			tmp = strtoll(optarg, &eos, 0);
+			tmp = strtol(optarg, &eos, 0);
 			if (errno || eos == optarg || eos[0] || tmp < 0 ||
-			    tmp > 0xffffffffU)
-				errx(2,
-				    "Iteration count must be "
-				    "a 32bit integer");
+			    tmp > 10000)
+				errx(2, "-i %ld iteration count must be < 10000", tmp);
 			max_iterations = (uint32_t)tmp;
 			break;
 		case 'I':
@@ -675,7 +675,7 @@ main(int argc, char **argv)
 		if (!looped)
 			nbperf.check_duplicates = 1;
 		looped = 1;
-		if (max_iterations == 0xffffffffU)
+		if (max_iterations == MAX_ITERATIONS)
 			continue;
 		if (--max_iterations == 0) {
 			fputc('\n', stderr);

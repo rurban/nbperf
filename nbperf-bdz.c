@@ -115,7 +115,7 @@ assign_nodes(struct state *state)
 			t = e->vertices[2];
 		}
 
-		state->visited[t] = 2 + j;
+		state->visited[t] = 2 + j; // store the result_map index
 		if (state->visited[e->vertices[0]] == 0)
 			state->visited[e->vertices[0]] = 1;
 		if (state->visited[e->vertices[1]] == 0)
