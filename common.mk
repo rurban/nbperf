@@ -26,6 +26,8 @@ _words: $(WORDS)
 	cp $(WORDS) $@
 _words1000:
 	head -n 1000 $(WORDS) > $@
+_words100:
+	head -n 100 $(WORDS) > $@
 
 check: $(PROG) _words1000 _words $(RANDBIG) $(RANDHEX)
 	@echo test building a few with big sets

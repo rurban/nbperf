@@ -37,6 +37,7 @@
  * - check a 2/3-graph for acyclicness and compute an output order
 *
  * For each vertex in the 2/3-graph, the incidence lists need to kept.
+ * ------------------------------------------------------------------
  * Avoid storing the full list by just XORing the indices of the still
  * incident edges and the number of such edges as that's all the peeling
  * computation needs. This is inspired by:
@@ -50,6 +51,7 @@
  *
  * The core observation of the paper above is that for a degree of one,
  * the incident edge can be obtained directly.
+ * -------------------------------------------------------------------
  */
 
 #ifndef GRAPH_SIZE
@@ -78,7 +80,6 @@ struct SIZED(graph) {
 	struct SIZED(edge) *edges;
 	uint32_t output_index;
 	uint32_t *output_order;
-	uint8_t *visited;
 	uint32_t e, v, va;
 	int hash_fudge;
 };

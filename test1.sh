@@ -1,5 +1,5 @@
 #!/bin/sh
-if [ -z $CFLAGS ]; then
+if [ -z "$CFLAGS" ]; then
     CFLAGS="-g -march=native -fno-strict-aliasing -Wall -Wextra"
 else
     make clean

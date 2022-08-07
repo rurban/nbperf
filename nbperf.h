@@ -74,3 +74,11 @@ void mi_vector_hash_print(struct nbperf *nbperf, const char *indent, const char 
                           const char *keylen, const char *hash);
 void inthash_addprint(struct nbperf *nbperf);
 void inthash4_addprint(struct nbperf *nbperf);
+
+#ifdef DEBUG
+#define DEBUGP(args...) do { \
+    fprintf(stderr, "%s:%d ", __FILE__, __LINE__); fprintf(stderr, ## args); \
+    } while (0)
+#else
+#define DEBUGP(...) do { ; } while (0)
+#endif

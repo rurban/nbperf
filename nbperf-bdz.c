@@ -77,80 +77,126 @@ __RCSID("$NetBSD: nbperf-bdz.c,v 1.10 2021/01/07 16:03:08 joerg Exp $");
 
 struct state {
 	struct SIZED(graph) graph;
-	uint32_t r;
-	uint32_t *visited;
-	uint32_t *holes64k;
-	uint16_t *holes64;
+	//uint32_t r;
+	uint8_t *visited;
+	uint32_t *ranking;
 	uint8_t *g;
-	uint32_t *result_map;
+        unsigned g_size;
+        unsigned visited_size;
+        unsigned ranking_size;
 };
 
+static const uint8_t bitmask[] = {
+        1, 1 << 1,  1 << 2,  1 << 3, 1 << 4, 1 << 5, 1 << 6, 1 << 7
+};
+static const uint8_t valuemask[] = { 0xfc, 0xf3, 0xcf, 0x3f };
+
+#define GETBIT(visited, i) ((visited[i >> 3] & bitmask[i & 7]) >> (i & 7))
+#define SETBIT(visited, i) (visited[i >> 3] |= bitmask[i & 7])
+#define CLRBIT(visited, i) (visited[i >> 3] &= ~bitmask[i & 7])
+// g is an array of 2 bits
+#define GETI2(g, i) ((uint8_t)((g[i >> 2] >> ((i & 3) << 1U)) & 3))
+#define SETI2(g, i, v) (g[i >> 2] &= (uint8_t)((v << ((i & 3) << 1)) | valuemask[i & 3]))
 #define UNVISITED 3
+
+static const uint8_t bits_per_byte[256] = {
+        4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,
+        4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,
+        4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,
+        3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 2, 2, 2, 2, 1,
+        4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,
+        4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,
+        4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,
+        3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 2, 2, 2, 2, 1,
+        4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,
+        4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,
+        4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,
+        3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 2, 2, 2, 2, 1,
+        3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 2, 2, 2, 2, 1,
+        3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 2, 2, 2, 2, 1,
+        3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 2, 2, 2, 2, 1,
+        2, 2, 2, 1, 2, 2, 2, 1, 2, 2, 2, 1, 1, 1, 1, 0
+};
 
 static void
 assign_nodes(struct state *state)
 {
 	struct SIZED(edge) *e;
 	size_t i, j;
-	uint32_t t, r, holes;
 
-	for (i = 0; i < state->graph.v; ++i)
-		state->g[i] = UNVISITED;
+	memset(state->g, 0xff, state->g_size);
+	//for (i = 0; i < state->graph.v; ++i)
+	//	SETI2(state->g, i, UNVISITED);
 
 	for (i = 0; i < state->graph.e; ++i) {
+                
 		j = state->graph.output_order[i];
 		e = &state->graph.edges[j];
-		if (!state->visited[e->vertices[0]]) {
-			r = 0;
-			t = e->vertices[0];
-		} else if (!state->visited[e->vertices[1]]) {
-			r = 1;
-			t = e->vertices[1];
-		} else {
-			if (state->visited[e->vertices[2]]) {
-                                fprintf(stderr, "Internal illegal state, all 3 vertices visited.\n");
-				abort();
-                        }
-			r = 2;
-			t = e->vertices[2];
+                const uint32_t v0 = e->vertices[0];
+                const uint32_t v1 = e->vertices[1];
+                const uint32_t v2 = e->vertices[2];
+		//DEBUGP("B:%u %u %u -- %u %u %u edge %lu\n", v0, v1, v2,
+                //       GETI2(state->g, v0), GETI2(state->g, v1), GETI2(state->g, v2), j);
+		if (!GETBIT(state->visited, v0))
+                {
+			if (!GETBIT(state->visited,v1))
+			{
+				SETI2(state->g, v1, UNVISITED);
+				SETBIT(state->visited, v1);
+			}
+			if (!GETBIT(state->visited,v2))
+			{
+				SETI2(state->g, v2, UNVISITED);
+				SETBIT(state->visited, v2);
+			}
+			SETI2(state->g, v0, (6 - (GETI2(state->g, v1) + GETI2(state->g, v2))) % 3);
+			SETBIT(state->visited, v0);
+		} else if (!GETBIT(state->visited, v1))
+                {
+			if (!GETBIT(state->visited,v2))
+			{
+				SETI2(state->g, v2, UNVISITED);
+				SETBIT(state->visited, v2);
+			}
+			SETI2(state->g, v1, (7 - (GETI2(state->g, v0) + GETI2(state->g, v2))) % 3);
+			SETBIT(state->visited, v1);
+		} else
+                {
+			SETI2(state->g, v2, (8 - (GETI2(state->g, v0) + GETI2(state->g, v1))) % 3);
+			SETBIT(state->visited, v2);
 		}
-
-		state->visited[t] = 2 + j; // store the result_map index
-		if (state->visited[e->vertices[0]] == 0)
-			state->visited[e->vertices[0]] = 1;
-		if (state->visited[e->vertices[1]] == 0)
-			state->visited[e->vertices[1]] = 1;
-		if (state->visited[e->vertices[2]] == 0)
-			state->visited[e->vertices[2]] = 1;
-
-		state->g[t] = (9 + r
-                               - state->g[e->vertices[0]]
-                               - state->g[e->vertices[1]]
-                               - state->g[e->vertices[2]]) % 3;
+		//DEBUGP("A:%u %u %u -- %u %u %u\n", v0, v1, v2,
+                //       GETI2(state->g, v0), GETI2(state->g, v1), GETI2(state->g, v2));
 	}
+}
 
-	holes = 0;
-	for (i = 0; i < state->graph.v; ++i) {
-		if (i % 65536 == 0)
-			state->holes64k[i >> 16] = holes;
-
-		if (i % 64 == 0)
-			state->holes64[i >> 6] = holes - state->holes64k[i >> 16];
-
-		if (state->visited[i] > 1) {
-			j = state->visited[i] - 2;
-			state->result_map[j] = i - holes;
+// build the ranking table: number of bits in g
+static void
+ranking(struct state *state)
+{
+	size_t i, j;
+        const uint32_t k = 1U << 7; // for 32bit ranking
+        state->ranking_size = ceil(state->graph.v / k) + 1;
+        state->ranking = (uint32_t*)calloc(state->ranking_size, sizeof(uint32_t));
+        state->ranking[0] = 0;
+        uint32_t offset = 0U, sum = 0U, size = (k >> 2U),
+                nbytes_total = state->g_size * 4, nbytes;
+	for (i=1; i < state->ranking_size; i++) {
+		nbytes = size < nbytes_total ? size : nbytes_total;
+		for (j = 0; j < nbytes; j++) {
+			sum += bits_per_byte[*(state->g + offset + j)];
 		}
-
-		if (state->g[i] == UNVISITED)
-			++holes;
+		state->ranking[i] = sum;
+		offset += nbytes;
+		nbytes_total -= size;
+                DEBUGP("ranking[%zu]: %u\n", i, sum);
 	}
 }
 
 static void
 print_hash(struct nbperf *nbperf, struct state *state)
 {
-	uint64_t sum;
+	//uint64_t sum;
 	size_t i;
         const char *g_type;
         int g_width, per_line;
@@ -160,6 +206,7 @@ print_hash(struct nbperf *nbperf, struct state *state)
         fprintf(nbperf->output, "#if defined __WORDSIZE && __WORDSIZE < 64\n"
                 "#define NO_POPCOUNT64\n"
                 "#endif\n"
+                "#define NO_POPCOUNT64\n"
                 "#if !defined NO_POPCOUNT64 && (__GNUC__ > 4 "
                 "|| (__GNUC__ == 4 && __GNUC_MINOR__ >= 5))\n" // since gcc 4.5
                 "#define HAVE_POPCOUNT64\n"
@@ -167,7 +214,8 @@ print_hash(struct nbperf *nbperf, struct state *state)
                 "#else\n");
         fprintf(nbperf->output, "static const uint8_t %s_bits_per_byte[256] = {\n",
                 nbperf->hash_name);
-        fprintf(nbperf->output, "\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
+        fprintf(nbperf->output,
+                "\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
                 "\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
                 "\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
                 "\t3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 2, 2, 2, 2, 1,\n"
@@ -186,10 +234,12 @@ print_hash(struct nbperf *nbperf, struct state *state)
         fprintf(nbperf->output, "#endif\n\n");
 
 	if (nbperf->intkeys) {
-                inthash4_addprint(nbperf);
+		inthash4_addprint(nbperf);
 	}
+	fprintf(nbperf->output,
+	    "#define GETI2(g, i) ((uint8_t)((g[i >> 2] >> ((i & 3) << 1U)) & 3))\n\n");
 	if (nbperf->embed_data) {
-                fprintf(nbperf->output, "%sconst char * const %s_keys[%" PRIu64 "] = {\n",
+		fprintf(nbperf->output, "%sconst char * const %s_keys[%" PRIu64 "] = {\n",
                         nbperf->static_hash ? "static " : "",
                         nbperf->hash_name, nbperf->n);
                 for (size_t i = 0; i < nbperf->n; i++) {
@@ -201,11 +251,11 @@ print_hash(struct nbperf *nbperf, struct state *state)
                                 fprintf(nbperf->output, "\"%s\",\t/* %lu */\n\t", nbperf->keys[i], i+1);
                 }
                 fprintf(nbperf->output, "};\n\n");
-        }
+	}
 
+	const char* hashtype = nbperf->n >= 4294967295U ? "uint64_t" : "uint32_t";
 	fprintf(nbperf->output, "%s%s\n",
-                nbperf->n >= 4294967295U ? "uint64_t" : "uint32_t",
-                nbperf->static_hash ? "static " : "");
+                nbperf->static_hash ? "static " : "", hashtype);
 	if (!nbperf->intkeys)
 		fprintf(nbperf->output,
 		    "%s(const void * __restrict key, size_t keylen)\n",
@@ -237,86 +287,51 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	if (nbperf->embed_map) {
                 assert(state->graph.e == nbperf->n);
                 fprintf(nbperf->output,
-                        "\tstatic const %s map[%zu] = {\n",
+                        "\tstatic const %s output_order[%zu] = {\n",
                         g_type, nbperf->n);
 		for (i = 0; i < state->graph.e; ++i) {
                         if (!i)
                                 fprintf(nbperf->output, "\t    ");
 			fprintf(nbperf->output, "%*u,",
-                                g_width, state->result_map[i]);
+                                g_width, state->graph.output_order[i]);
                         if ((i + 1) % per_line == 0)
                                 fprintf(nbperf->output, "\n\t    ");
                 }
                 fprintf(nbperf->output, "};\n");
 	}
+	fprintf(nbperf->output,
+                "\tstatic const uint8_t g[%" PRIu8 "] = {\n", state->g_size + 1);
+	for (i = 0; i < state->g_size; ++i) {
+                if (!i)
+                        fprintf(nbperf->output, "\t    ");
+                fprintf(nbperf->output, " 0x%x,",
+                        state->g[i]);
+                if ((i + 1) % 10 == 0)
+                        fprintf(nbperf->output, "\n\t    ");
+	}
+	fprintf(nbperf->output, "%s\t 0x00 };\n", (i % 10 ? "\n" : ""));
+
+        //const uint32_t b = 7;       // number of bits of k
+        //const uint32_t k = 1U << b; // kth index in ranking
+        const int has_ranking = state->ranking_size > 1 || state->ranking[0] != 0;
+        if (has_ranking) {
+                fprintf(nbperf->output,
+                        "\tstatic const uint32_t ranking[%" PRId32 "] = {\n",
+                        state->ranking_size);
+                for (i = 0; i < state->ranking_size; ++i) {
+                        if (!i)
+                                fprintf(nbperf->output, "\t    ");
+                        fprintf(nbperf->output, "%" PRIu32 ", ", state->ranking[i]);
+                        if ((i + 1) % 5 == 0)
+                                fprintf(nbperf->output, "\n\t    ");
+                }
+                fprintf(nbperf->output, "\n\t};\n");
+                fprintf(nbperf->output, "\tconst uint32_t b = 7;\n"
+                        "\tuint32_t index, base_rank, idx_v, idx_b, end_idx_b;\n");
+        }
         if (nbperf->embed_data)
-                fprintf(nbperf->output, "\t%s result;\n", g_type);
-	fprintf(nbperf->output,
-	    "\tstatic const uint64_t g1[%" PRId32 "] = {\n",
-	    (state->graph.v + 63) / 64);
-	sum = 0;
-	for (i = 0; i < state->graph.v; ++i) {
-		sum |= ((uint64_t)state->g[i] & 1) << (i & 63);
-		if (i % 64 == 63) {
-			fprintf(nbperf->output, "%sUINT64_C(0x%016" PRIx64 "),%s",
-			    (i / 64 % 2 == 0 ? "\t    " : " "),
-			    sum,
-			    (i / 64 % 2 == 1 ? "\n" : ""));
-			sum = 0;
-		}
-	}
-	if (i % 64 != 0) {
-		fprintf(nbperf->output, "%sUINT64_C(0x%016" PRIx64 "),%s",
-		    (i / 64 % 2 == 0 ? "\t    " : " "),
-		    sum,
-		    (i / 64 % 2 == 1 ? "\n" : ""));
-	}
-	fprintf(nbperf->output, "%s\t};\n", (i % 2 ? "\n" : ""));
-
-	fprintf(nbperf->output,
-	    "\tstatic const uint64_t g2[%" PRId32 "] = {\n",
-	    (state->graph.v + 63) / 64);
-	sum = 0;
-	for (i = 0; i < state->graph.v; ++i) {
-		sum |= (((uint64_t)state->g[i] & 2) >> 1) << (i & 63);
-		if (i % 64 == 63) {
-			fprintf(nbperf->output, "%sUINT64_C(0x%016" PRIx64 "),%s",
-			    (i / 64 % 2 == 0 ? "\t    " : " "),
-			    sum,
-			    (i / 64 % 2 == 1 ? "\n" : ""));
-			sum = 0;
-		}
-	}
-	if (i % 64 != 0) {
-		fprintf(nbperf->output, "%sUINT64_C(0x%016" PRIx64 "),%s",
-		    (i / 64 % 2 == 0 ? "\t    " : " "),
-		    sum,
-		    (i / 64 % 2 == 1 ? "\n" : ""));
-	}
-	fprintf(nbperf->output, "%s\t};\n", (i % 2 ? "\n" : ""));
-
-	fprintf(nbperf->output,
-	    "\tstatic const uint32_t holes64k[%" PRId32 "] = {\n",
-	    (state->graph.v + 65535) / 65536);
-	for (i = 0; i < state->graph.v; i += 65536)
-		fprintf(nbperf->output, "%sUINT32_C(0x%08" PRIx32 "),%s",
-		    (i / 65536 % 4 == 0 ? "\t    " : " "),
-		    state->holes64k[i >> 16],
-		    (i / 65536 % 4 == 3 ? "\n" : ""));
-	fprintf(nbperf->output, "%s\t};\n", (i / 65536 % 4 ? "\n" : ""));
-
-	fprintf(nbperf->output,
-	    "\tstatic const uint16_t holes64[%" PRId32 "] = {\n",
-	    (state->graph.v + 63) / 64);
-	for (i = 0; i < state->graph.v; i += 64)
-		fprintf(nbperf->output, "%sUINT16_C(0x%04" PRIx32 "),%s",
-		    (i / 64 % 4 == 0 ? "\t    " : " "),
-		    state->holes64[i >> 6],
-		    (i / 64 % 4 == 3 ? "\n" : ""));
-	fprintf(nbperf->output, "%s\t};\n", (i / 64 % 4 ? "\n" : "")); 
-
-	fprintf(nbperf->output, "\tuint32_t idx, idx2;\n");
-	fprintf(nbperf->output, "\tuint64_t x;\n");
+                fprintf(nbperf->output, "\t%s result;\n", hashtype);
+	fprintf(nbperf->output, "\tuint32_t vertex;\n");
         if (nbperf->hashes16)
                 fprintf(nbperf->output, "\tuint16_t h[%u];\n\n", nbperf->hash_size * 2);
         else
@@ -392,51 +407,56 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	}
 
         fprintf(nbperf->output,
-                //"\tidx = 9 + %u - g1[h[0]] - g1[h[1]] - g2[h[2]];\n", state->r);
-                "\tidx = 9 + ((g1[h[0] >> 6] >> (h[0] & 63)) & 1)\n"
-                "\t        + ((g1[h[1] >> 6] >> (h[1] & 63)) & 1)\n"
-                "\t        + ((g1[h[2] >> 6] >> (h[2] & 63)) & 1)\n"
-                "\t        - ((g2[h[0] >> 6] >> (h[0] & 63)) & 1)\n"
-                "\t        - ((g2[h[1] >> 6] >> (h[1] & 63)) & 1)\n"
-                "\t        - ((g2[h[2] >> 6] >> (h[2] & 63)) & 1);\n");
+                "\tconst uint8_t i = GETI2(g, h[0]) + GETI2(g, h[1]) + GETI2(g, h[2]);\n");
         fprintf(nbperf->output,
-                "\tidx = h[idx %% 3];\n");
-
-	fprintf(nbperf->output,
-            "\tidx2 = idx - holes64[idx >> 6] - holes64k[idx >> 16];\n"
-            "\tx = g1[idx >> 6] & g2[idx >> 6] & (((uint64_t)1 << (idx & 63)) - 1);\n"
-	    "#ifdef HAVE_POPCOUNT64\n"
-	    "\tidx2 -= popcount64(x);\n"
-	    "#else\n"
-            "\tfor (int i=0; i < 8; i++) {\n"
-            "\t\tidx2 -= %s_bits_per_byte[x & 255];\n"
-            "\t\tx >>= 8;\n"
-            "\t}\n"
-	    "#endif\n",
-	    nbperf->hash_name);
-	if (nbperf->embed_map)
-		fprintf(nbperf->output, "\t%s map[idx2];\n",
-                        nbperf->embed_data ? "result =" : "return");
-        else
-                fprintf(nbperf->output, "\t%s idx2;\n",
-                        nbperf->embed_data ? "result =" : "return");
+                "\tvertex = h[i %% 3] %% %" PRIu32 ";\n\n", state->graph.v);
+        if (state->ranking_size > 1 || state->ranking[0] != 0) {
+                // rank lookup: vertex -> base_rank
+                fprintf(nbperf->output,
+                        "\tindex = vertex >> b;\n"
+                        "\tbase_rank = ranking[index];\n"
+                        "\tidx_v = index << b;\n"
+                        "\tidx_b = idx_v >> 2;\n"
+                        "\tend_idx_b = vertex >> 2;\n"
+                        "\twhile (idx_b < end_idx_b)\n"
+                        "\t    base_rank += %s_bits_per_byte[*(g + idx_b++)];\n"
+                        "\tidx_v = idx_b << 2;\n"
+                        "\twhile (idx_v < vertex)\n"
+                        "\t{\n"
+                        "\t      if (GETI2(g, idx_v) != 3) base_rank++;\n"
+                        "\t      idx_v++;\n"
+                        "\t}\n", nbperf->hash_name);
+                if (nbperf->embed_map)
+                        fprintf(nbperf->output, "\t%s (%s)output_order[base_rank];\n",
+                                nbperf->embed_data ? "result =" : "return", hashtype);
+                else
+                        fprintf(nbperf->output, "\t%s base_rank;\n",
+                                nbperf->embed_data ? "result =" : "return");
+        } else {
+                if (nbperf->embed_map)
+                        fprintf(nbperf->output, "\t%s (%s)output_order[vertex];\n",
+                                nbperf->embed_data ? "result =" : "return", hashtype);
+                else
+                        fprintf(nbperf->output, "\t%s (%s)vertex;\n",
+                                nbperf->embed_data ? "result =" : "return", hashtype);
+        }
         if (nbperf->embed_data)
                 fprintf(nbperf->output, "\treturn (strcmp(%s_keys[result], key) == 0)"
-                        " ? result : (uint32_t)-1;\n",
-                        nbperf->hash_name);
+                        " ? result : (%s)-1;\n",
+                        nbperf->hash_name, hashtype);
 	fprintf(nbperf->output, "}\n");
 
 	if (nbperf->map_output != NULL) {
 		for (i = 0; i < state->graph.e; ++i)
 			fprintf(nbperf->map_output, "%" PRIu32 "\n",
-			    state->result_map[i]);
+			    state->graph.output_order[i]);
 	}
 }
 
 int
 bpz_compute(struct nbperf *nbperf)
 {
-	struct state state;
+	struct state state = {NULL};
 	int retval = -1;
 	uint32_t v, e, va;
         const double min_c = 1.24;
@@ -469,8 +489,8 @@ bpz_compute(struct nbperf *nbperf)
 		++v;
 	if (v < 8)
 		v = 8;
-	state.r = ceil(v / 3);
-	if (state.r % 2) state.r++;
+	//state.r = ceil(v / 3);
+	//if (state.r % 2) state.r++;
 	if (nbperf->allow_hash_fudging) // two more as reserve
 		va = (v + 2) | 3;
 	else
@@ -478,32 +498,27 @@ bpz_compute(struct nbperf *nbperf)
 
 	graph3_setup(&state.graph, v, e, va);
 
-	state.holes64k = calloc(sizeof(uint32_t), (v + 65535) / 65536);
-	state.holes64 = calloc(sizeof(uint16_t), (v + 63) / 64 );
-	state.g = calloc(sizeof(uint32_t), v | 63);
-	state.visited = calloc(sizeof(uint32_t), v);
-	state.result_map = calloc(sizeof(uint32_t), e);
+        state.g_size = ceil(v / 4);
+	state.g = calloc(state.g_size, sizeof(uint32_t));
+        state.visited_size = (v >> 3) + 1;
+	state.visited = calloc(state.visited_size, sizeof(uint32_t));
 
-	if (state.holes64k == NULL || state.holes64 == NULL ||
-	    state.g == NULL || state.visited == NULL ||
-	    state.result_map == NULL)
+	if (state.g == NULL || state.visited == NULL)
 		err(1, "malloc failed");
-
 	if (SIZED2(_hash)(nbperf, &state.graph))
 		goto failed;
 	if (SIZED2(_output_order)(&state.graph))
 		goto failed;
 	assign_nodes(&state);
+	ranking(&state);
 	print_hash(nbperf, &state);
 
 	retval = 0;
 
 failed:
 	SIZED2(_free)(&state.graph);
-	free(state.visited);
 	free(state.g);
-	free(state.holes64k);
-	free(state.holes64);
-	free(state.result_map);
+        free(state.visited);
+        free(state.ranking);
 	return retval;
 }
