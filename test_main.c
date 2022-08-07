@@ -48,7 +48,7 @@ int main(int argc, char **argv)
     if (verbose)
         printf("%u: %u\n", 1, h);
 # else
-    char *w = "englis";
+    char *w = "englis\0\0";
     h = hash(w, strlen(w));
     if (verbose)
         printf("%s: %d\n", w, h); // false-positive! englis == Luz's
