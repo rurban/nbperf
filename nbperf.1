@@ -132,8 +132,11 @@ See
 .Bl -tag -width "fnv32"
 .It Sy fnv32
 32bit fnv-1a variant, the only hash which works on 32bit systems. With chm only.
-See
-.Xr fnv 3 .
+.El
+.Bl -tag -width "fnv16"
+.It Sy fnv16
+16bit fnv variant for small CPU's and keysets. The only hash which works on 16bit systems.
+With chm only.
 .El
 .Bl -tag -width "crc"
 .It Sy crc
@@ -230,6 +233,8 @@ to size the intermediate vector array as the next power of 2,
 which speeds up the two hash modulo functions.
 .Pp
 It supports embedding the keys and the bdz map into the source.
+.Pp
+It supports generating hash functions for small CPU's, 32bit or 16bit systems.
 .Pp
 .Qq Sy "gperf"
 integer key support and perfect hash support for larger keysizes is

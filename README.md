@@ -67,6 +67,10 @@ Supported arguments for **-h**:
   32-bit FNV-1a, the only hash function for 32-bit CPU's. With chm only.
   See [fnv(3)](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function).
 
+* **fnv16**:
+
+  16-bit FNV, the only hash function for 16-bit CPU's. With chm and small keysets only.
+
 * **crc**:
 
   Various SW and HW variants of iSCSI CRC32c.
@@ -133,8 +137,12 @@ The **nbperf** utility exits 0 on success, and >0 if an error occurs.
 
 5. It supports -c -2 to size the intermediate vector array as the next power of 2,
   which speeds up the two hash modulo functions.
+  
+6. It supports embedding the keys and the bdz map into the source.
 
-6. **gperf** integer key support and perfect hash support for larger
+7. It supports generating hash functions for small CPU's, 32bit or 16bit systems.
+
+8. **gperf** integer key support and perfect hash support for larger
   keysizes is still in work. **PostgresQL** uses a perl script for its
   CHM support with strings only.  **perl5** uses slower run-time perfect
   hashes for its unicode tables.  **cmph** is only suitable for huge

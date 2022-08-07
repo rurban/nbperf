@@ -93,6 +93,7 @@ perf chm fnv
 perf chm3 fnv
 perf bdz fnv
 perf chm fnv32
+perf chm fnv16
 perf chm crc
 if [ -z $PERF]; then
     perf chm "" -M

@@ -63,6 +63,7 @@ __RCSID("$NetBSD: nbperf.c,v 1.7 2021/01/12 14:21:18 joerg Exp $");
 #ifdef HAVE_CRC
 #include "crc3.h"
 #endif
+#include "fnv16.h"
 
 static void
 usage(void)
@@ -188,6 +189,12 @@ fnv32_compute(struct nbperf *nbperf, const void *key, size_t keylen,
 	fnv32_2(key, keylen, nbperf->seed[0], nbperf->seed[1], hashes);
 }
 static void
+fnv16_compute(struct nbperf *nbperf, const void *key, size_t keylen,
+    uint32_t *hashes)
+{
+  fnv16_2(key, keylen, nbperf->seed[0] & 0xffff, nbperf->seed[0] >> 16, (uint16_t*)hashes);
+}
+static void
 fnv_print(struct nbperf *nbperf, const char *indent, const char *key,
     const char *keylen, const char *hash)
 {
@@ -196,6 +203,10 @@ fnv_print(struct nbperf *nbperf, const char *indent, const char *key,
 		fprintf(nbperf->output,
 		    "%sfnv32_2(%s, %s, 0x%" PRIx32 ", 0x%" PRIx32 ", (uint32_t*)%s);\n",
 		    indent, key, keylen, nbperf->seed[0], nbperf->seed[1], hash);
+	else if (nbperf->compute_hash == fnv16_compute)
+		fprintf(nbperf->output,
+		    "%sfnv16_2(%s, %s, 0x%" PRIx16 ", 0x%" PRIx16 ", (uint16_t*)%s);\n",
+                        indent, key, keylen, nbperf->seed[0] & 0xffff, nbperf->seed[0] >> 16, hash);
 	else
 		fprintf(nbperf->output,
 		    "%sfnv%s(%s, %s, UINT64_C(0x%" PRIx64
@@ -252,6 +263,7 @@ inthash2_compute(struct nbperf *nbperf, const void *key, size_t keylen,
 	*hashes = ((int32_t)(ptrdiff_t)key * (UINT32_C(0xEB382D69) + nbperf->seed[0])) +
 	    nbperf->seed[1];
 }
+// TODO inthash16 for 16bit
 void
 inthash_addprint(struct nbperf *nbperf)
 {
@@ -429,7 +441,16 @@ set_hash(struct nbperf *nbperf, const char *arg)
 		nbperf->print_hash = fnv_print;
 		return;
         }
-	errx(1, "Unknown hash function: %s. Known hashes: mi_vector_hash wyhash fnv fnv32 crc",
+	else if (strcmp(arg, "fnv16") == 0) {
+		nbperf->hash_size = 2;
+		nbperf->compute_hash = fnv16_compute;
+		nbperf->hash_header = "fnv16.h";
+		nbperf->seed_hash = fnv_seed;
+		nbperf->print_hash = fnv_print;
+		return;
+        }
+	errx(1, "Unknown hash function: %s. "
+             "Known hashes: mi_vector_hash wyhash fnv fnv32 fnv16 crc",
              arg);
 }
 
@@ -653,6 +674,7 @@ main(int argc, char **argv)
 		if (build_hash == chm_compute) {
 			if (nbperf.intkeys > 0) {
 				if (nbperf.hash_size == 2)
+                                        // TODO inthash16 for 16bit CPU's
 					nbperf.compute_hash = inthash2_compute;
 				else
 					nbperf.compute_hash = inthash_compute;

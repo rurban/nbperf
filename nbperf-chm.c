@@ -181,9 +181,10 @@ print_hash(struct nbperf *nbperf, struct state *state)
                 fprintf(nbperf->output, "};\n");
         }
 
+        const char* hashtype = nbperf->n >= 4294967295U ? "uint64_t"
+                : !nbperf->hashes16 ? "uint32_t" : "uint16_t";
 	fprintf(nbperf->output, "%s%s\n",
-                nbperf->n >= 4294967295U ? "uint64_t" : "uint32_t",
-                nbperf->static_hash ? "static " : "");
+                nbperf->static_hash ? "static " : "", hashtype);
 	if (!nbperf->intkeys)
 		fprintf(nbperf->output,
 			"%s(const void * __restrict key, size_t keylen)\n",
@@ -323,8 +324,8 @@ print_hash(struct nbperf *nbperf, struct state *state)
 #endif
         if (nbperf->embed_data)
                 fprintf(nbperf->output, "\treturn (strcmp(%s_keys[result], key) == 0)"
-                        " ? result : (uint32_t)-1;\n",
-                        nbperf->hash_name);
+                        " ? result : (%s)-1;\n",
+                        nbperf->hash_name, hashtype);
 	fprintf(nbperf->output, "}\n");
 
 	if (nbperf->map_output != NULL) {
