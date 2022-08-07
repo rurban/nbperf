@@ -182,14 +182,26 @@ fnv_compute(struct nbperf *nbperf, const void *key, size_t keylen,
 	fnv(key, keylen, seed, (uint64_t *)hashes);
 }
 static void
+fnv32_compute(struct nbperf *nbperf, const void *key, size_t keylen,
+    uint32_t *hashes)
+{
+	fnv32_2(key, keylen, nbperf->seed[0], nbperf->seed[1], hashes);
+}
+static void
 fnv_print(struct nbperf *nbperf, const char *indent, const char *key,
     const char *keylen, const char *hash)
 {
 	uint64_t seed = *(uint64_t *)nbperf->seed;
-	fprintf(nbperf->output,
-	    "%sfnv%s(%s, %s, UINT64_C(0x%" PRIx64 "), (uint64_t*)%s);\n", indent,
-                nbperf->compute_hash == fnv3_compute ? "3" : "",
-                key, keylen, seed, hash);
+	if (nbperf->compute_hash == fnv32_compute)
+		fprintf(nbperf->output,
+		    "%sfnv32_2(%s, %s, 0x%" PRIx32 ", 0x%" PRIx32 ", (uint32_t*)%s);\n",
+		    indent, key, keylen, nbperf->seed[0], nbperf->seed[1], hash);
+	else
+		fprintf(nbperf->output,
+		    "%sfnv%s(%s, %s, UINT64_C(0x%" PRIx64
+		    "), (uint64_t*)%s);\n",
+		    indent, nbperf->compute_hash == fnv3_compute ? "3" : "",
+		    key, keylen, seed, hash);
 }
 
 #ifdef HAVE_CRC
@@ -409,11 +421,16 @@ set_hash(struct nbperf *nbperf, const char *arg)
 		return;
 	}
 #endif
-	if (nbperf->hash_size > NBPERF_MAX_HASH_SIZE)
-		errx(1, "Hash function creates too many output values");
-	if (nbperf->hash_size < NBPERF_MIN_HASH_SIZE)
-		errx(1, "Hash function creates not enough output values");
-	errx(1, "Unknown hash function: %s", arg);
+	else if (strcmp(arg, "fnv32") == 0) {
+		nbperf->hash_size = 2;
+		nbperf->compute_hash = fnv32_compute;
+		nbperf->hash_header = "fnv3.h";
+		nbperf->seed_hash = fnv_seed;
+		nbperf->print_hash = fnv_print;
+		return;
+        }
+	errx(1, "Unknown hash function: %s. Known hashes: mi_vector_hash wyhash fnv fnv32 crc",
+             arg);
 }
 
 int
@@ -535,6 +552,10 @@ main(int argc, char **argv)
 			usage();
 		}
 	}
+	if (nbperf.hash_size > NBPERF_MAX_HASH_SIZE)
+		errx(1, "Hash function creates too many output values");
+	if (nbperf.hash_size < NBPERF_MIN_HASH_SIZE)
+		errx(1, "Hash function creates not enough output values");
 
 	argc -= optind;
 	argv += optind;

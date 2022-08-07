@@ -62,6 +62,11 @@ Supported arguments for **-h**:
   See [fnv(3)](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function).
   This is not as good as expected yet.
 
+* **fnv32**:
+
+  32-bit FNV-1a, the only hash function for 32-bit CPU's. With chm only.
+  See [fnv(3)](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function).
+
 * **crc**:
 
   Various SW and HW variants of iSCSI CRC32c.
@@ -144,6 +149,7 @@ The **nbperf** utility exits 0 on success, and >0 if an error occurs.
 * [Bob Jenkins's Minimal Perfect Hashing](https://github.com/rurban/jenkins-minimal-perfect-hash)
 * `mi_vector_hash(3)` in NetBSD
 * [wyhash](https://github.com/wangyi-fudan/wyhash)
+* [cmph](https://github.com/rurban/cmph) fixed
 * [CHM](http://cmph.sourceforge.net/chm.html) Algorithm
 * [BPZ](http://cmph.sourceforge.net/bdz.html) Algorithm
 * [smhasher](https://github.com/rurban/smhasher) hash comparisons

@@ -92,6 +92,7 @@ perf bdz wyhash
 perf chm fnv
 perf chm3 fnv
 perf bdz fnv
+perf chm fnv32
 perf chm crc
 if [ -z $PERF]; then
     perf chm "" -M
@@ -100,6 +101,9 @@ if [ -z $PERF]; then
     perf chm3 "" -c -2
     perf bdz "" -c -2
     perf bdz fnv -f
+    perf bdz fnv -fp
+    perf chm fnv32 -f
+    perf chm fnv32 -fp
     perf chm crc -f
     perf chm crc -fp
     perf chm wyhash -f

@@ -34,7 +34,7 @@
 
 // number of u32 results
 #define NBPERF_MIN_HASH_SIZE 2
-#define NBPERF_MAX_HASH_SIZE 3
+#define NBPERF_MAX_HASH_SIZE 4
 
 struct nbperf {
 	FILE *output;

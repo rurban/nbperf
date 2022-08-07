@@ -52,6 +52,7 @@ _test_bdz_fnv
 _test_bdz_wyhash
 _test_bdz_crc
 _test_chm_fnv
+_test_chm_fnv32
 _test_chm_wyhash
 _test_chm_crc
 _test_chm3_fnv
