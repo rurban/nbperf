@@ -143,7 +143,7 @@ int main(int argc, char **argv)
 #else // bdz
 	if (map[h] != i && verbose)
             printf("%s[%u]: %d != %u (%d)\n", line, i, i, map[h], h);
-	//assert(map[h] == i); // GH #15
+	assert(map[h] == i);
 #endif
 #endif
 #endif
