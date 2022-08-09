@@ -60,6 +60,7 @@ SIZED2(_setup)(struct SIZED(graph) * graph, uint32_t v, uint32_t e, uint32_t va)
 	graph->v = v;
 	graph->va = va;
 	graph->e = e;
+	graph->r = v / 3;
 
 	graph->verts = calloc(va, sizeof(*graph->verts));
 	graph->edges = calloc(e, sizeof(*graph->edges));
@@ -173,6 +174,8 @@ SIZED2(_add_edge)(struct SIZED(graph) * graph, uint32_t edge)
 	struct SIZED(edge) *e = &graph->edges[edge];
 	struct SIZED(vertex) * v;
 	size_t i;
+	DEBUGP("add edge %u (%u %u %u)\n", edge, e->vertices[0], e->vertices[1],
+	       e->vertices[2]);
 
 	for (i = 0; i < GRAPH_SIZE; ++i) {
 	        assert(e->vertices[i] < graph->va);
@@ -188,6 +191,8 @@ SIZED2(_remove_edge)(struct SIZED(graph) * graph, uint32_t edge)
 	struct SIZED(edge) *e = &graph->edges[edge];
 	struct SIZED(vertex) * v;
 	size_t i;
+	DEBUGP("remove edge %u (%u %u %u)\n", edge, e->vertices[0], e->vertices[1],
+	       e->vertices[2]);
 
 	for (i = 0; i < GRAPH_SIZE; ++i) {
 	        assert(e->vertices[i] < graph->va);
@@ -202,6 +207,7 @@ SIZED2(_remove_vertex)(struct SIZED(graph) * graph, uint32_t vertex)
 {
 	struct SIZED(vertex) *v = &graph->verts[vertex];
 	uint32_t e;
+	DEBUGP("remove vertex %u\n", vertex);
 
 	if (v->degree == 1) {
 		e = v->edges;
@@ -237,11 +243,27 @@ SIZED2(_hash)(struct nbperf *nbperf, struct SIZED(graph) * graph)
 			(*nbperf->compute_hash)(nbperf, nbperf->keys[i],
 			    nbperf->keylens[i], hashes);
 		e = graph->edges + i;
+		if (nbperf->hashes16) {
+		    e->vertices[0] = hashes16[0] % graph->r;
+		    e->vertices[1] = hashes16[1] % graph->r + graph->r;
+#if GRAPH_SIZE >= 3
+		    e->vertices[2] = hashes16[2] % graph->r + (graph->r << 1);
+#endif
+		}
+		else {
+		    e->vertices[0] = hashes[0] % graph->r;
+		    e->vertices[1] = hashes[1] % graph->r + graph->r;
+#if GRAPH_SIZE >= 3
+		    e->vertices[2] = hashes[2] % graph->r + (graph->r << 1);
+#endif
+		}
+		DEBUGP("Key[%lu]: %s (%u, %u, %u)\n", i, nbperf->keys[i],
+		       e->vertices[0], e->vertices[1], e->vertices[2]);
 		for (j = 0; j < GRAPH_SIZE; ++j) {
-			if (nbperf->hashes16)
-				e->vertices[j] = hashes16[j] % graph->v;
-			else
-				e->vertices[j] = hashes[j] % graph->v;
+			//if (nbperf->hashes16)
+			//	e->vertices[j] = hashes16[j] % graph->v;
+			//else
+			//	e->vertices[j] = hashes[j] % graph->v;
 			if (j == 1 && e->vertices[0] == e->vertices[1]) {
 				if (!nbperf->allow_hash_fudging)
 					return -1;

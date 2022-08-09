@@ -80,7 +80,7 @@ struct SIZED(graph) {
 	struct SIZED(edge) *edges;
 	uint32_t output_index;
 	uint32_t *output_order;
-	uint32_t e, v, va;
+	uint32_t e, v, va, r;
 	int hash_fudge;
 };
 
