@@ -138,11 +138,11 @@ int main(int argc, char **argv)
 #else
 #if defined _INTKEYS && !defined bdz
 	if (l != map[h] && verbose)
-            printf("%s[%u]: %d != %d (%d)\n", line, i, l, map[h], h);
+            printf("%s[%u]: %d != %d (hash %d)\n", line, i, l, map[h], h);
 	assert(l == map[h]);
 #else // bdz
 	if (map[h] != i && verbose)
-            printf("%s[%u]: %d != %u (%d)\n", line, i, i, map[h], h);
+            printf("%s[%u]: %d != %u (hash %d)\n", line, i, i, map[h], h);
 	assert(map[h] == i);
 #endif
 #endif
