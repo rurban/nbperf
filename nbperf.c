@@ -53,7 +53,7 @@ __RCSID("$NetBSD: nbperf.c,v 1.7 2021/01/12 14:21:18 joerg Exp $");
 
 #include "nbperf.h"
 #ifndef VERSION
-#define VERSION 3.0
+#define VERSION "3.0"
 #endif
 #define HAVE_CRC
 
@@ -158,15 +158,15 @@ wyhash_print(struct nbperf *nbperf, const char *indent, const char *key,
 static void
 fnv_seed(struct nbperf *nbperf)
 {
-	static uint32_t predictable_counter = 0;
+	static uint32_t predictable_counter = 1;
 	if (nbperf->predictable) {
-		nbperf->seed[0] = (uint32_t)(0x85ebca6b *
-		    ++predictable_counter);
-		nbperf->seed[1] = predictable_counter;
+                nbperf->seed[0] = predictable_counter;
+		nbperf->seed[1] = ++predictable_counter;
 	} else {
 		nbperf->seed[0] = arc4random();
 		nbperf->seed[1] = arc4random();
 	}
+        DEBUGP("seed[0]: %u, seed[1]: %u\n", nbperf->seed[0], nbperf->seed[1]);
 }
 static void
 fnv3_compute(struct nbperf *nbperf, const void *key, size_t keylen,
@@ -186,13 +186,14 @@ static void
 fnv32_compute(struct nbperf *nbperf, const void *key, size_t keylen,
     uint32_t *hashes)
 {
-	fnv32_2(key, keylen, nbperf->seed[0], nbperf->seed[1], hashes);
+	fnv32_3(key, keylen, nbperf->seed[0], hashes);
 }
 static void
 fnv16_compute(struct nbperf *nbperf, const void *key, size_t keylen,
     uint32_t *hashes)
 {
-  fnv16_2(key, keylen, nbperf->seed[0] & 0xffff, nbperf->seed[0] >> 16, (uint16_t*)hashes);
+	fnv16_2(key, keylen, nbperf->seed[0] & 0xffff, nbperf->seed[0] >> 16,
+	    (uint16_t *)hashes);
 }
 static void
 fnv_print(struct nbperf *nbperf, const char *indent, const char *key,
@@ -201,8 +202,8 @@ fnv_print(struct nbperf *nbperf, const char *indent, const char *key,
 	uint64_t seed = *(uint64_t *)nbperf->seed;
 	if (nbperf->compute_hash == fnv32_compute)
 		fprintf(nbperf->output,
-		    "%sfnv32_2(%s, %s, 0x%" PRIx32 ", 0x%" PRIx32 ", (uint32_t*)%s);\n",
-		    indent, key, keylen, nbperf->seed[0], nbperf->seed[1], hash);
+		    "%sfnv32_3(%s, %s, 0x%" PRIx32 ", (uint32_t*)%s);\n",
+		    indent, key, keylen, nbperf->seed[0], hash);
 	else if (nbperf->compute_hash == fnv16_compute)
 		fprintf(nbperf->output,
 		    "%sfnv16_2(%s, %s, 0x%" PRIx16 ", 0x%" PRIx16 ", (uint16_t*)%s);\n",
@@ -434,7 +435,7 @@ set_hash(struct nbperf *nbperf, const char *arg)
 	}
 #endif
 	else if (strcmp(arg, "fnv32") == 0) {
-		nbperf->hash_size = 2;
+		nbperf->hash_size = 3;
 		nbperf->compute_hash = fnv32_compute;
 		nbperf->hash_header = "fnv3.h";
 		nbperf->seed_hash = fnv_seed;
@@ -690,6 +691,8 @@ main(int argc, char **argv)
 				nbperf.hash_size = 2;
 				nbperf.compute_hash = fnv_compute;
 			}
+		} else if (nbperf.compute_hash == fnv32_compute) {
+			nbperf.hashes16 = 0; // FIXME for compat only
 		}
 	} else if (build_hash == chm_compute) {
 		if (nbperf.compute_hash == fnv3_compute) {
