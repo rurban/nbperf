@@ -135,8 +135,8 @@ assign_nodes(struct state *state)
                 const uint32_t v0 = e->vertices[0];
                 const uint32_t v1 = e->vertices[1];
                 const uint32_t v2 = e->vertices[2];
-		//DEBUGP("B:%u %u %u -- %u %u %u edge %lu\n", v0, v1, v2,
-                //       GETI2(state->g, v0), GETI2(state->g, v1), GETI2(state->g, v2), j);
+		DEBUGP("B:%u %u %u -- %u %u %u edge %lu\n", v0, v1, v2,
+                       GETI2(state->g, v0), GETI2(state->g, v1), GETI2(state->g, v2), j);
 		if (!GETBIT(state->visited, v0))
                 {
 			if (!GETBIT(state->visited,v1))
@@ -165,8 +165,8 @@ assign_nodes(struct state *state)
 			SETI2(state->g, v2, (8 - (GETI2(state->g, v0) + GETI2(state->g, v1))) % 3);
 			SETBIT(state->visited, v2);
 		}
-		//DEBUGP("A:%u %u %u -- %u %u %u\n", v0, v1, v2,
-                //       GETI2(state->g, v0), GETI2(state->g, v1), GETI2(state->g, v2));
+		DEBUGP("A:%u %u %u -- %u %u %u\n", v0, v1, v2,
+                       GETI2(state->g, v0), GETI2(state->g, v1), GETI2(state->g, v2));
 	}
 }
 
@@ -203,41 +203,11 @@ print_hash(struct nbperf *nbperf, struct state *state)
 
 	print_coda(nbperf);
 	fprintf(nbperf->output, "#include <string.h>\n");
-        fprintf(nbperf->output, "#if defined __WORDSIZE && __WORDSIZE < 64\n"
-                "#define NO_POPCOUNT64\n"
-                "#endif\n"
-                "#define NO_POPCOUNT64\n"
-                "#if !defined NO_POPCOUNT64 && (__GNUC__ > 4 "
-                "|| (__GNUC__ == 4 && __GNUC_MINOR__ >= 5))\n" // since gcc 4.5
-                "#define HAVE_POPCOUNT64\n"
-                "#define popcount64 __builtin_popcountll\n"
-                "#else\n");
-        fprintf(nbperf->output, "static const uint8_t %s_bits_per_byte[256] = {\n",
-                nbperf->hash_name);
-        fprintf(nbperf->output,
-                "\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
-                "\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
-                "\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
-                "\t3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 2, 2, 2, 2, 1,\n"
-                "\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
-                "\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
-                "\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
-                "\t3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 2, 2, 2, 2, 1,\n"
-                "\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
-                "\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
-                "\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
-                "\t3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 2, 2, 2, 2, 1,\n"
-                "\t3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 2, 2, 2, 2, 1,\n"
-                "\t3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 2, 2, 2, 2, 1,\n"
-                "\t3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 2, 2, 2, 2, 1,\n"
-                "\t2, 2, 2, 1, 2, 2, 2, 1, 2, 2, 2, 1, 1, 1, 1, 0 };\n");
-        fprintf(nbperf->output, "#endif\n\n");
-
 	if (nbperf->intkeys) {
 		inthash4_addprint(nbperf);
 	}
 	fprintf(nbperf->output,
-	    "#define GETI2(g, i) ((uint8_t)((g[i >> 2] >> ((i & 3) << 1U)) & 3))\n\n");
+	    "#define GETI2(g, i) (uint8_t)((g[i >> 2] >> ((i & 3) << 1U)) & 3)\n\n");
 	if (nbperf->embed_data) {
 		fprintf(nbperf->output, "%sconst char * const %s_keys[%" PRIu64 "] = {\n",
                         nbperf->static_hash ? "static " : "",
@@ -253,6 +223,7 @@ print_hash(struct nbperf *nbperf, struct state *state)
                 fprintf(nbperf->output, "};\n\n");
 	}
 
+        const int has_ranking = state->ranking_size > 1 || state->ranking[0] != 0;
 	const char* hashtype = nbperf->n >= 4294967295U ? "uint64_t" : "uint32_t";
 	fprintf(nbperf->output, "%s%s\n",
                 nbperf->static_hash ? "static " : "", hashtype);
@@ -299,8 +270,29 @@ print_hash(struct nbperf *nbperf, struct state *state)
                 }
                 fprintf(nbperf->output, "};\n");
 	}
-	fprintf(nbperf->output,
-                "\tstatic const uint8_t g[%" PRIu8 "] = {\n", state->g_size + 1);
+	if (has_ranking) {
+		fprintf(nbperf->output,
+		    "\tstatic const uint8_t ranking_lut[256] = {\n");
+		fprintf(nbperf->output,
+		    "\t\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
+		    "\t\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
+		    "\t\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
+		    "\t\t3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 2, 2, 2, 2, 1,\n"
+		    "\t\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
+		    "\t\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
+		    "\t\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
+		    "\t\t3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 2, 2, 2, 2, 1,\n"
+		    "\t\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
+		    "\t\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
+		    "\t\t4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 2,\n"
+		    "\t\t3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 2, 2, 2, 2, 1,\n"
+		    "\t\t3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 2, 2, 2, 2, 1,\n"
+		    "\t\t3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 2, 2, 2, 2, 1,\n"
+		    "\t\t3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 2, 2, 2, 2, 1,\n"
+		    "\t\t2, 2, 2, 1, 2, 2, 2, 1, 2, 2, 2, 1, 1, 1, 1, 0 };\n");
+	}
+	fprintf(nbperf->output, "\tstatic const uint8_t g[%" PRIu8 "] = {\n",
+	    state->g_size + 1);
 	for (i = 0; i < state->g_size; ++i) {
                 if (!i)
                         fprintf(nbperf->output, "\t    ");
@@ -313,7 +305,6 @@ print_hash(struct nbperf *nbperf, struct state *state)
 
         //const uint32_t b = 7;       // number of bits of k
         //const uint32_t k = 1U << b; // kth index in ranking
-        const int has_ranking = state->ranking_size > 1 || state->ranking[0] != 0;
         if (has_ranking) {
                 fprintf(nbperf->output,
                         "\tstatic const uint32_t ranking[%" PRId32 "] = {\n",
@@ -390,10 +381,10 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	} else {
 		fprintf(nbperf->output, "\n\th[0] = h[0] %% %" PRIu32 ";\n",
                         state->graph.v);
-		fprintf(nbperf->output, "\th[1] = h[1] %% %" PRIu32 ";\n",
-                        state->graph.v);
-		fprintf(nbperf->output, "\th[2] = h[2] %% %" PRIu32 ";\n",
-		    state->graph.v);
+		fprintf(nbperf->output, "\th[1] = h[1] %% %" PRIu32 " + %" PRIu32 ";\n",
+                        state->graph.v, state->graph.r);
+		fprintf(nbperf->output, "\th[2] = h[2] %% %" PRIu32 " + (%" PRIu32 " >> 1);\n",
+                        state->graph.v, state->graph.r);
 	}
 
 	if (state->graph.hash_fudge & 1)
@@ -410,7 +401,7 @@ print_hash(struct nbperf *nbperf, struct state *state)
                 "\tconst uint8_t i = GETI2(g, h[0]) + GETI2(g, h[1]) + GETI2(g, h[2]);\n");
         fprintf(nbperf->output,
                 "\tvertex = h[i %% 3] %% %" PRIu32 ";\n\n", state->graph.v);
-        if (state->ranking_size > 1 || state->ranking[0] != 0) {
+        if (has_ranking) {
                 // rank lookup: vertex -> base_rank
                 fprintf(nbperf->output,
                         "\tindex = vertex >> b;\n"
@@ -419,13 +410,13 @@ print_hash(struct nbperf *nbperf, struct state *state)
                         "\tidx_b = idx_v >> 2;\n"
                         "\tend_idx_b = vertex >> 2;\n"
                         "\twhile (idx_b < end_idx_b)\n"
-                        "\t    base_rank += %s_bits_per_byte[*(g + idx_b++)];\n"
+                        "\t    base_rank += ranking_lut[*(g + idx_b++)];\n"
                         "\tidx_v = idx_b << 2;\n"
                         "\twhile (idx_v < vertex)\n"
                         "\t{\n"
                         "\t      if (GETI2(g, idx_v) != 3) base_rank++;\n"
                         "\t      idx_v++;\n"
-                        "\t}\n", nbperf->hash_name);
+                        "\t}\n");
                 if (nbperf->embed_map)
                         fprintf(nbperf->output, "\t%s (%s)output_order[base_rank];\n",
                                 nbperf->embed_data ? "result =" : "return", hashtype);
@@ -458,8 +449,8 @@ bpz_compute(struct nbperf *nbperf)
 {
 	struct state state = {NULL};
 	int retval = -1;
-	uint32_t v, e, va;
-        const double min_c = 1.24;
+	uint32_t v, e, va, r;
+        const double min_c = 1.23;
 
 	if (nbperf->c == 0)
 		nbperf->c = min_c;
@@ -470,7 +461,14 @@ bpz_compute(struct nbperf *nbperf)
 
 	(*nbperf->seed_hash)(nbperf);
 	e = nbperf->n;
-	v = nbperf->c * nbperf->n;
+	r = ceil((nbperf->c * nbperf->n) / 3);
+	if ((r % 2) == 0)
+                r += 1;
+        if (r == 1) // workaround for small key sets
+		r = 3;
+	v = r * 3;
+	if (min_c * nbperf->n > v)
+		v += 3;
 
         /* With -c -2 prefer v as next power of two.
            But with bigger sets the space overhead might be too much.
@@ -485,12 +483,8 @@ bpz_compute(struct nbperf *nbperf)
                 }
         }
         
-	if (min_c * nbperf->n > v)
-		++v;
-	if (v < 8)
-		v = 8;
-	//state.r = ceil(v / 3);
-	//if (state.r % 2) state.r++;
+	if (v < 9)
+		v = 9;
 	if (nbperf->allow_hash_fudging) // two more as reserve
 		va = (v + 2) | 3;
 	else
