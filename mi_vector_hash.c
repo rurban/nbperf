@@ -48,19 +48,20 @@ __RCSID("$NetBSD: mi_vector_hash.c,v 1.1 2013/12/11 01:24:08 joerg Exp $");
 #endif
 
 #if !HAVE_NBTOOL_CONFIG_H && HAVE_ENDIAN_H
-# include <endian.h>
+#include <endian.h>
 #else
-# if !defined(__FreeBSD__) && !defined(__DragonFly__)
-   // linux, openbsd, ... (darwin??)
-#  include <endian.h>
-# else
-#  include <sys/endian.h>
-# endif
+#if !defined(__FreeBSD__) && !defined(__DragonFly__)
+// linux, openbsd, ... (darwin??)
+#include <endian.h>
+#else
+#include <sys/endian.h>
+#endif
 #endif
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 #include <sys/types.h>
 #include <sys/systm.h>
+
 #include <lib/libkern/libkern.h>
 #else
 
@@ -76,24 +77,43 @@ le32dec(const void *buf)
 	uint8_t const *p = (uint8_t const *)buf;
 	return (((unsigned)p[3] << 24) | (p[2] << 16) | (p[1] << 8) | p[0]);
 #else
-        return *(uint32_t*)buf;
+	return *(uint32_t *)buf;
 #endif
 }
 #endif
 
-#define mix(a, b, c) do {		\
-	a -= b; a -= c; a ^= (c >> 13);	\
-	b -= c; b -= a; b ^= (a << 8);	\
-	c -= a; c -= b; c ^= (b >> 13);	\
-	a -= b; a -= c; a ^= (c >> 12);	\
-	b -= c; b -= a; b ^= (a << 16);	\
-	c -= a; c -= b; c ^= (b >> 5);	\
-	a -= b; a -= c; a ^= (c >> 3);	\
-	b -= c; b -= a; b ^= (a << 10);	\
-	c -= a; c -= b; c ^= (b >> 15);	\
-} while (/* CONSTCOND */0)
+#define mix(a, b, c)            \
+	do {                    \
+		a -= b;         \
+		a -= c;         \
+		a ^= (c >> 13); \
+		b -= c;         \
+		b -= a;         \
+		b ^= (a << 8);  \
+		c -= a;         \
+		c -= b;         \
+		c ^= (b >> 13); \
+		a -= b;         \
+		a -= c;         \
+		a ^= (c >> 12); \
+		b -= c;         \
+		b -= a;         \
+		b ^= (a << 16); \
+		c -= a;         \
+		c -= b;         \
+		c ^= (b >> 5);  \
+		a -= b;         \
+		a -= c;         \
+		a ^= (c >> 3);  \
+		b -= c;         \
+		b -= a;         \
+		b ^= (a << 10); \
+		c -= a;         \
+		c -= b;         \
+		c ^= (b >> 15); \
+	} while (/* CONSTCOND */ 0)
 
-#define FIXED_SEED	0x9e3779b9	/* Golden ratio, arbitrary constant */
+#define FIXED_SEED 0x9e3779b9 /* Golden ratio, arbitrary constant */
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #ifdef __weak_alias
@@ -101,13 +121,11 @@ __weak_alias(mi_vector_hash, _mi_vector_hash)
 #endif
 #endif
 
-void
-mi_vector_hash(const void * __restrict key, size_t len, uint32_t seed,
-               uint32_t hashes[3])
+    void mi_vector_hash(const void *__restrict key, size_t len, uint32_t seed,
+	uint32_t hashes[3])
 {
-	static const uint32_t mask[4] = {
-		0x000000ff, 0x0000ffff, 0x00ffffff, 0xffffffff
-	};
+	static const uint32_t mask[4] = { 0x000000ff, 0x0000ffff, 0x00ffffff,
+		0xffffffff };
 	uint32_t orig_len, a, b, c;
 	const uint8_t *k;
 

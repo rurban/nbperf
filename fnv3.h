@@ -47,9 +47,12 @@ static inline void fnv32_3(const void *key, size_t len, uint32_t seed,
   h1 = seed + 1;
   h2 = seed + 2;
   while (data < end) {
-    h0 += (h0 << 1) + (h0 << 4) + (h0 << 7) + (h0 << 8) + (h0 << 24); //from cpmh
-    h1 += (h1 << 1) + (h1 << 4) + (h1 << 7) + (h1 << 8) + (h1 << 24); //from cpmh
-    h2 += (h2 << 1) + (h2 << 4) + (h2 << 7) + (h2 << 8) + (h2 << 24); //from cpmh
+    h0 *= 0x01000193;
+    h1 *= 0x01000193;
+    h2 *= 0x01000193;
+    //h0 += (h0 << 1) + (h0 << 4) + (h0 << 7) + (h0 << 8) + (h0 << 24); //from cpmh
+    //h1 += (h1 << 1) + (h1 << 4) + (h1 << 7) + (h1 << 8) + (h1 << 24); //from cpmh
+    //h2 += (h2 << 1) + (h2 << 4) + (h2 << 7) + (h2 << 8) + (h2 << 24); //from cpmh
     h0 ^= *data;
     h1 ^= *data;
     h2 ^= *data;

@@ -71,7 +71,8 @@ usage(void)
 	fprintf(stderr,
 	    "rurban/nbperf v%s\n"
 	    "nbperf [-dfIMps] [-c utilisation] [-i iterations] [-n name] "
-                "[-h hash] [-o output] [-m mapfile] input\n", VERSION);
+	    "[-h hash] [-o output] [-m mapfile] input\n",
+	    VERSION);
 	exit(1);
 }
 
@@ -103,7 +104,7 @@ mi_vector_hash_print(struct nbperf *nbperf, const char *indent, const char *key,
 	fprintf(nbperf->output,
 	    "%smi_vector_hash(%s, %s, UINT32_C(0x%08" PRIx32 "), %s%s);\n",
 	    indent, key, keylen, nbperf->seed[0],
-		nbperf->hashes16 ? "(uint32_t *)" : "", hash);
+	    nbperf->hashes16 ? "(uint32_t *)" : "", hash);
 }
 
 static void
@@ -144,12 +145,12 @@ wyhash_print(struct nbperf *nbperf, const char *indent, const char *key,
     const char *keylen, const char *hash)
 {
 	uint64_t seed = *(uint64_t *)nbperf->seed;
-        if (nbperf->compute_hash == wyhash2_compute)
+	if (nbperf->compute_hash == wyhash2_compute)
 		fprintf(nbperf->output,
 		    "%smi_wyhash2(%s, %s, UINT64_C(0x%" PRIx64
 		    "), (uint32_t*)%s);\n",
 		    indent, key, keylen, seed, hash);
-        else
+	else
 		fprintf(nbperf->output,
 		    "%smi_wyhash4(%s, %s, UINT64_C(0x%" PRIx64
 		    "), (uint64_t*)%s);\n",
@@ -160,13 +161,13 @@ fnv_seed(struct nbperf *nbperf)
 {
 	static uint32_t predictable_counter = 1;
 	if (nbperf->predictable) {
-                nbperf->seed[0] = predictable_counter;
+		nbperf->seed[0] = predictable_counter;
 		nbperf->seed[1] = ++predictable_counter;
 	} else {
 		nbperf->seed[0] = arc4random();
 		nbperf->seed[1] = arc4random();
 	}
-        DEBUGP("seed[0]: %u, seed[1]: %u\n", nbperf->seed[0], nbperf->seed[1]);
+	DEBUGP("seed[0]: %u, seed[1]: %u\n", nbperf->seed[0], nbperf->seed[1]);
 }
 static void
 fnv3_compute(struct nbperf *nbperf, const void *key, size_t keylen,
@@ -187,13 +188,15 @@ fnv32_compute(struct nbperf *nbperf, const void *key, size_t keylen,
     uint32_t *hashes)
 {
 	fnv32_3(key, keylen, nbperf->seed[0], hashes);
-        //DEBUGP("hashes[0]: %u, hashes[1]: %u, hashes[2]: %u\n", hashes[0], hashes[1], hashes[2]);
+	// DEBUGP("hashes[0]: %u, hashes[1]: %u, hashes[2]: %u\n", hashes[0],
+	// hashes[1], hashes[2]);
 }
 static void
 fnv16_compute(struct nbperf *nbperf, const void *key, size_t keylen,
     uint32_t *hashes)
 {
-  fnv16_2(key, keylen, nbperf->seed[0] & 0xffff, nbperf->seed[0] >> 16, (uint16_t*)hashes);
+	fnv16_2(key, keylen, nbperf->seed[0] & 0xffff, nbperf->seed[0] >> 16,
+	    (uint16_t *)hashes);
 }
 static void
 fnv_print(struct nbperf *nbperf, const char *indent, const char *key,
@@ -206,8 +209,10 @@ fnv_print(struct nbperf *nbperf, const char *indent, const char *key,
 		    indent, key, keylen, nbperf->seed[0], hash);
 	else if (nbperf->compute_hash == fnv16_compute)
 		fprintf(nbperf->output,
-		    "%sfnv16_2(%s, %s, 0x%" PRIx16 ", 0x%" PRIx16 ", (uint16_t*)%s);\n",
-                        indent, key, keylen, nbperf->seed[0] & 0xffff, nbperf->seed[0] >> 16, hash);
+		    "%sfnv16_2(%s, %s, 0x%" PRIx16 ", 0x%" PRIx16
+		    ", (uint16_t*)%s);\n",
+		    indent, key, keylen, nbperf->seed[0] & 0xffff,
+		    nbperf->seed[0] >> 16, hash);
 	else
 		fprintf(nbperf->output,
 		    "%sfnv%s(%s, %s, UINT64_C(0x%" PRIx64
@@ -222,7 +227,7 @@ crc_compute(struct nbperf *nbperf, const void *key, size_t keylen,
     uint32_t *hashes)
 {
 	uint64_t seed = *(uint64_t *)nbperf->seed;
-        // produces three 32bit hashes from 2 seeds
+	// produces three 32bit hashes from 2 seeds
 	crc3(key, keylen, seed, (uint64_t *)hashes);
 }
 static void
@@ -230,7 +235,7 @@ crc2_compute(struct nbperf *nbperf, const void *key, size_t keylen,
     uint32_t *hashes)
 {
 	uint64_t seed = *(uint64_t *)nbperf->seed;
-        // produces one 64bit hash, resp. two 32bit hashes
+	// produces one 64bit hash, resp. two 32bit hashes
 	crc2(key, keylen, seed, (uint64_t *)hashes);
 }
 static void
@@ -250,7 +255,7 @@ inthash_compute(struct nbperf *nbperf, const void *key, size_t keylen,
     uint32_t *hashes)
 {
 	(void)keylen;
-        /* mult factor from CityHash to reach into 2nd 32bit slot */
+	/* mult factor from CityHash to reach into 2nd 32bit slot */
 	*(uint64_t *)hashes = ((int64_t)key *
 				  (UINT64_C(0x9DDFEA08EB382D69) +
 				      (uint64_t)nbperf->seed[0])) +
@@ -261,7 +266,8 @@ inthash2_compute(struct nbperf *nbperf, const void *key, size_t keylen,
     uint32_t *hashes)
 {
 	(void)keylen;
-	*hashes = ((int32_t)(ptrdiff_t)key * (UINT32_C(0xEB382D69) + nbperf->seed[0])) +
+	*hashes = ((int32_t)(ptrdiff_t)key *
+		      (UINT32_C(0xEB382D69) + nbperf->seed[0])) +
 	    nbperf->seed[1];
 }
 // TODO inthash16 for 16bit
@@ -275,7 +281,7 @@ inthash_addprint(struct nbperf *nbperf)
 		    "\t*h = ((int64_t)key * (UINT64_C(0x9DDFEA08EB382D69) + UINT64_C(%u)))\n"
 		    "\t\t + UINT32_C(%u);\n",
 		    nbperf->seed[0], nbperf->seed[1]);
-        } else {
+	} else {
 		fprintf(nbperf->output,
 		    "\nstatic inline void _inthash2(const int32_t key, uint32_t *h)\n{\n");
 		fprintf(nbperf->output,
@@ -292,8 +298,8 @@ inthash4_compute(struct nbperf *nbperf, const void *key, size_t keylen,
 {
 	uint64_t *h64 = (uint64_t *)hashes;
 	(void)keylen;
-        /* mult factor from CityHash to reach into 2nd 32bit slot, but
-           not the 3rd */
+	/* mult factor from CityHash to reach into 2nd 32bit slot, but
+	   not the 3rd */
 	h64[0] = ((int64_t)key *
 		     (UINT64_C(0x9DDFEA08EB382D69) +
 			 (uint64_t)nbperf->seed[0])) +
@@ -337,8 +343,8 @@ inthash4_print(struct nbperf *nbperf, const char *indent, const char *key,
     const char *keylen, const char *hash)
 {
 	(void)keylen;
-        fprintf(nbperf->output, "%s_inthash4(%s, (uint64_t*)%s);\n", indent, key,
-		    hash);
+	fprintf(nbperf->output, "%s_inthash4(%s, (uint64_t*)%s);\n", indent,
+	    key, hash);
 }
 
 void
@@ -375,7 +381,7 @@ print_coda(struct nbperf *nbperf)
 	    " */\n/* seed[0]: %" PRIu32 ", seed[1]: %" PRIu32 " */\n",
 	    nbperf->seed[0], nbperf->seed[1]);
 
-	//if (!nbperf->intkeys)
+	// if (!nbperf->intkeys)
 	//	fprintf(nbperf->output, "#include <stdlib.h>\n");
 	fprintf(nbperf->output, "#include <stdint.h>\n");
 	if (nbperf->hash_header)
@@ -393,13 +399,15 @@ set_hash(struct nbperf *nbperf, const char *arg)
 		nbperf->compute_hash = mi_vector_hash_compute;
 		nbperf->print_hash = mi_vector_hash_print;
 #ifdef ASAN
-		errx(1, "This hash function is disallowed with address-sanitizer");
+		errx(1,
+		    "This hash function is disallowed with address-sanitizer");
 #else
-# if defined(__has_feature)
-#  if __has_feature(address_sanitizer)
-		errx(1, "This hash function is disallowed with address-sanitizer");
-#  endif
-# endif
+#if defined(__has_feature)
+#if __has_feature(address_sanitizer)
+		errx(1,
+		    "This hash function is disallowed with address-sanitizer");
+#endif
+#endif
 #endif
 		return;
 	} else if (strcmp(arg, "wyhash") == 0) {
@@ -441,18 +449,18 @@ set_hash(struct nbperf *nbperf, const char *arg)
 		nbperf->seed_hash = fnv_seed;
 		nbperf->print_hash = fnv_print;
 		return;
-        }
-	else if (strcmp(arg, "fnv16") == 0) {
+	} else if (strcmp(arg, "fnv16") == 0) {
 		nbperf->hash_size = 2;
 		nbperf->compute_hash = fnv16_compute;
 		nbperf->hash_header = "fnv16.h";
 		nbperf->seed_hash = fnv_seed;
 		nbperf->print_hash = fnv_print;
 		return;
-        }
-	errx(1, "Unknown hash function: %s. "
-             "Known hashes: mi_vector_hash wyhash fnv fnv32 fnv16 crc",
-             arg);
+	}
+	errx(1,
+	    "Unknown hash function: %s. "
+	    "Known hashes: mi_vector_hash wyhash fnv fnv32 fnv16 crc",
+	    arg);
 }
 
 int
@@ -479,7 +487,7 @@ main(int argc, char **argv)
 	size_t line_allocated;
 	const char **keys = NULL;
 	size_t *keylens = NULL;
-        // chm needs 20, bpz 1000
+	// chm needs 20, bpz 1000
 #define MAX_ITERATIONS 1000U
 	uint32_t max_iterations = MAX_ITERATIONS;
 	long tmp;
@@ -489,15 +497,15 @@ main(int argc, char **argv)
 #ifdef ASAN
 	set_hash(&nbperf, "wyhash");
 #else
-# if defined(__has_feature)
-#  if __has_feature(address_sanitizer)
+#if defined(__has_feature)
+#if __has_feature(address_sanitizer)
 	set_hash(&nbperf, "wyhash");
-#  else
+#else
 	set_hash(&nbperf, "mi_vector_hash");
-#  endif
-# else
+#endif
+#else
 	set_hash(&nbperf, "mi_vector_hash");
-# endif
+#endif
 #endif
 
 	while ((ch = getopt(argc, argv, "a:c:dfh:i:m:n:o:psIM")) != -1) {
@@ -509,10 +517,12 @@ main(int argc, char **argv)
 			else if (strcmp(optarg, "chm3") == 0)
 				build_hash = chm3_compute;
 			else if ((strcmp(optarg, "bpz") == 0 ||
-                                  strcmp(optarg, "bdz") == 0))
+				     strcmp(optarg, "bdz") == 0))
 				build_hash = bpz_compute;
 			else
-				errx(1, "Unsupported algorithm -a %s. Only chm,chm3,bpz,bdz.", optarg);
+				errx(1,
+				    "Unsupported algorithm -a %s. Only chm,chm3,bpz,bdz.",
+				    optarg);
 			break;
 		case 'c':
 			errno = 0;
@@ -534,7 +544,9 @@ main(int argc, char **argv)
 			tmp = strtol(optarg, &eos, 0);
 			if (errno || eos == optarg || eos[0] || tmp < 0 ||
 			    tmp > 10000)
-				errx(2, "-i %ld iteration count must be < 10000", tmp);
+				errx(2,
+				    "-i %ld iteration count must be < 10000",
+				    tmp);
 			max_iterations = (uint32_t)tmp;
 			break;
 		case 'I':
@@ -552,7 +564,7 @@ main(int argc, char **argv)
 			nbperf.map_output = fopen(optarg, "w");
 			if (nbperf.map_output == NULL)
 				err(2, "cannot open map file");
-                        nbperf.embed_map = 0;
+			nbperf.embed_map = 0;
 			break;
 		case 'n':
 			nbperf.hash_name = optarg;
@@ -585,16 +597,17 @@ main(int argc, char **argv)
 	if (argc > 1)
 		usage();
 
-	//if (build_hash == chm_compute && nbperf.hash_size == 3)
+	// if (build_hash == chm_compute && nbperf.hash_size == 3)
 	//	nbperf.hash_size = 2; // wyhash not
 	if (build_hash == bpz_compute || build_hash == chm3_compute) {
 		if (nbperf.intkeys) {
 			nbperf.hash_size = 4;
 			nbperf.compute_hash = inthash4_compute;
-                        nbperf.print_hash = inthash4_print;
+			nbperf.print_hash = inthash4_print;
 		}
 		if (nbperf.hash_size < 3)
-			errx(1, "Unsupported algorithm with hash_size %d", nbperf.hash_size);
+			errx(1, "Unsupported algorithm with hash_size %d",
+			    nbperf.hash_size);
 	}
 
 	if (argc == 1) {
@@ -630,7 +643,8 @@ main(int argc, char **argv)
 		if (nbperf.intkeys) {
 			uint64_t i;
 			if (!line_len || line[0] == '#') {
-				continue; // skip comment or empy lines, intkeys only
+				continue; // skip comment or empy lines, intkeys
+					  // only
 			}
 			if (line[0] == '0' &&
 			    (line[1] == 'x' || line[1] == 'X')) {
@@ -670,12 +684,12 @@ main(int argc, char **argv)
 	nbperf.keylens = keylens;
 
 	/* with less keys we can use smaller and esp. faster 16bit hashes */
-	if (curlen <= 65534) {
+	if (curlen <= 1 /*65534*/) {
 		nbperf.hashes16 = 1;
 		if (build_hash == chm_compute) {
 			if (nbperf.intkeys > 0) {
 				if (nbperf.hash_size == 2)
-                                        // TODO inthash16 for 16bit CPU's
+					// TODO inthash16 for 16bit CPU's
 					nbperf.compute_hash = inthash2_compute;
 				else
 					nbperf.compute_hash = inthash_compute;

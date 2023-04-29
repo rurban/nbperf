@@ -42,17 +42,16 @@
 __RCSID("$NetBSD: graph2.c,v 1.5 2021/01/07 16:03:08 joerg Exp $");
 #endif
 
+#include <assert.h>
 #include <err.h>
 #include <inttypes.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
-#include <assert.h>
-
-#include "nbperf.h"
 
 #include "graph2.h"
+#include "nbperf.h"
 
 void
 SIZED2(_setup)(struct SIZED(graph) * graph, uint32_t v, uint32_t e, uint32_t va)
@@ -105,7 +104,7 @@ sorting_cmp(const void *a_, const void *b_)
 	if (sorting_nbperf->keylens[*a] > sorting_nbperf->keylens[*b])
 		return 1;
 	i = memcmp(sorting_nbperf->keys[*a], sorting_nbperf->keys[*b],
-		   sorting_nbperf->keylens[*a]);
+	    sorting_nbperf->keylens[*a]);
 	if (i == 0) {
 		sorting_found = 1;
 		fprintf(stderr, "Duplicate %s\n", sorting_nbperf->keys[*a]);
@@ -127,11 +126,12 @@ sorting_intcmp(const void *a_, const void *b_)
 			return 1;
 	}
 	i = memcmp((const void *)&sorting_nbperf->keys[*a],
-		   (const void *)&sorting_nbperf->keys[*b], sizeof(char *));
+	    (const void *)&sorting_nbperf->keys[*b], sizeof(char *));
 	if (i == 0) {
 		sorting_found = 1;
-		fprintf(stderr, "Duplicate %lu\n", (unsigned long)sorting_nbperf->keys[*a]);
-        }
+		fprintf(stderr, "Duplicate %lu\n",
+		    (unsigned long)sorting_nbperf->keys[*a]);
+	}
 	return i;
 }
 
@@ -175,10 +175,10 @@ SIZED2(_add_edge)(struct SIZED(graph) * graph, uint32_t edge)
 	struct SIZED(vertex) * v;
 	size_t i;
 	DEBUGP("add edge %u (%u %u %u)\n", edge, e->vertices[0], e->vertices[1],
-	       e->vertices[2]);
+	    e->vertices[2]);
 
 	for (i = 0; i < GRAPH_SIZE; ++i) {
-	        assert(e->vertices[i] < graph->va);
+		assert(e->vertices[i] < graph->va);
 		v = &graph->verts[e->vertices[i]];
 		v->edges ^= edge;
 		++v->degree;
@@ -191,11 +191,11 @@ SIZED2(_remove_edge)(struct SIZED(graph) * graph, uint32_t edge)
 	struct SIZED(edge) *e = &graph->edges[edge];
 	struct SIZED(vertex) * v;
 	size_t i;
-	DEBUGP("remove edge %u (%u %u %u)\n", edge, e->vertices[0], e->vertices[1],
-	       e->vertices[2]);
+	DEBUGP("remove edge %u (%u %u %u)\n", edge, e->vertices[0],
+	    e->vertices[1], e->vertices[2]);
 
 	for (i = 0; i < GRAPH_SIZE; ++i) {
-	        assert(e->vertices[i] < graph->va);
+		assert(e->vertices[i] < graph->va);
 		v = &graph->verts[e->vertices[i]];
 		v->edges ^= edge;
 		--v->degree;
@@ -244,30 +244,30 @@ SIZED2(_hash)(struct nbperf *nbperf, struct SIZED(graph) * graph)
 			    nbperf->keylens[i], hashes);
 		e = graph->edges + i;
 		if (nbperf->hashes16) {
-		    e->vertices[0] = hashes16[0] % graph->r;
-		    e->vertices[1] = hashes16[1] % graph->r + graph->r;
+			e->vertices[0] = hashes16[0] % graph->r;
+			e->vertices[1] = hashes16[1] % graph->r + graph->r;
 #if GRAPH_SIZE >= 3
-		    e->vertices[2] = hashes16[2] % graph->r + (graph->r << 1);
+			e->vertices[2] = hashes16[2] % graph->r +
+			    (graph->r << 1);
+#endif
+		} else {
+			e->vertices[0] = hashes[0] % graph->r;
+			e->vertices[1] = hashes[1] % graph->r + graph->r;
+#if GRAPH_SIZE >= 3
+			e->vertices[2] = hashes[2] % graph->r + (graph->r << 1);
 #endif
 		}
-		else {
-		    e->vertices[0] = hashes[0] % graph->r;
-		    e->vertices[1] = hashes[1] % graph->r + graph->r;
-#if GRAPH_SIZE >= 3
-		    e->vertices[2] = hashes[2] % graph->r + (graph->r << 1);
-#endif
-		}
-		DEBUGP("Key[%lu]: %s (%u, %u, %u)\n", i, nbperf->keys[i],
-		       e->vertices[0], e->vertices[1], e->vertices[2]);
+		DEBUGP("Key[%lu]: \"%s\" (%u %u %u)\n", i, nbperf->keys[i],
+		    e->vertices[0], e->vertices[1], e->vertices[2]);
 		for (j = 0; j < GRAPH_SIZE; ++j) {
-			//if (nbperf->hashes16)
+			// if (nbperf->hashes16)
 			//	e->vertices[j] = hashes16[j] % graph->v;
-			//else
+			// else
 			//	e->vertices[j] = hashes[j] % graph->v;
 			if (j == 1 && e->vertices[0] == e->vertices[1]) {
 				if (!nbperf->allow_hash_fudging)
 					return -1;
-                                // this needs to bump the graph->v by one
+				// this needs to bump the graph->v by one
 				e->vertices[1] ^= 1; /* toogle bit to differ */
 				graph->hash_fudge |= 1;
 			}
@@ -279,7 +279,7 @@ SIZED2(_hash)(struct nbperf *nbperf, struct SIZED(graph) * graph)
 					return -1;
 				graph->hash_fudge |= 2;
 				e->vertices[2] ^= 1;
-                                // this needs to bump the graph->v by two
+				// this needs to bump the graph->v by two
 				e->vertices[2] ^= 2 *
 				    (e->vertices[0] == e->vertices[2] ||
 					e->vertices[1] == e->vertices[2]);
