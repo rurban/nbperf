@@ -670,7 +670,7 @@ main(int argc, char **argv)
 	nbperf.keylens = keylens;
 
 	/* with less keys we can use smaller and esp. faster 16bit hashes */
-	if (curlen <= 65534) {
+	if (curlen <= 1 /*65534*/) {
 		nbperf.hashes16 = 1;
 		if (build_hash == chm_compute) {
 			if (nbperf.intkeys > 0) {

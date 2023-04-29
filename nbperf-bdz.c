@@ -125,6 +125,7 @@ assign_nodes(struct state *state)
 	size_t i, j;
 
 	memset(state->g, 0xff, state->g_size);
+        DEBUGP("e: %u, v: %u, va: %u, r: %u\n", state->graph.e, state->graph.v, state->graph.va, state->graph.r);
 	//for (i = 0; i < state->graph.v; ++i)
 	//	SETI2(state->g, i, UNVISITED);
 

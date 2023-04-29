@@ -257,7 +257,7 @@ SIZED2(_hash)(struct nbperf *nbperf, struct SIZED(graph) * graph)
 		    e->vertices[2] = hashes[2] % graph->r + (graph->r << 1);
 #endif
 		}
-		DEBUGP("Key[%lu]: %s (%u, %u, %u)\n", i, nbperf->keys[i],
+		DEBUGP("Key[%lu]: \"%s\" (%u %u %u)\n", i, nbperf->keys[i],
 		       e->vertices[0], e->vertices[1], e->vertices[2]);
 		for (j = 0; j < GRAPH_SIZE; ++j) {
 			//if (nbperf->hashes16)
