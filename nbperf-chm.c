@@ -167,10 +167,8 @@ embed_data_string(struct nbperf *nbperf)
 }
 
 static void
-embed_data_int(struct nbperf *nbperf)
+embed_data_int(struct nbperf *nbperf, const char* hashtype)
 {
-        const char* hashtype = nbperf->n >= 4294967295U ? "uint64_t"
-                : !nbperf->hashes16 ? "uint32_t" : "uint16_t";
 	fprintf(nbperf->output, "%sconst %s %s_keys[%" PRIu64 "] = {\n",
 		nbperf->static_hash ? "static " : "",
 		hashtype,
@@ -204,15 +202,15 @@ print_hash(struct nbperf *nbperf, struct state *state)
                 inthash_addprint(nbperf);
 #endif
 	}
+        const char* hashtype = nbperf->n >= 4294967295U ? "uint64_t"
+                : !nbperf->hashes16 ? "uint32_t" : "uint16_t";
 	if (nbperf->embed_data) {
 		if (nbperf->intkeys)
-			embed_data_int(nbperf);
+			embed_data_int(nbperf, hashtype);
 		else
 			embed_data_string(nbperf);
         }
 
-        const char* hashtype = nbperf->n >= 4294967295U ? "uint64_t"
-                : !nbperf->hashes16 ? "uint32_t" : "uint16_t";
 	fprintf(nbperf->output, "%s%s\n",
                 nbperf->static_hash ? "static " : "", hashtype);
 	if (!nbperf->intkeys)
