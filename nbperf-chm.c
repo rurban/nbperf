@@ -345,6 +345,8 @@ chm_compute(struct nbperf *nbperf)
 	int retval = -1;
 	uint32_t v, e, va;
 
+	if (nbperf->n < 1)
+		errx(1, "Not enough members, n < 1");
 #if GRAPH_SIZE >= 3
         const double min_c = 1.24;
 	if (nbperf->c == 0)
