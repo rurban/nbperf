@@ -1,4 +1,5 @@
 # $NetBSD: Makefile,v 1.1 2009/08/15 16:21:04 joerg Exp $
+# random requires bsd-games
 
 PROG=	nbperf
 SRCS=	nbperf.c
