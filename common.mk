@@ -14,7 +14,7 @@ $(PROG): $(SRCS) mi_vector_hash.c mi_vector_hash.h wyhash.h nbtool_config.h VERS
 	  mi_vector_hash.c -o $@ -lm
 perf: perf.h perf_test.c perf.cc
 	c++ $(CFLAGS) perf.cc -o $@
-VERSION: nbtool_config.h nbperf.c
+VERSION: nbtool_config.h $(SRC) $(HEADERS) README.md nbperf.1
 	git describe --long --tags --always >$@
 
 $(RANDBIG):
