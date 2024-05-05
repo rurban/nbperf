@@ -150,6 +150,44 @@ assign_nodes(struct state *state)
 #endif
 
 static void
+embed_data_string(struct nbperf *nbperf)
+{
+	fprintf(nbperf->output, "%sconst char * const %s_keys[%" PRIu64 "] = {\n",
+		nbperf->static_hash ? "static " : "",
+		nbperf->hash_name, nbperf->n);
+	for (size_t i = 0; i < nbperf->n; i++) {
+		if (!i)
+			fprintf(nbperf->output, "\t");
+		if ((i + 1) % 4)
+			fprintf(nbperf->output, "\"%s\", ", nbperf->keys[i]);
+		else
+			fprintf(nbperf->output, "\"%s\",\t/* %lu */\n\t", nbperf->keys[i], i+1);
+	}
+	fprintf(nbperf->output, "};\n");
+}
+
+static void
+embed_data_int(struct nbperf *nbperf)
+{
+        const char* hashtype = nbperf->n >= 4294967295U ? "uint64_t"
+                : !nbperf->hashes16 ? "uint32_t" : "uint16_t";
+	fprintf(nbperf->output, "%sconst %s %s_keys[%" PRIu64 "] = {\n",
+		nbperf->static_hash ? "static " : "",
+		hashtype,
+		nbperf->hash_name, nbperf->n);
+	for (size_t i = 0; i < nbperf->n; i++) {
+		if (!i)
+			fprintf(nbperf->output, "\t");
+		if ((i + 1) % 10)
+			fprintf(nbperf->output, "%ld, ", (long)nbperf->keys[i]);
+		else
+			fprintf(nbperf->output, "%ld,\t/* %lu */\n\t",
+				(long)nbperf->keys[i], i+1);
+	}
+	fprintf(nbperf->output, "};\n");
+}
+
+static void
 print_hash(struct nbperf *nbperf, struct state *state)
 {
 	uint32_t i, per_line;
@@ -157,7 +195,7 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	int g_width;
 
 	print_coda(nbperf);
-        if (nbperf->embed_data)
+        if (nbperf->embed_data && !nbperf->intkeys)
                 fprintf(nbperf->output, "#include <string.h>\n");
 	if (nbperf->intkeys) {
 #if GRAPH_SIZE >= 3
@@ -167,18 +205,10 @@ print_hash(struct nbperf *nbperf, struct state *state)
 #endif
 	}
 	if (nbperf->embed_data) {
-                fprintf(nbperf->output, "%sconst char * const %s_keys[%" PRIu64 "] = {\n",
-                        nbperf->static_hash ? "static " : "",
-                        nbperf->hash_name, nbperf->n);
-                for (size_t i = 0; i < nbperf->n; i++) {
-                        if (!i)
-                                fprintf(nbperf->output, "\t");
-                        if ((i + 1) % 4)
-                                fprintf(nbperf->output, "\"%s\", ", nbperf->keys[i]);
-                        else
-                                fprintf(nbperf->output, "\"%s\",\t/* %lu */\n\t", nbperf->keys[i], i+1);
-                }
-                fprintf(nbperf->output, "};\n");
+		if (nbperf->intkeys)
+			embed_data_int(nbperf);
+		else
+			embed_data_string(nbperf);
         }
 
         const char* hashtype = nbperf->n >= 4294967295U ? "uint64_t"
@@ -190,7 +220,8 @@ print_hash(struct nbperf *nbperf, struct state *state)
 			"%s(const void * __restrict key, size_t keylen)\n",
 			nbperf->hash_name);
 	else
-		fprintf(nbperf->output,	"%s(const int32_t key)\n", nbperf->hash_name);
+		fprintf(nbperf->output,	"%s(const %s key)\n",
+			nbperf->hash_name, hashtype);
 	fprintf(nbperf->output, "{\n");
 	if (state->graph.v >= 65536) {
 		g_type = "uint32_t";
@@ -322,10 +353,16 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	    "%" PRIu32 ";\n", nbperf->embed_data ? "result =" : "return",
 	    state->graph.e);
 #endif
-        if (nbperf->embed_data)
-                fprintf(nbperf->output, "\treturn (strcmp(%s_keys[result], key) == 0)"
-                        " ? result : (%s)-1;\n",
-                        nbperf->hash_name, hashtype);
+        if (nbperf->embed_data) {
+		if (!nbperf->intkeys)
+			fprintf(nbperf->output, "\treturn (strcmp(%s_keys[result], key) == 0)"
+				" ? result : (%s)-1;\n",
+				nbperf->hash_name, hashtype);
+		else
+			fprintf(nbperf->output,
+				"\treturn (%s_keys[result] == key) ? result : (%s)-1;\n",
+				nbperf->hash_name, hashtype);
+	}
 	fprintf(nbperf->output, "}\n");
 
 	if (nbperf->map_output != NULL) {
