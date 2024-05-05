@@ -78,13 +78,20 @@ Supported arguments for **-h**:
   This is not as good as expected yet. Ensure that you use -msse4, -mcrc or
   -march=native or similar for the much faster HW variant.
 
-The number of iterations can be limited with **-i**.  **nbperf**
-outputs a function matching `uint32_t hash(const void * restrict, size_t)`
+The number of iterations can be limited with **-i**.  
+
+**nbperf** outputs a function matching `uint32_t hash(const void * restrict, size_t)`
 to stdout.  The function expects the key length as second
 argument, for strings not including the terminating NUL.  It is the
 responsibility of the caller to pass in only valid keys or compare the
 resulting index to the key.  The function name can be changed using
-**-n _name_**.  If the **-s** flag is specified, it will be static.
+**-n _name_**.
+
+If the **-s** flag is specified, it will be static.
+
+If the **-d** flag is specified, the hash keys will be embdedded into
+generated C source, and
+the resulting key is checked against the input to rule out false positives.
 
 If the **-f** flag is specified, hash fudging will be allowed. I.e.
 slightly slower hashes.
