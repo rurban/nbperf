@@ -399,8 +399,8 @@ chm_compute(struct nbperf *nbperf)
 		va = v;
 #endif
 
-	state.g = calloc(sizeof(uint32_t), v);
-	state.visited = calloc(sizeof(uint8_t), v);
+	state.g = calloc(v,sizeof(uint32_t));
+	state.visited = calloc(v, sizeof(uint8_t));
 	if (state.g == NULL || state.visited == NULL)
 		err(1, "malloc failed");
 
