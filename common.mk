@@ -21,7 +21,7 @@ $(RANDBIG):
 	seq 160000 | random > $@
 $(RANDHEX):
 	seq 2000 | random | xargs printf "0x%x\n" > $@
-_rand100:
+_rand200:
 	seq 200 | random > $@
 _words: $(WORDS)
 	cp $(WORDS) $@
@@ -30,7 +30,7 @@ _words1000:
 _words100:
 	head -n 100 $(WORDS) > $@
 
-check: $(PROG) _words1000 _words $(RANDBIG) $(RANDHEX)
+check: $(PROG) _words1000 _words $(RANDBIG) $(RANDHEX) _rand200
 	@echo test building a few with big sets
 	./$(PROG) -o _test_chm.c $(WORDS)
 	$(CC) $(CFLAGS) -I. -Dchm -o _test_chm _test_chm.c test_main.c mi_vector_hash.c
@@ -73,6 +73,9 @@ check: $(PROG) _words1000 _words $(RANDBIG) $(RANDHEX)
 	./$(PROG) -IM -o _test_Mint.c $(RANDBIG)
 	$(CC) $(CFLAGS) -I. -Dchm -D_INTKEYS -o _test_Mint _test_Mint.c test_main.c
 	./_test_Mint $(RANDBIG)
+	./$(PROG) -Ipd -o _test_dint.c _rand200
+	$(CC) $(CFLAGS) -I. -Dchm -D_INTKEYS -o _test_dint _test_dint.c test_main.c
+	./_test_dint _rand200
 	@echo
 	@echo test all combinations and results with a small set
 	CFLAGS="$(CFLAGS)" ./test
